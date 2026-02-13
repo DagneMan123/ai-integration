@@ -1,0 +1,20 @@
+{
+  "name": "simuai-platform",
+  "version": "1.0.0",
+  "description": "AI-powered interview simulation and recruitment automation platform",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "setup-db": "cd server && npm run migrate"
+  },
+  "keywords": ["ai", "interview", "recruitment", "simulation", "chapa"],
+  "author": "SimuAI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
