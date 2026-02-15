@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const applicationController = require('../controllers/applicationController');
-const { protect, authorize } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-router.use(protect);
+router.use(authenticateToken);
 
 // Candidate routes
-router.post('/', authorize('candidate'), applicationController.createApplication);
-router.get('/my-applications', authorize('candidate'), applicationController.getCandidateApplications);
+router.post('/', authorizeRoles('candidate'), applicationController.createApplication);
+router.get('/my-applications', authorizeRoles('candidate'), applicationController.getCandidateApplications);
 router.get('/:id', applicationController.getApplication);
-router.delete('/:id', authorize('candidate'), applicationController.withdrawApplication);
+router.delete('/:id', authorizeRoles('candidate'), applicationController.withdrawApplication);
 
 // Employer routes
-router.get('/job/:jobId', authorize('employer', 'admin'), applicationController.getJobApplications);
-router.patch('/:id/status', authorize('employer', 'admin'), applicationController.updateApplicationStatus);
-router.post('/:id/shortlist', authorize('employer', 'admin'), applicationController.shortlistCandidate);
+router.get('/job/:jobId', authorizeRoles('employer', 'admin'), applicationController.getJobApplications);
+router.patch('/:id/status', authorizeRoles('employer', 'admin'), applicationController.updateApplicationStatus);
+router.post('/:id/shortlist', authorizeRoles('employer', 'admin'), applicationController.shortlistCandidate);
 
 module.exports = router;

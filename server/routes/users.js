@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { protect } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 
-router.use(protect);
+router.use(authenticateToken);
 
 router.get('/profile', userController.getProfile);
 router.put('/profile', userController.updateProfile);

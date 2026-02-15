@@ -1,22 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const interviewController = require('../controllers/interviewController');
-const { protect, authorize } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-router.use(protect);
+router.use(authenticateToken);
 
 // Candidate routes
-router.post('/start', authorize('candidate'), interviewController.startInterview);
-router.post('/:id/submit-answer', authorize('candidate'), interviewController.submitAnswer);
-router.post('/:id/complete', authorize('candidate'), interviewController.completeInterview);
-router.get('/my-interviews', authorize('candidate'), interviewController.getCandidateInterviews);
+router.post('/start', authorizeRoles('candidate'), interviewController.startInterview);
+router.post('/:id/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
+router.post('/:id/complete', authorizeRoles('candidate'), interviewController.completeInterview);
+router.get('/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews);
 router.get('/:id/report', interviewController.getInterviewReport);
 
 // Employer routes
-router.get('/job/:jobId/interviews', authorize('employer', 'admin'), interviewController.getJobInterviews);
-router.post('/:id/evaluate', authorize('employer', 'admin'), interviewController.evaluateInterview);
+router.get('/job/:jobId/interviews', authorizeRoles('employer', 'admin'), interviewController.getJobInterviews);
+router.post('/:id/evaluate', authorizeRoles('employer', 'admin'), interviewController.evaluateInterview);
 
 // Admin routes
-router.get('/all', authorize('admin'), interviewController.getAllInterviews);
+router.get('/all', authorizeRoles('admin'), interviewController.getAllInterviews);
 
 module.exports = router;

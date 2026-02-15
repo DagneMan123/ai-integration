@@ -1,14 +1,26 @@
 const OpenAI = require('openai');
 const { logAI } = require('../utils/logger');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Initialize OpenAI client only if API key is provided
+let openai = null;
+
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+} else {
+  console.warn('⚠️  OPENAI_API_KEY not set. AI features will be disabled.');
+}
 
 class AIService {
   // Generate interview questions based on job requirements
   async generateInterviewQuestions(jobDetails, questionCount = 10) {
     try {
+      if (!openai) {
+        logAI('warn', 'OpenAI not configured, returning default questions');
+        return this.createDefaultQuestions('OpenAI API key not configured');
+      }
+
       logAI('info', 'Generating interview questions', { 
         jobTitle: jobDetails.title,
         questionCount,
@@ -432,6 +444,10 @@ class AIService {
   // Check if AI service is available
   async checkAvailability() {
     try {
+      if (!openai) {
+        return { available: false, reason: 'API key not configured' };
+      }
+
       if (!process.env.OPENAI_API_KEY) {
         return { available: false, reason: 'API key not configured' };
       }

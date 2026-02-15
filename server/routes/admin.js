@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { protect, authorize } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-router.use(protect, authorize('admin'));
+router.use(authenticateToken, authorizeRoles('admin'));
 
 // User management
 router.get('/users', adminController.getAllUsers);

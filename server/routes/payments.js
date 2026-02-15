@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
-const { protect, authorize } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-router.use(protect);
+router.use(authenticateToken);
 
 // Initialize payment
 router.post('/initialize', paymentController.initializePayment);
@@ -24,7 +24,7 @@ router.get('/subscription', paymentController.getSubscription);
 router.post('/subscription/cancel', paymentController.cancelSubscription);
 
 // Admin routes
-router.get('/all', authorize('admin'), paymentController.getAllPayments);
-router.post('/:id/refund', authorize('admin'), paymentController.refundPayment);
+router.get('/all', authorizeRoles('admin'), paymentController.getAllPayments);
+router.post('/:id/refund', authorizeRoles('admin'), paymentController.refundPayment);
 
 module.exports = router;
