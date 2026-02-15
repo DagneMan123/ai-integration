@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - handles all user types (candidate, employer, admin)
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  role          UserRole
+  phone         String?
+  profilePicture String? @map("profile_picture")
+  linkedinUrl   String?  @map("linkedin_url")
+  githubUrl     String?  @map("github_url")
+  bio           String?
+  isVerified    Boolean  @default(false) @map("is_verified")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  candidateProfile CandidateProfile?
+  companies        Company[]
+  jobs             Job[]
+  applications     Application[]
+  interviews       Interview[]
+  payments         Payment[]
+  activityLogs     ActivityLog[]
+
+  @@map("users")
+}
+
+// Company model
+model Company {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  industry    String?
+  size        String?
+  website     String?
+  logoUrl     String?  @map("logo_url")
+  address     String?
+  isVerified  Boolean  @default(false) @map("is_verified")
+  createdById Int      @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdBy User @relation(fields: [createdById], references: [id])
+  jobs      Job[]
+
+  @@map("companies")
+}
+
+// Job model
+model Job {
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String
+  jobType         String    @default("full-time") @map("job_type")
+  experienceLevel String?   @map("experience_level")
+  salaryMin       Decimal?  @map("salary_min") @db.Decimal(10, 2)
+  salaryMax       Decimal?  @map("salary_max") @db.Decimal(10, 2)
+  location        String?
+  requiredSkills  String[]  @map("required_skills")
+  interviewType   String    @default("technical") @map("interview_type")
+  status          JobStatus @default(ACTIVE)
+  companyId       Int       @map("company_id")
+  createdById     Int       @map("created_by_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  company      Company       @relation(fields: [companyId], references: [id])
+  createdBy    User          @relation(fields: [createdById], references: [id])
+  applications Application[]
+  interviews   Interview[]
+
+  @@map("jobs")
+}
+
+// Candidate Profile model
+model CandidateProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique @map("user_id")
+  resumeUrl       String?  @map("resume_url")
+  skills          String[]
+  experienceLevel String?  @map("experience_level")
+  education       Json?
+  workExperience  Json?    @map("work_experience")
+  certifications  Json?
+  languages       String[]
+  availability    String?
+  expectedSalary  Decimal? @map("expected_salary") @db.Decimal(10, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("candidate_profiles")
+}
+
+// Application model
+model Application {
+  id          Int               @id @default(autoincrement())
+  jobId       Int               @map("job_id")
+  candidateId Int               @map("candidate_id")
+  status      ApplicationStatus @default(PENDING)
+  coverLetter String?           @map("cover_letter")
+  resumeUrl   String?           @map("resume_url")
+  appliedAt   DateTime          @default(now()) @map("applied_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  job       Job  @relation(fields: [jobId], references: [id])
+  candidate User @relation(fields: [candidateId], references: [id])
+
+  @@unique([jobId, candidateId])
+  @@map("applications")
+}
+
+// Interview model
+model Interview {
+  id                  Int             @id @default(autoincrement())
+  jobId               Int             @map("job_id")
+  candidateId         Int             @map("candidate_id")
+  questions           Json?
+  responses           Json?
+  evaluation          Json?
+  overallScore        Int?            @map("overall_score")
+  technicalScore      Int?            @map("technical_score")
+  communicationScore  Int?            @map("communication_score")
+  problemSolvingScore Int?            @map("problem_solving_score")
+  status              InterviewStatus @default(PENDING)
+  feedback            String?
+  startedAt           DateTime?       @map("started_at")
+  completedAt         DateTime?       @map("completed_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  job       Job  @relation(fields: [jobId], references: [id])
+  candidate User @relation(fields: [candidateId], references: [id])
+
+  @@map("interviews")
+}
+
+// Payment model
+model Payment {
+  id              Int           @id @default(autoincrement())
+  userId          Int           @map("user_id")
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("ETB")
+  paymentMethod   String        @map("payment_method")
+  transactionId   String?       @unique @map("transaction_id")
+  chapaReference  String?       @unique @map("chapa_reference")
+  status          PaymentStatus @default(PENDING)
+  description     String?
+  metadata        Json?
+  paidAt          DateTime?     @map("paid_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+// Activity Log model
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  action      String
+  description String?
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
+}
+
+// Enums
+enum UserRole {
+  CANDIDATE
+  EMPLOYER
+  ADMIN
+
+  @@map("user_role")
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+  EXPIRED
+
+  @@map("job_status")
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  INTERVIEWED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+
+  @@map("application_status")
+}
+
+enum InterviewStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+
+  @@map("interview_status")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+
+  @@map("payment_status")
+}
