@@ -1,27 +1,31 @@
-const User = require('../models/User');
-const CandidateProfile = require('../models/CandidateProfile');
-const Company = require('../models/Company');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { AppError } = require('../middleware/errorHandler');
 const { uploadToCloud } = require('../utils/cloudStorage');
+const bcrypt = require('bcryptjs');
 
 // Get user profile
 exports.getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
-    
-    let profile = { user };
+    // Prisma uses findUnique and 'include' for relations
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        candidateProfile: true,
+        company: true
+      }
+    });
 
-    if (user.role === 'candidate') {
-      const candidateProfile = await CandidateProfile.findOne({ userId: user._id });
-      profile.candidateProfile = candidateProfile;
-    } else if (user.role === 'employer') {
-      const company = await Company.findOne({ userId: user._id });
-      profile.company = company;
+    if (!user) {
+      return next(new AppError('User not found', 404));
     }
+
+    // Don't send password back
+    delete user.password;
 
     res.json({
       success: true,
-      data: profile
+      data: user
     });
   } catch (error) {
     next(error);
@@ -33,26 +37,23 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const { firstName, lastName, phone, ...otherFields } = req.body;
 
-    // Update user
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { firstName, lastName, phone },
-      { new: true, runValidators: true }
-    );
+    // 1. Update basic user info
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { firstName, lastName, phone }
+    });
 
-    // Update role-specific profile
+    // 2. Update role-specific profile
     if (user.role === 'candidate') {
-      await CandidateProfile.findOneAndUpdate(
-        { userId: user._id },
-        otherFields,
-        { new: true, runValidators: true }
-      );
+      await prisma.candidateProfile.update({
+        where: { userId: user.id },
+        data: otherFields
+      });
     } else if (user.role === 'employer') {
-      await Company.findOneAndUpdate(
-        { userId: user._id },
-        otherFields,
-        { new: true, runValidators: true }
-      );
+      await prisma.company.update({
+        where: { userId: user.id },
+        data: otherFields
+      });
     }
 
     res.json({
@@ -70,17 +71,22 @@ exports.updatePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.id).select('+password');
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
 
     // Verify current password
-    const isValid = await user.comparePassword(currentPassword);
+    const isValid = await bcrypt.compare(currentPassword, user.password);
     if (!isValid) {
       return next(new AppError('Current password is incorrect', 401));
     }
 
-    // Update password
-    user.password = newPassword;
-    await user.save();
+    // Hash new password and save
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword }
+    });
 
     res.json({
       success: true,
@@ -102,11 +108,10 @@ exports.uploadAvatar = async (req, res, next) => {
     const avatarUrl = await uploadToCloud(req.file, 'avatars');
 
     // Update user
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { avatar: avatarUrl },
-      { new: true }
-    );
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatar: avatarUrl }
+    });
 
     res.json({
       success: true,
@@ -118,15 +123,16 @@ exports.uploadAvatar = async (req, res, next) => {
   }
 };
 
-// Delete account
+// Delete account (Soft delete)
 exports.deleteAccount = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
-
-    // Soft delete
-    user.isActive = false;
-    user.deletedAt = new Date();
-    await user.save();
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        isActive: false,
+        deletedAt: new Date()
+      }
+    });
 
     res.json({
       success: true,

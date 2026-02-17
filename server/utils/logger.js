@@ -1,5 +1,6 @@
 const winston = require('winston');
-const { ActivityLog } = require('../models');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Configure Winston logger
 const logger = winston.createLogger({
@@ -26,21 +27,24 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-// Log activity to database
+// Log activity to database using Prisma
 const logActivity = async (userId, action, resourceType, resourceId, details = {}, ipAddress = null, userAgent = null, severity = 'info') => {
   try {
-    await ActivityLog.create({
-      user_id: userId,
-      action,
-      resource_type: resourceType,
-      resource_id: resourceId,
-      details,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      severity
+    // Prisma uses 'data' object and camelCase is standard for Prisma models
+    await prisma.activityLog.create({
+      data: {
+        userId: userId ? String(userId) : null,
+        action,
+        resourceType: resourceType || null,
+        resourceId: resourceId ? String(resourceId) : null,
+        details: details || {},
+        ipAddress,
+        userAgent,
+        severity
+      }
     });
   } catch (error) {
-    logger.error('Failed to log activity:', error);
+    logger.error('Failed to log activity to DB:', error);
   }
 };
 

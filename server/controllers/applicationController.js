@@ -1,6 +1,5 @@
-const Application = require('../models/Application');
-const Job = require('../models/Job');
-const CandidateProfile = require('../models/CandidateProfile');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { AppError } = require('../middleware/errorHandler');
 const { sendEmail } = require('../utils/email');
 const { logger } = require('../utils/logger');
@@ -11,15 +10,20 @@ exports.createApplication = async (req, res, next) => {
     const { jobId, coverLetter } = req.body;
 
     // Check if job exists
-    const job = await Job.findById(jobId);
+    const job = await prisma.job.findUnique({
+      where: { id: jobId }
+    });
+
     if (!job || job.status !== 'active') {
       return next(new AppError('Job not available', 404));
     }
 
     // Check if already applied
-    const existingApplication = await Application.findOne({
-      jobId,
-      candidateId: req.user.id
+    const existingApplication = await prisma.application.findFirst({
+      where: {
+        jobId,
+        candidateId: req.user.id
+      }
     });
 
     if (existingApplication) {
@@ -27,15 +31,19 @@ exports.createApplication = async (req, res, next) => {
     }
 
     // Get candidate profile
-    const profile = await CandidateProfile.findOne({ userId: req.user.id });
+    const profile = await prisma.candidateProfile.findUnique({
+      where: { userId: req.user.id }
+    });
 
     // Create application
-    const application = await Application.create({
-      jobId,
-      candidateId: req.user.id,
-      coverLetter,
-      resume: profile?.resume,
-      status: 'pending'
+    const application = await prisma.application.create({
+      data: {
+        jobId,
+        candidateId: req.user.id,
+        coverLetter,
+        resume: profile?.resume || null,
+        status: 'pending'
+      }
     });
 
     // Send confirmation email
@@ -44,12 +52,12 @@ exports.createApplication = async (req, res, next) => {
       subject: 'Application Submitted - SimuAI',
       html: `
         <h1>Application Submitted Successfully</h1>
-        <p>Your application for ${job.title} has been submitted.</p>
+        <p>Your application for <strong>${job.title}</strong> has been submitted.</p>
         <p>You will be notified once the employer reviews your application.</p>
       `
     });
 
-    logger.info(`Application created: ${application._id} for job ${jobId}`);
+    logger.info(`Application created: ${application.id} for job ${jobId}`);
 
     res.status(201).json({
       success: true,
@@ -64,10 +72,19 @@ exports.createApplication = async (req, res, next) => {
 // Get candidate applications
 exports.getCandidateApplications = async (req, res, next) => {
   try {
-    const applications = await Application.find({ candidateId: req.user.id })
-      .populate('jobId', 'title company location status')
-      .sort('-createdAt')
-      .lean();
+    const applications = await prisma.application.findMany({
+      where: { candidateId: req.user.id },
+      include: {
+        job: {
+          select: {
+            title: true,
+            status: true,
+            company: { select: { name: true, logo: true } }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     res.json({
       success: true,
@@ -81,20 +98,26 @@ exports.getCandidateApplications = async (req, res, next) => {
 // Get single application
 exports.getApplication = async (req, res, next) => {
   try {
-    const application = await Application.findById(req.params.id)
-      .populate('jobId')
-      .populate('candidateId', 'firstName lastName email');
+    const application = await prisma.application.findUnique({
+      where: { id: req.params.id },
+      include: {
+        job: true,
+        candidate: {
+          select: { firstName: true, lastName: true, email: true }
+        }
+      }
+    });
 
     if (!application) {
       return next(new AppError('Application not found', 404));
     }
 
     // Check authorization
-    if (
-      application.candidateId._id.toString() !== req.user.id &&
-      req.user.role !== 'employer' &&
-      req.user.role !== 'admin'
-    ) {
+    const isOwner = application.candidateId === req.user.id;
+    const isEmployer = application.job.createdBy === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isEmployer && !isAdmin) {
       return next(new AppError('Not authorized', 403));
     }
 
@@ -110,22 +133,26 @@ exports.getApplication = async (req, res, next) => {
 // Withdraw application
 exports.withdrawApplication = async (req, res, next) => {
   try {
-    const application = await Application.findById(req.params.id);
+    const application = await prisma.application.findUnique({
+      where: { id: req.params.id }
+    });
 
     if (!application) {
       return next(new AppError('Application not found', 404));
     }
 
-    if (application.candidateId.toString() !== req.user.id) {
+    if (application.candidateId !== req.user.id) {
       return next(new AppError('Not authorized', 403));
     }
 
-    if (application.status === 'accepted' || application.status === 'rejected') {
+    if (['accepted', 'rejected'].includes(application.status)) {
       return next(new AppError('Cannot withdraw application at this stage', 400));
     }
 
-    application.status = 'withdrawn';
-    await application.save();
+    await prisma.application.update({
+      where: { id: req.params.id },
+      data: { status: 'withdrawn' }
+    });
 
     res.json({
       success: true,
@@ -140,25 +167,41 @@ exports.withdrawApplication = async (req, res, next) => {
 exports.getJobApplications = async (req, res, next) => {
   try {
     const { jobId } = req.params;
-    const { status, sort = '-createdAt' } = req.query;
+    const { status, sort = 'createdAt' } = req.query;
 
-    const job = await Job.findById(jobId);
+    const job = await prisma.job.findUnique({
+      where: { id: jobId }
+    });
+
     if (!job) {
       return next(new AppError('Job not found', 404));
     }
 
     // Check ownership
-    if (job.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdBy !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized', 403));
     }
 
-    const query = { jobId };
-    if (status) query.status = status;
+    const where = { jobId };
+    if (status) where.status = status;
 
-    const applications = await Application.find(query)
-      .populate('candidateId', 'firstName lastName email avatar')
-      .sort(sort)
-      .lean();
+    // Build sorting
+    const orderBy = {};
+    if (sort.startsWith('-')) {
+      orderBy[sort.substring(1)] = 'desc';
+    } else {
+      orderBy[sort] = 'asc';
+    }
+
+    const applications = await prisma.application.findMany({
+      where,
+      include: {
+        candidate: {
+          select: { firstName: true, lastName: true, email: true, avatar: true }
+        }
+      },
+      orderBy: Object.keys(orderBy).length ? orderBy : { createdAt: 'desc' }
+    });
 
     res.json({
       success: true,
@@ -173,29 +216,37 @@ exports.getJobApplications = async (req, res, next) => {
 exports.updateApplicationStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
-    const application = await Application.findById(req.params.id).populate('jobId');
+    const application = await prisma.application.findUnique({
+      where: { id: req.params.id },
+      include: { job: true }
+    });
 
     if (!application) {
       return next(new AppError('Application not found', 404));
     }
 
     // Check authorization
-    if (application.jobId.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (application.job.createdBy !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized', 403));
     }
 
-    application.status = status;
-    await application.save();
+    const updatedApplication = await prisma.application.update({
+      where: { id: req.params.id },
+      data: { status }
+    });
 
     // Send notification email
-    const candidate = await User.findById(application.candidateId);
+    const candidate = await prisma.user.findUnique({
+      where: { id: application.candidateId }
+    });
+
     if (candidate) {
       await sendEmail({
         to: candidate.email,
         subject: `Application Status Update - SimuAI`,
         html: `
           <h1>Application Status Updated</h1>
-          <p>Your application for ${application.jobId.title} has been ${status}.</p>
+          <p>Your application for <strong>${application.job.title}</strong> has been ${status}.</p>
         `
       });
     }
@@ -203,7 +254,7 @@ exports.updateApplicationStatus = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Application status updated',
-      data: application
+      data: updatedApplication
     });
   } catch (error) {
     next(error);
@@ -213,25 +264,32 @@ exports.updateApplicationStatus = async (req, res, next) => {
 // Shortlist candidate
 exports.shortlistCandidate = async (req, res, next) => {
   try {
-    const application = await Application.findById(req.params.id).populate('jobId');
+    const application = await prisma.application.findUnique({
+      where: { id: req.params.id },
+      include: { job: true }
+    });
 
     if (!application) {
       return next(new AppError('Application not found', 404));
     }
 
     // Check authorization
-    if (application.jobId.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (application.job.createdBy !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized', 403));
     }
 
-    application.isShortlisted = true;
-    application.shortlistedAt = new Date();
-    await application.save();
+    const updatedApplication = await prisma.application.update({
+      where: { id: req.params.id },
+      data: {
+        isShortlisted: true,
+        shortlistedAt: new Date()
+      }
+    });
 
     res.json({
       success: true,
       message: 'Candidate shortlisted successfully',
-      data: application
+      data: updatedApplication
     });
   } catch (error) {
     next(error);

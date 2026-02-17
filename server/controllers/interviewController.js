@@ -1,6 +1,5 @@
-const Interview = require('../models/Interview');
-const Job = require('../models/Job');
-const Application = require('../models/Application');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { generateInterviewQuestions, evaluateAnswer, generateReport } = require('../services/aiService');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
@@ -11,52 +10,64 @@ exports.startInterview = async (req, res, next) => {
     const { jobId, applicationId } = req.body;
 
     // Verify job exists
-    const job = await Job.findById(jobId);
+    const job = await prisma.job.findUnique({
+      where: { id: jobId }
+    });
     if (!job) {
       return next(new AppError('Job not found', 404));
     }
 
-    // Check if application exists
-    const application = await Application.findById(applicationId);
-    if (!application || application.candidateId.toString() !== req.user.id) {
+    // Check if application exists and belongs to the candidate
+    const application = await prisma.application.findUnique({
+      where: { id: applicationId }
+    });
+
+    if (!application || application.candidateId !== req.user.id) {
       return next(new AppError('Application not found', 404));
     }
 
     // Check if interview already exists
-    const existingInterview = await Interview.findOne({
-      applicationId,
-      status: { $in: ['in_progress', 'completed'] }
+    const existingInterview = await prisma.interview.findFirst({
+      where: {
+        applicationId,
+        status: { in: ['in_progress', 'completed'] }
+      }
     });
 
     if (existingInterview) {
       return next(new AppError('Interview already exists for this application', 400));
     }
 
-    // Generate AI questions
+    // Generate AI questions (External Service)
     const questions = await generateInterviewQuestions(job);
 
     // Create interview
-    const interview = await Interview.create({
-      jobId,
-      candidateId: req.user.id,
-      applicationId,
-      questions,
-      status: 'in_progress',
-      startedAt: new Date(),
-      timeLimit: job.interviewConfig?.timeLimit || 60,
-      currentQuestionIndex: 0
+    const interview = await prisma.interview.create({
+      data: {
+        jobId,
+        candidateId: req.user.id,
+        applicationId,
+        questions: questions, // Assuming this is a JSON field
+        status: 'in_progress',
+        startedAt: new Date(),
+        timeLimit: job.interviewConfig?.timeLimit || 60,
+        currentQuestionIndex: 0,
+        antiCheatData: { tabSwitches: 0, suspiciousActivities: [] } // Initial JSON
+      }
     });
 
     // Update application status
-    application.status = 'interviewing';
-    await application.save();
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: { status: 'interviewing' }
+    });
 
-    logger.info(`Interview started: ${interview._id} for job ${jobId}`);
+    logger.info(`Interview started: ${interview.id} for job ${jobId}`);
 
     res.status(201).json({
       success: true,
       data: {
-        interviewId: interview._id,
+        interviewId: interview.id,
         questions: interview.questions,
         timeLimit: interview.timeLimit,
         currentQuestion: interview.questions[0]
@@ -71,15 +82,17 @@ exports.startInterview = async (req, res, next) => {
 exports.submitAnswer = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { questionIndex, answer, timeTaken } = req.body;
+    const { questionIndex, answer, timeTaken, tabSwitches, suspiciousActivity } = req.body;
 
-    const interview = await Interview.findById(id);
+    const interview = await prisma.interview.findUnique({
+      where: { id }
+    });
 
     if (!interview) {
       return next(new AppError('Interview not found', 404));
     }
 
-    if (interview.candidateId.toString() !== req.user.id) {
+    if (interview.candidateId !== req.user.id) {
       return next(new AppError('Not authorized', 403));
     }
 
@@ -87,13 +100,11 @@ exports.submitAnswer = async (req, res, next) => {
       return next(new AppError('Interview is not in progress', 400));
     }
 
-    // Check for cheating behavior
-    const { tabSwitches, suspiciousActivity } = req.body;
-    if (tabSwitches) {
-      interview.antiCheatData.tabSwitches += tabSwitches;
-    }
+    // Handle Anticheat Data (Prisma JSON update)
+    let updatedAntiCheat = interview.antiCheatData || { tabSwitches: 0, suspiciousActivities: [] };
+    if (tabSwitches) updatedAntiCheat.tabSwitches += tabSwitches;
     if (suspiciousActivity) {
-      interview.antiCheatData.suspiciousActivities.push({
+      updatedAntiCheat.suspiciousActivities.push({
         type: suspiciousActivity.type,
         timestamp: new Date(),
         details: suspiciousActivity.details
@@ -101,11 +112,13 @@ exports.submitAnswer = async (req, res, next) => {
     }
 
     // Evaluate answer using AI
-    const question = interview.questions[questionIndex];
+    const questions = interview.questions;
+    const question = questions[questionIndex];
     const evaluation = await evaluateAnswer(question, answer);
 
-    // Store response
-    interview.responses.push({
+    // Prepare responses array
+    const responses = interview.responses || [];
+    responses.push({
       questionIndex,
       question: question.text,
       answer,
@@ -114,17 +127,22 @@ exports.submitAnswer = async (req, res, next) => {
       feedback: evaluation.feedback
     });
 
-    // Move to next question
-    interview.currentQuestionIndex = questionIndex + 1;
-
-    await interview.save();
+    // Update interview record
+    const updatedInterview = await prisma.interview.update({
+      where: { id },
+      data: {
+        responses,
+        currentQuestionIndex: questionIndex + 1,
+        antiCheatData: updatedAntiCheat
+      }
+    });
 
     res.json({
       success: true,
       message: 'Answer submitted successfully',
       data: {
-        nextQuestion: interview.questions[interview.currentQuestionIndex],
-        isLastQuestion: interview.currentQuestionIndex >= interview.questions.length
+        nextQuestion: updatedInterview.questions[updatedInterview.currentQuestionIndex],
+        isLastQuestion: updatedInterview.currentQuestionIndex >= updatedInterview.questions.length
       }
     });
   } catch (error) {
@@ -137,44 +155,47 @@ exports.completeInterview = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const interview = await Interview.findById(id).populate('jobId');
+    const interview = await prisma.interview.findUnique({
+      where: { id },
+      include: { job: true }
+    });
 
     if (!interview) {
       return next(new AppError('Interview not found', 404));
     }
 
-    if (interview.candidateId.toString() !== req.user.id) {
+    if (interview.candidateId !== req.user.id) {
       return next(new AppError('Not authorized', 403));
     }
 
-    if (interview.status !== 'in_progress') {
-      return next(new AppError('Interview is not in progress', 400));
-    }
-
-    // Generate AI evaluation report
+    // AI report generation
     const report = await generateReport(interview);
 
-    // Update interview
-    interview.status = 'completed';
-    interview.completedAt = new Date();
-    interview.aiEvaluation = report;
-    await interview.save();
+    // Update Interview and Application in a transaction
+    await prisma.$transaction([
+      prisma.interview.update({
+        where: { id },
+        data: {
+          status: 'completed',
+          completedAt: new Date(),
+          aiEvaluation: report
+        }
+      }),
+      prisma.application.update({
+        where: { id: interview.applicationId },
+        data: {
+          status: 'interviewed',
+          interviewScore: report.overallScore
+        }
+      })
+    ]);
 
-    // Update application
-    const application = await Application.findById(interview.applicationId);
-    if (application) {
-      application.status = 'interviewed';
-      application.interviewScore = report.overallScore;
-      await application.save();
-    }
-
-    logger.info(`Interview completed: ${interview._id}`);
+    logger.info(`Interview completed: ${id}`);
 
     res.json({
       success: true,
-      message: 'Interview completed successfully',
       data: {
-        interviewId: interview._id,
+        interviewId: id,
         score: report.overallScore,
         reportAvailable: true
       }
@@ -187,15 +208,15 @@ exports.completeInterview = async (req, res, next) => {
 // Get candidate interviews
 exports.getCandidateInterviews = async (req, res, next) => {
   try {
-    const interviews = await Interview.find({ candidateId: req.user.id })
-      .populate('jobId', 'title company')
-      .sort('-createdAt')
-      .lean();
-
-    res.json({
-      success: true,
-      data: interviews
+    const interviews = await prisma.interview.findMany({
+      where: { candidateId: req.user.id },
+      include: {
+        job: { select: { title: true, company: { select: { name: true } } } }
+      },
+      orderBy: { createdAt: 'desc' }
     });
+
+    res.json({ success: true, data: interviews });
   } catch (error) {
     next(error);
   }
@@ -204,20 +225,22 @@ exports.getCandidateInterviews = async (req, res, next) => {
 // Get interview report
 exports.getInterviewReport = async (req, res, next) => {
   try {
-    const interview = await Interview.findById(req.params.id)
-      .populate('jobId', 'title')
-      .populate('candidateId', 'firstName lastName email');
+    const interview = await prisma.interview.findUnique({
+      where: { id: req.params.id },
+      include: {
+        job: { select: { title: true, createdBy: true } },
+        candidate: { select: { firstName: true, lastName: true, email: true } }
+      }
+    });
 
-    if (!interview) {
-      return next(new AppError('Interview not found', 404));
-    }
+    if (!interview) return next(new AppError('Interview not found', 404));
 
-    // Check authorization
-    if (
-      interview.candidateId._id.toString() !== req.user.id &&
-      req.user.role !== 'employer' &&
-      req.user.role !== 'admin'
-    ) {
+    // Authorization check
+    const isOwner = interview.candidateId === req.user.id;
+    const isEmployer = interview.job.createdBy === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isEmployer && !isAdmin) {
       return next(new AppError('Not authorized', 403));
     }
 
@@ -238,71 +261,65 @@ exports.getJobInterviews = async (req, res, next) => {
   try {
     const { jobId } = req.params;
 
-    const job = await Job.findById(jobId);
-    if (!job) {
-      return next(new AppError('Job not found', 404));
-    }
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) return next(new AppError('Job not found', 404));
 
-    // Check ownership
-    if (job.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdBy !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized', 403));
     }
 
-    const interviews = await Interview.find({ jobId })
-      .populate('candidateId', 'firstName lastName email')
-      .sort('-createdAt')
-      .lean();
-
-    res.json({
-      success: true,
-      data: interviews
+    const interviews = await prisma.interview.findMany({
+      where: { jobId },
+      include: {
+        candidate: { select: { firstName: true, lastName: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
     });
+
+    res.json({ success: true, data: interviews });
   } catch (error) {
     next(error);
   }
 };
 
-// Evaluate interview (employer)
+// Evaluate interview (employer manual evaluation)
 exports.evaluateInterview = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { employerNotes, employerRating, decision } = req.body;
 
-    const interview = await Interview.findById(id).populate('jobId');
+    const interview = await prisma.interview.findUnique({
+      where: { id },
+      include: { job: true }
+    });
 
-    if (!interview) {
-      return next(new AppError('Interview not found', 404));
-    }
+    if (!interview) return next(new AppError('Interview not found', 404));
 
-    // Check authorization
-    if (interview.jobId.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (interview.job.createdBy !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized', 403));
     }
 
-    interview.employerEvaluation = {
-      notes: employerNotes,
-      rating: employerRating,
-      decision,
-      evaluatedBy: req.user.id,
-      evaluatedAt: new Date()
-    };
-
-    await interview.save();
-
-    // Update application
-    if (decision) {
-      const application = await Application.findById(interview.applicationId);
-      if (application) {
-        application.status = decision === 'accept' ? 'accepted' : 'rejected';
-        await application.save();
+    const updatedInterview = await prisma.interview.update({
+      where: { id },
+      data: {
+        employerEvaluation: {
+          notes: employerNotes,
+          rating: employerRating,
+          decision,
+          evaluatedBy: req.user.id,
+          evaluatedAt: new Date()
+        }
       }
+    });
+
+    if (decision) {
+      await prisma.application.update({
+        where: { id: interview.applicationId },
+        data: { status: decision === 'accept' ? 'accepted' : 'rejected' }
+      });
     }
 
-    res.json({
-      success: true,
-      message: 'Interview evaluated successfully',
-      data: interview
-    });
+    res.json({ success: true, data: updatedInterview });
   } catch (error) {
     next(error);
   }
@@ -312,16 +329,20 @@ exports.evaluateInterview = async (req, res, next) => {
 exports.getAllInterviews = async (req, res, next) => {
   try {
     const { page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const interviews = await Interview.find()
-      .populate('candidateId', 'firstName lastName email')
-      .populate('jobId', 'title')
-      .sort('-createdAt')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
-
-    const count = await Interview.countDocuments();
+    const [interviews, count] = await prisma.$transaction([
+      prisma.interview.findMany({
+        include: {
+          candidate: { select: { firstName: true, lastName: true, email: true } },
+          job: { select: { title: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: skip,
+        take: parseInt(limit)
+      }),
+      prisma.interview.count()
+    ]);
 
     res.json({
       success: true,

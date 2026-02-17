@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { logActivity } = require('../utils/logger');
 
 const authenticateToken = async (req, res, next) => {
@@ -15,8 +16,17 @@ const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.userId, {
-      attributes: { exclude: ['password'] }
+    
+    // Prisma query (findByPk በ findUnique ተተክቷል)
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id || decoded.userId }, // JWT payloadህ ላይ ባለው ስም መሰረት
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true, // ወደ camelCase ተቀይሯል
+        isLocked: true
+      }
     });
 
     if (!user) {
@@ -26,17 +36,19 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    if (!user.is_active) {
+    // is_active የነበረው በ Prisma isActive ተብሏል
+    if (user.isActive === false) {
       return res.status(401).json({
         success: false,
         message: 'Account is deactivated'
       });
     }
 
-    if (user.isLocked()) {
+    // isLocked() ፈንክሽን የነበረው አሁን ቀጥታ ዳታቤዝ ውስጥ ያለ boolean ነው
+    if (user.isLocked) {
       return res.status(423).json({
         success: false,
-        message: 'Account is temporarily locked due to multiple failed login attempts'
+        message: 'Account is temporarily locked'
       });
     }
 
@@ -75,11 +87,21 @@ const authorizeRoles = (...roles) => {
     }
 
     if (!roles.includes(req.user.role)) {
-      logActivity(req.user.id, 'unauthorized_access', 'role_check', null, {
-        required_roles: roles,
-        user_role: req.user.role,
-        endpoint: req.originalUrl
-      }, req.ip, req.get('User-Agent'), 'warning');
+      // Log unauthorized access
+      logActivity(
+        req.user.id, 
+        'unauthorized_access', 
+        'role_check', 
+        null, 
+        {
+          required_roles: roles,
+          user_role: req.user.role,
+          endpoint: req.originalUrl
+        }, 
+        req.ip, 
+        req.get('User-Agent'), 
+        'warn'
+      );
 
       return res.status(403).json({
         success: false,
@@ -98,18 +120,17 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findByPk(decoded.userId, {
-        attributes: { exclude: ['password'] }
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id || decoded.userId }
       });
 
-      if (user && user.is_active && !user.isLocked()) {
+      if (user && user.isActive && !user.isLocked) {
         req.user = user;
       }
     }
 
     next();
   } catch (error) {
-    // Continue without authentication for optional auth
     next();
   }
 };

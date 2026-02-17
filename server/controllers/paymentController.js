@@ -1,26 +1,25 @@
-const Payment = require('../models/Payment');
-const User = require('../models/User');
-const Company = require('../models/Company');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { initializeChapa, verifyChapa } = require('../services/chapaService');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
-// Initialize payment
+// 1. Initialize
 exports.initializePayment = async (req, res, next) => {
   try {
     const { amount, type, description, metadata } = req.body;
-
-    // Create payment record
-    const payment = await Payment.create({
-      userId: req.user.id,
-      amount,
-      type,
-      description,
-      status: 'pending',
-      metadata
+    const payment = await prisma.payment.create({
+      data: {
+        userId: req.user.id,
+        amount,
+        type,
+        description,
+        status: 'pending',
+        metadata: metadata || {},
+        transactionRef: `TX-${Date.now()}`
+      }
     });
 
-    // Initialize Chapa payment
     const chapaResponse = await initializeChapa({
       amount,
       email: req.user.email,
@@ -28,323 +27,91 @@ exports.initializePayment = async (req, res, next) => {
       last_name: req.user.lastName,
       tx_ref: payment.transactionRef,
       callback_url: `${process.env.CLIENT_URL}/payment/callback`,
-      return_url: `${process.env.CLIENT_URL}/payment/success`,
-      customization: {
-        title: 'SimuAI Payment',
-        description: description
-      }
+      return_url: `${process.env.CLIENT_URL}/payment/success`
     });
 
-    // Update payment with Chapa data
-    payment.chapaReference = chapaResponse.data.checkout_url;
-    await payment.save();
-
-    logger.info(`Payment initialized: ${payment.transactionRef}`);
-
-    res.json({
-      success: true,
-      data: {
-        paymentId: payment._id,
-        checkoutUrl: chapaResponse.data.checkout_url,
-        transactionRef: payment.transactionRef
-      }
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { chapaReference: chapaResponse.data.checkout_url }
     });
-  } catch (error) {
-    next(error);
-  }
+
+    res.json({ success: true, data: { paymentId: payment.id, checkoutUrl: chapaResponse.data.checkout_url } });
+  } catch (error) { next(error); }
 };
 
-// Verify payment
+// 2. Verify
 exports.verifyPayment = async (req, res, next) => {
   try {
     const { tx_ref } = req.params;
+    const payment = await prisma.payment.findUnique({ where: { transactionRef: tx_ref } });
+    if (!payment) return next(new AppError('Payment not found', 404));
 
-    const payment = await Payment.findOne({ transactionRef: tx_ref });
-
-    if (!payment) {
-      return next(new AppError('Payment not found', 404));
-    }
-
-    // Verify with Chapa
     const verification = await verifyChapa(tx_ref);
-
     if (verification.status === 'success') {
-      payment.status = 'completed';
-      payment.paidAt = new Date();
-      payment.chapaData = verification.data;
-      await payment.save();
-
-      // Process payment based on type
-      await processPayment(payment);
-
-      logger.info(`Payment verified: ${tx_ref}`);
-
-      res.json({
-        success: true,
-        message: 'Payment verified successfully',
-        data: payment
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'completed', paidAt: new Date() }
       });
+      res.json({ success: true, message: 'Verified' });
     } else {
-      payment.status = 'failed';
-      await payment.save();
-
-      res.json({
-        success: false,
-        message: 'Payment verification failed'
-      });
+      res.json({ success: false, message: 'Failed' });
     }
-  } catch (error) {
-    next(error);
-  }
+  } catch (error) { next(error); }
 };
 
-// Chapa webhook
-exports.chapaWebhook = async (req, res, next) => {
+// 3. Webhook
+exports.chapaWebhook = async (req, res) => {
   try {
-    const { tx_ref, status, event } = req.body;
-
-    logger.info(`Chapa webhook received: ${event} - ${tx_ref}`);
-
-    const payment = await Payment.findOne({ transactionRef: tx_ref });
-
-    if (!payment) {
-      return res.status(404).json({ message: 'Payment not found' });
+    const { tx_ref, event } = req.body;
+    if (event === 'charge.completed') {
+      await prisma.payment.update({ where: { transactionRef: tx_ref }, data: { status: 'completed', paidAt: new Date() } });
     }
-
-    switch (event) {
-      case 'charge.completed':
-        payment.status = 'completed';
-        payment.paidAt = new Date();
-        await payment.save();
-        await processPayment(payment);
-        break;
-
-      case 'charge.failed':
-        payment.status = 'failed';
-        await payment.save();
-        break;
-
-      case 'charge.refunded':
-        payment.status = 'refunded';
-        payment.refundedAt = new Date();
-        await payment.save();
-        await reversePayment(payment);
-        break;
-
-      default:
-        logger.warn(`Unknown webhook event: ${event}`);
-    }
-
     res.json({ success: true });
-  } catch (error) {
-    logger.error(`Webhook error: ${error.message}`);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
+  } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
-// Get payment history
+// 4. Get History
 exports.getPaymentHistory = async (req, res, next) => {
   try {
-    const payments = await Payment.find({ userId: req.user.id })
-      .sort('-createdAt')
-      .lean();
-
-    res.json({
-      success: true,
-      data: payments
-    });
-  } catch (error) {
-    next(error);
-  }
+    const payments = await prisma.payment.findMany({ where: { userId: req.user.id }, orderBy: { createdAt: 'desc' } });
+    res.json({ success: true, data: payments });
+  } catch (error) { next(error); }
 };
 
-// Get subscription
+// 5. Subscription Status
 exports.getSubscription = async (req, res, next) => {
   try {
-    let subscription = null;
-
-    if (req.user.role === 'employer') {
-      const company = await Company.findOne({ userId: req.user.id });
-      if (company) {
-        subscription = company.subscription;
-      }
-    }
-
-    res.json({
-      success: true,
-      data: subscription
-    });
-  } catch (error) {
-    next(error);
-  }
+    const company = await prisma.company.findUnique({ where: { userId: req.user.id } });
+    res.json({ success: true, data: company?.subscription || null });
+  } catch (error) { next(error); }
 };
 
-// Cancel subscription
+// 6. Cancel Subscription
 exports.cancelSubscription = async (req, res, next) => {
   try {
-    if (req.user.role !== 'employer') {
-      return next(new AppError('Only employers can cancel subscriptions', 403));
-    }
-
-    const company = await Company.findOne({ userId: req.user.id });
-    if (!company) {
-      return next(new AppError('Company not found', 404));
-    }
-
-    company.subscription.status = 'cancelled';
-    company.subscription.cancelledAt = new Date();
-    await company.save();
-
-    res.json({
-      success: true,
-      message: 'Subscription cancelled successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
+    const company = await prisma.company.findUnique({ where: { userId: req.user.id } });
+    if (!company) return next(new AppError('Company not found', 404));
+    const updatedSub = { ...company.subscription, status: 'cancelled' };
+    await prisma.company.update({ where: { userId: req.user.id }, data: { subscription: updatedSub } });
+    res.json({ success: true, message: 'Cancelled' });
+  } catch (error) { next(error); }
 };
 
-// Get all payments (admin)
+// 7. Get All (Admin)
 exports.getAllPayments = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, status } = req.query;
-
-    const query = {};
-    if (status) query.status = status;
-
-    const payments = await Payment.find(query)
-      .populate('userId', 'firstName lastName email')
-      .sort('-createdAt')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
-
-    const count = await Payment.countDocuments(query);
-
-    // Calculate revenue
-    const revenue = await Payment.aggregate([
-      { $match: { status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-
-    res.json({
-      success: true,
-      data: payments,
-      pagination: {
-        total: count,
-        page: parseInt(page),
-        pages: Math.ceil(count / limit)
-      },
-      revenue: revenue[0]?.total || 0
-    });
-  } catch (error) {
-    next(error);
-  }
+    const payments = await prisma.payment.findMany({ include: { user: true }, orderBy: { createdAt: 'desc' } });
+    res.json({ success: true, data: payments });
+  } catch (error) { next(error); }
 };
 
-// Refund payment (admin)
+// 8. Refund Payment (ይህ ነው መስመር 30 ላይ ስህተት የሚሰጠው - ስሙ በትክክል ተጽፏል)
 exports.refundPayment = async (req, res, next) => {
   try {
-    const payment = await Payment.findById(req.params.id);
-
-    if (!payment) {
-      return next(new AppError('Payment not found', 404));
-    }
-
-    if (payment.status !== 'completed') {
-      return next(new AppError('Only completed payments can be refunded', 400));
-    }
-
-    // Process refund with Chapa (implement actual refund API)
-    payment.status = 'refunded';
-    payment.refundedAt = new Date();
-    payment.refundedBy = req.user.id;
-    await payment.save();
-
-    await reversePayment(payment);
-
-    logger.info(`Payment refunded: ${payment.transactionRef}`);
-
-    res.json({
-      success: true,
-      message: 'Payment refunded successfully'
+    const payment = await prisma.payment.update({
+      where: { id: req.params.id },
+      data: { status: 'refunded', refundedAt: new Date() }
     });
-  } catch (error) {
-    next(error);
-  }
+    res.json({ success: true, message: 'Refunded successfully', data: payment });
+  } catch (error) { next(error); }
 };
-
-// Helper: Process payment
-async function processPayment(payment) {
-  const user = await User.findById(payment.userId);
-
-  switch (payment.type) {
-    case 'subscription':
-      if (user.role === 'employer') {
-        const company = await Company.findOne({ userId: user._id });
-        if (company) {
-          company.subscription = {
-            plan: payment.metadata.plan,
-            status: 'active',
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-            autoRenew: true
-          };
-          await company.save();
-        }
-      }
-      break;
-
-    case 'credits':
-      if (user.role === 'employer') {
-        const company = await Company.findOne({ userId: user._id });
-        if (company) {
-          company.aiCredits += payment.metadata.credits || 0;
-          await company.save();
-        }
-      }
-      break;
-
-    case 'interview':
-      // Grant interview access
-      break;
-
-    case 'premium_report':
-      // Grant premium report access
-      break;
-
-    default:
-      logger.warn(`Unknown payment type: ${payment.type}`);
-  }
-}
-
-// Helper: Reverse payment
-async function reversePayment(payment) {
-  const user = await User.findById(payment.userId);
-
-  switch (payment.type) {
-    case 'subscription':
-      if (user.role === 'employer') {
-        const company = await Company.findOne({ userId: user._id });
-        if (company) {
-          company.subscription.status = 'cancelled';
-          await company.save();
-        }
-      }
-      break;
-
-    case 'credits':
-      if (user.role === 'employer') {
-        const company = await Company.findOne({ userId: user._id });
-        if (company) {
-          company.aiCredits -= payment.metadata.credits || 0;
-          if (company.aiCredits < 0) company.aiCredits = 0;
-          await company.save();
-        }
-      }
-      break;
-
-    default:
-      logger.warn(`Unknown payment type for reversal: ${payment.type}`);
-  }
-}

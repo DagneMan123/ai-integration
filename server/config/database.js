@@ -1,36 +1,21 @@
-const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const sequelize = new Sequelize({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'simuai_db',
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD,
-  dialect: 'postgres',
-  logging: process.env.NODE_ENV === 'development' ? console.log : false,
-  pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
-  },
-  define: {
-    timestamps: true,
-    underscored: true,
-    freezeTableName: true
-  }
+const { PrismaClient } = require('@prisma/client');
+
+
+const prisma = new PrismaClient({
+  log: ['error', 'warn'],
 });
 
 // Test database connection
 const testConnection = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ Database connection established successfully.');
+    await prisma.$connect();
+    console.log('✅ Database connection established successfully via Prisma.');
   } catch (error) {
     console.error('❌ Unable to connect to the database:', error.message);
     process.exit(1);
   }
 };
 
-module.exports = { sequelize, testConnection };
+module.exports = { prisma, testConnection };

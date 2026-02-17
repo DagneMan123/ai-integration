@@ -1,31 +1,49 @@
-const Company = require('../models/Company');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const { AppError } = require('../middleware/errorHandler');
 const { uploadToCloud } = require('../utils/cloudStorage');
 
-// Get all companies
+// Get all companies (With search and pagination)
 exports.getAllCompanies = async (req, res, next) => {
   try {
     const { search, industry, page = 1, limit = 10 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
 
-    const query = { isVerified: true };
+    // Build Prisma query object
+    const where = {
+      isVerified: true,
+    };
 
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
       ];
     }
 
-    if (industry) query.industry = industry;
+    if (industry) {
+      where.industry = industry;
+    }
 
-    const companies = await Company.find(query)
-      .select('name logo industry description website')
-      .sort('-createdAt')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
-
-    const count = await Company.countDocuments(query);
+    // Execute query
+    const [companies, count] = await prisma.$transaction([
+      prisma.company.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          logo: true,
+          industry: true,
+          description: true,
+          website: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      prisma.company.count({ where })
+    ]);
 
     res.json({
       success: true,
@@ -33,7 +51,7 @@ exports.getAllCompanies = async (req, res, next) => {
       pagination: {
         total: count,
         page: parseInt(page),
-        pages: Math.ceil(count / limit)
+        pages: Math.ceil(count / take)
       }
     });
   } catch (error) {
@@ -44,7 +62,9 @@ exports.getAllCompanies = async (req, res, next) => {
 // Get single company
 exports.getCompany = async (req, res, next) => {
   try {
-    const company = await Company.findById(req.params.id);
+    const company = await prisma.company.findUnique({
+      where: { id: req.params.id }
+    });
 
     if (!company) {
       return next(new AppError('Company not found', 404));
@@ -59,10 +79,12 @@ exports.getCompany = async (req, res, next) => {
   }
 };
 
-// Get my company
+// Get my company profile
 exports.getMyCompany = async (req, res, next) => {
   try {
-    const company = await Company.findOne({ userId: req.user.id });
+    const company = await prisma.company.findUnique({
+      where: { userId: req.user.id }
+    });
 
     if (!company) {
       return next(new AppError('Company profile not found', 404));
@@ -77,18 +99,22 @@ exports.getMyCompany = async (req, res, next) => {
   }
 };
 
-// Update company
+// Update company profile
 exports.updateCompany = async (req, res, next) => {
   try {
-    const company = await Company.findOneAndUpdate(
-      { userId: req.user.id },
-      req.body,
-      { new: true, runValidators: true }
-    );
+    // Check if company exists first
+    const existingCompany = await prisma.company.findUnique({
+      where: { userId: req.user.id }
+    });
 
-    if (!company) {
-      return next(new AppError('Company not found', 404));
+    if (!existingCompany) {
+      return next(new AppError('Company profile not found', 404));
     }
+
+    const company = await prisma.company.update({
+      where: { userId: req.user.id },
+      data: req.body
+    });
 
     res.json({
       success: true,
@@ -100,20 +126,28 @@ exports.updateCompany = async (req, res, next) => {
   }
 };
 
-// Upload logo
+// Upload company logo
 exports.uploadLogo = async (req, res, next) => {
   try {
     if (!req.file) {
       return next(new AppError('Please upload a file', 400));
     }
 
+    // Check if company exists
+    const existingCompany = await prisma.company.findUnique({
+      where: { userId: req.user.id }
+    });
+
+    if (!existingCompany) {
+      return next(new AppError('Company profile not found', 404));
+    }
+
     const logoUrl = await uploadToCloud(req.file, 'logos');
 
-    const company = await Company.findOneAndUpdate(
-      { userId: req.user.id },
-      { logo: logoUrl },
-      { new: true }
-    );
+    const company = await prisma.company.update({
+      where: { userId: req.user.id },
+      data: { logo: logoUrl }
+    });
 
     res.json({
       success: true,

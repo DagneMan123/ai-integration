@@ -8,3 +8,21 @@
 {"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-15T12:53:44.599Z"}
 {"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-15T12:54:43.857Z"}
 {"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-15T19:13:50.721Z"}
+{"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-16T16:25:37.825Z"}
+{"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-16T16:45:38.370Z"}
+{"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-16T17:01:53.320Z"}
+{"level":"info","message":"✅ Database tables synced","service":"simuai-api","timestamp":"2026-02-16T17:02:06.359Z"}
+{"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-16T17:02:25.810Z"}
+{"level":"info","message":"✅ Database tables synced","service":"simuai-api","timestamp":"2026-02-16T17:02:29.072Z"}
+{"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-16T17:10:23.841Z"}
+{"level":"info","message":"✅ Database tables synced","service":"simuai-api","timestamp":"2026-02-16T17:10:25.507Z"}
+{"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-16T17:10:37.455Z"}
+{"level":"info","message":"✅ Database tables synced","service":"simuai-api","timestamp":"2026-02-16T17:10:39.107Z"}
+{"level":"error","message":"User.findOne(...).select is not a function - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:13:17.842Z"}
+{"level":"error","message":"User.findOne(...).select is not a function - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:13:24.261Z"}
+{"level":"info","message":"Server running on port 5000","service":"simuai-api","timestamp":"2026-02-16T17:19:02.765Z"}
+{"level":"info","message":"✅ Database tables synced","service":"simuai-api","timestamp":"2026-02-16T17:19:05.097Z"}
+{"level":"error","message":"Invalid credentials - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:09.754Z"}
+{"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:09.762Z"}
+{"level":"error","message":"Invalid credentials - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:49.296Z"}
+{"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:49.302Z"}

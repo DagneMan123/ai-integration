@@ -1,0 +1,6 @@
+{"level":"error","message":"User.findOne(...).select is not a function - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:13:17.842Z"}
+{"level":"error","message":"User.findOne(...).select is not a function - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:13:24.261Z"}
+{"level":"error","message":"Invalid credentials - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:09.754Z"}
+{"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:09.762Z"}
+{"level":"error","message":"Invalid credentials - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:49.296Z"}
+{"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:49.302Z"}
