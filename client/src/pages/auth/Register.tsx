@@ -27,13 +27,14 @@ const Register: React.FC = () => {
     setLoading(true);
     try {
       const response = await authAPI.register(data);
-      const { user, token, refreshToken } = response.data.data!;
       
-      setAuth(user, token, refreshToken);
-      toast.success('Registration successful! Please verify your email.');
-      navigate(`/${user.role}/dashboard`);
+      // Don't auto-login, redirect to login page instead
+      toast.success('Registration successful! Please login to continue.');
+      navigate('/login');
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Registration failed');
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Registration failed';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -143,11 +144,14 @@ const Register: React.FC = () => {
                 }
               })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-              placeholder="Create a password"
+              placeholder="Create a password (min 6 characters)"
             />
             {errors.password && (
               <p className="mt-1 text-sm text-danger">{errors.password.message}</p>
             )}
+            <p className="mt-1 text-xs text-gray-500">
+              Use at least 6 characters
+            </p>
           </div>
 
           <button 

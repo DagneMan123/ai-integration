@@ -30,17 +30,17 @@ if (process.env.NODE_ENV !== 'production') {
 // Log activity to database using Prisma
 const logActivity = async (userId, action, resourceType, resourceId, details = {}, ipAddress = null, userAgent = null, severity = 'info') => {
   try {
-    // Prisma uses 'data' object and camelCase is standard for Prisma models
+    // Convert userId to integer if it's a string
+    const userIdInt = userId ? parseInt(userId, 10) : null;
+    
     await prisma.activityLog.create({
       data: {
-        userId: userId ? String(userId) : null,
+        userId: userIdInt,
         action,
-        resourceType: resourceType || null,
-        resourceId: resourceId ? String(resourceId) : null,
-        details: details || {},
+        description: resourceType || null,
         ipAddress,
         userAgent,
-        severity
+        metadata: details || {}
       }
     });
   } catch (error) {

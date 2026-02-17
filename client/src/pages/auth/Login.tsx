@@ -20,13 +20,15 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const response = await authAPI.login(data);
-      const { user, token, refreshToken } = response.data.data!;
+      const { user, token, refreshToken } = response.data;
       
       setAuth(user, token, refreshToken);
       toast.success('Login successful!');
       navigate(`/${user.role}/dashboard`);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Login failed');
+      console.error('Login error:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

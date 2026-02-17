@@ -26,15 +26,18 @@ exports.register = async (req, res, next) => {
     const verificationToken = crypto.createHash('sha256').update(rawToken).digest('hex');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); 
 
+    // Convert role to uppercase for enum
+    const userRole = role ? role.toUpperCase() : 'CANDIDATE';
+
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           email,
-          password: hashedPassword,
-          role,
+          passwordHash: hashedPassword,
+          role: userRole,
           firstName,
           lastName,
-          isEmailVerified: false,
+          isVerified: false,
           emailVerificationToken: verificationToken,
           emailVerificationExpires: verificationExpires,
         },
@@ -42,13 +45,13 @@ exports.register = async (req, res, next) => {
 
       if (role === 'candidate') {
         await tx.candidateProfile.create({
-          data: { userId: newUser.id, firstName, lastName }
+          data: { userId: newUser.id }
         });
       } else if (role === 'employer') {
         await tx.company.create({
           data: {
-            userId: newUser.id,
             name: companyName || `${firstName}'s Company`,
+            createdById: newUser.id,
             isVerified: false
           }
         });
@@ -72,14 +75,14 @@ exports.register = async (req, res, next) => {
       // Continue with registration even if email fails
     }
 
-    const token = generateToken(user.id, user.role);
-    const refreshToken = generateRefreshToken(user.id);
+    const token = generateToken({ id: user.id, role: user.role });
+    const refreshToken = generateRefreshToken({ id: user.id });
 
     res.status(201).json({
       success: true,
       token,
       refreshToken,
-      user: { id: user.id, email: user.email, role: user.role }
+      user: { id: user.id, email: user.email, role: user.role.toLowerCase() }
     });
   } catch (error) {
     next(error);
@@ -91,18 +94,40 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      if (user) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { 
-            loginAttempts: { increment: 1 },
-            isLocked: user.loginAttempts + 1 >= 5 ? true : false
-          }
-        });
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        isLocked: true,
+        loginAttempts: true,
+        isVerified: true
       }
+    });
+    
+    if (!user) {
+      return next(new AppError('Invalid credentials', 401));
+    }
+
+    if (!user.passwordHash) {
+      logger.error('User has no password', { email });
+      return next(new AppError('Invalid credentials', 401));
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    
+    if (!isPasswordValid) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          loginAttempts: { increment: 1 },
+          isLocked: user.loginAttempts + 1 >= 5 ? true : false
+        }
+      });
       return next(new AppError('Invalid credentials', 401));
     }
 
@@ -118,14 +143,14 @@ exports.login = async (req, res, next) => {
     // Log Activity
     await logActivity(user.id, 'login', 'user', user.id, {}, req.ip, req.get('User-Agent'));
 
-    const token = generateToken(user.id, user.role);
-    const refreshToken = generateRefreshToken(user.id);
+    const token = generateToken({ id: user.id, role: user.role });
+    const refreshToken = generateRefreshToken({ id: user.id });
 
     res.json({
       success: true,
       token,
       refreshToken,
-      user: { id: user.id, email: user.email, role: user.role }
+      user: { id: user.id, email: user.email, role: user.role.toLowerCase(), firstName: user.firstName, lastName: user.lastName }
     });
   } catch (error) {
     next(error);
@@ -266,8 +291,8 @@ exports.refreshToken = async (req, res, next) => {
 
     res.json({
       success: true,
-      token: generateToken(user.id, user.role),
-      refreshToken: generateRefreshToken(user.id)
+      token: generateToken({ id: user.id, role: user.role }),
+      refreshToken: generateRefreshToken({ id: user.id })
     });
   } catch (error) {
     next(error);

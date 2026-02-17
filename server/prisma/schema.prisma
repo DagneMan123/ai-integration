@@ -8,21 +8,28 @@ datasource db {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  email          String   @unique
-  passwordHash   String   @map("password_hash")
-  firstName      String   @map("first_name")
-  lastName       String   @map("last_name")
-  role           UserRole @default(CANDIDATE)
-  phone          String?
-  profilePicture String?  @map("profile_picture")
-  linkedinUrl    String?  @map("linkedin_url")
-  githubUrl      String?  @map("github_url")
-  bio            String?
-  isVerified     Boolean  @default(false) @map("is_verified")
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                        Int      @id @default(autoincrement())
+  email                     String   @unique
+  passwordHash              String   @map("password_hash")
+  firstName                 String   @map("first_name")
+  lastName                  String   @map("last_name")
+  role                      UserRole @default(CANDIDATE)
+  phone                     String?
+  profilePicture            String?  @map("profile_picture")
+  linkedinUrl               String?  @map("linkedin_url")
+  githubUrl                 String?  @map("github_url")
+  bio                       String?
+  isVerified                Boolean  @default(false) @map("is_verified")
+  isActive                  Boolean  @default(true) @map("is_active")
+  isLocked                  Boolean  @default(false) @map("is_locked")
+  loginAttempts             Int      @default(0) @map("login_attempts")
+  lastLogin                 DateTime? @map("last_login")
+  emailVerificationToken    String?  @map("email_verification_token")
+  emailVerificationExpires  DateTime? @map("email_verification_expires")
+  resetPasswordToken        String?  @map("reset_password_token")
+  resetPasswordExpires      DateTime? @map("reset_password_expires")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
 
   // Relations
   candidateProfile CandidateProfile?
@@ -43,7 +50,8 @@ model Company {
   industry    String?
   size        String?
   website     String?
-  logoUrl     String?  @map("logo_url")
+  // ማስተካከያ፡ ስሙን ከ logoUrl ወደ logo ቀይሬዋለሁ
+  logo        String?  @map("logo_url") 
   address     String?
   isVerified  Boolean  @default(false) @map("is_verified")
   createdById Int      @map("created_by_id")

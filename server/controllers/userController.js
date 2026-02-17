@@ -11,7 +11,7 @@ exports.getProfile = async (req, res, next) => {
       where: { id: req.user.id },
       include: {
         candidateProfile: true,
-        company: true
+        companies: true
       }
     });
 
@@ -20,11 +20,11 @@ exports.getProfile = async (req, res, next) => {
     }
 
     // Don't send password back
-    delete user.password;
+    const { passwordHash, ...userWithoutPassword } = user;
 
     res.json({
       success: true,
-      data: user
+      data: userWithoutPassword
     });
   } catch (error) {
     next(error);

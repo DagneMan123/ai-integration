@@ -2,8 +2,8 @@ const nodemailer = require('nodemailer');
 const { logger } = require('./logger');
 
 // Create transporter
-const createTransporter = () => {
-  return nodemailer.createTransporter({
+const createTransport = () => {
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
     secure: false,
@@ -17,7 +17,7 @@ const createTransporter = () => {
 // Send verification email
 const sendVerificationEmail = async (email, firstName, verificationToken) => {
   try {
-    const transporter = createTransporter();
+    const transporter = createTransport();
     const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
 
     const mailOptions = {
@@ -57,7 +57,7 @@ const sendVerificationEmail = async (email, firstName, verificationToken) => {
 // Send password reset email
 const sendPasswordResetEmail = async (email, firstName, resetToken) => {
   try {
-    const transporter = createTransporter();
+    const transporter = createTransport();
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
@@ -98,7 +98,7 @@ const sendPasswordResetEmail = async (email, firstName, resetToken) => {
 // Send interview completion notification
 const sendInterviewCompletionEmail = async (email, firstName, interviewResult) => {
   try {
-    const transporter = createTransporter();
+    const transporter = createTransport();
 
     const mailOptions = {
       from: `"SimuAI Platform" <${process.env.EMAIL_USER}>`,
@@ -142,7 +142,7 @@ const sendInterviewCompletionEmail = async (email, firstName, interviewResult) =
 // Send payment confirmation email
 const sendPaymentConfirmationEmail = async (email, firstName, paymentDetails) => {
   try {
-    const transporter = createTransporter();
+    const transporter = createTransport();
 
     const mailOptions = {
       from: `"SimuAI Platform" <${process.env.EMAIL_USER}>`,
@@ -193,7 +193,7 @@ const sendEmail = async ({ to, subject, html }) => {
       return;
     }
 
-    const transporter = createTransporter();
+    const transporter = createTransport();
     const mailOptions = {
       from: `"SimuAI Platform" <${process.env.EMAIL_USER}>`,
       to,

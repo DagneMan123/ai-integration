@@ -20,16 +20,14 @@ exports.getAllJobs = async (req, res, next) => {
 
     // Build filter object
     const where = {
-      status: 'active',
-      isApproved: true
+      status: 'ACTIVE',
+      // Remove isApproved as it's not in schema
     };
 
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-        // skills String[] ከሆነ:
-        // { skills: { hasSome: [search] } } 
       ];
     }
 
@@ -51,7 +49,7 @@ exports.getAllJobs = async (req, res, next) => {
         where,
         include: {
           company: {
-            select: { name: true, logo: true, industry: true, isVerified: true }
+            select: { name: true, logoUrl: true, industry: true, isVerified: true }
           }
         },
         orderBy: Object.keys(orderBy).length ? orderBy : { createdAt: 'desc' },
