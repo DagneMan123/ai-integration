@@ -1,6 +1,4 @@
-const { PrismaClient } = require('@prisma/client'); 
-const prisma = new PrismaClient(); 
-
+const prisma = require('../lib/prisma');
 const { generateToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { sendEmail } = require('../utils/email');
 const { AppError } = require('../middleware/errorHandler');
@@ -61,12 +59,18 @@ exports.register = async (req, res, next) => {
     // Log Activity
     await logActivity(user.id, 'register', 'user', user.id, { role }, req.ip, req.get('User-Agent'));
 
-    const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${rawToken}`;
-    await sendEmail({
-      to: email,
-      subject: 'Verify Your Email - SimuAI',
-      html: `<h1>Welcome!</h1><p>Please verify your email: <a href="${verificationUrl}">Verify Email</a></p>`
-    });
+    // Try to send verification email (don't fail registration if email fails)
+    try {
+      const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${rawToken}`;
+      await sendEmail({
+        to: email,
+        subject: 'Verify Your Email - SimuAI',
+        html: `<h1>Welcome!</h1><p>Please verify your email: <a href="${verificationUrl}">Verify Email</a></p>`
+      });
+    } catch (emailError) {
+      logger.warn('Failed to send verification email', { email, error: emailError.message });
+      // Continue with registration even if email fails
+    }
 
     const token = generateToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id);

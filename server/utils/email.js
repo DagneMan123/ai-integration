@@ -184,7 +184,33 @@ const sendPaymentConfirmationEmail = async (email, firstName, paymentDetails) =>
   }
 };
 
+// Generic send email function
+const sendEmail = async ({ to, subject, html }) => {
+  try {
+    // Check if email is configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      logger.warn('Email not configured, skipping email send', { to, subject });
+      return;
+    }
+
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: `"SimuAI Platform" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    };
+
+    await transporter.sendMail(mailOptions);
+    logger.info('Email sent successfully', { to, subject });
+  } catch (error) {
+    logger.error('Failed to send email', { to, subject, error: error.message });
+    throw error;
+  }
+};
+
 module.exports = {
+  sendEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendInterviewCompletionEmail,

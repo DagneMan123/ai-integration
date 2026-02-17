@@ -14,7 +14,9 @@ const testConnection = async () => {
     console.log('✅ Database connection established successfully via Prisma.');
   } catch (error) {
     console.error('❌ Unable to connect to the database:', error.message);
-    process.exit(1);
+    console.error('Please start PostgreSQL service and ensure database exists.');
+    console.error('See START_POSTGRESQL.md for instructions.');
+    // Don't exit - allow server to run for other endpoints
   }
 };
 

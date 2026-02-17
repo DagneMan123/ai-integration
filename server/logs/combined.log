@@ -26,3 +26,27 @@
 {"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:09.762Z"}
 {"level":"error","message":"Invalid credentials - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:49.296Z"}
 {"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-16T17:20:49.302Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T07:52:36.192Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T08:58:14.074Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T08:58:15.175Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:14:50.490Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:14:51.223Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:15:56.178Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:15:56.515Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:16:29.358Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:16:29.445Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:16:39.560Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:16:39.693Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:17:01.838Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:17:02.006Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:17:21.540Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:17:21.852Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:17:29.788Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:17:30.016Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:17:50.517Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:17:51.040Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:28:12.038Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:28:12.413Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T09:33:34.869Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T09:33:35.844Z"}
+{"level":"info","message":"Received SIGINT, disconnecting from database...","service":"simuai-api","timestamp":"2026-02-17T09:45:37.537Z"}

@@ -12,7 +12,7 @@ router.post('/initialize', paymentController.initializePayment);
 // Verify payment
 router.get('/verify/:tx_ref', paymentController.verifyPayment);
 
-// Webhook (ብዙውን ጊዜ ህዝባዊ መሆን አለበት፣ ግን ጥበቃ ካለው እንደዚህ ይቀጥላል)
+// Webhook 
 router.post('/webhook', paymentController.chapaWebhook);
 
 // Get payment history

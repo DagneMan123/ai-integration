@@ -1,7 +1,4 @@
-const User = require('../models/User');
-const Company = require('../models/Company');
-const Job = require('../models/Job');
-const ActivityLog = require('../models/ActivityLog');
+const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { sendEmail } = require('../utils/email');
 const { logger } = require('../utils/logger');
@@ -11,26 +8,47 @@ exports.getAllUsers = async (req, res, next) => {
   try {
     const { role, status, search, page = 1, limit = 20 } = req.query;
 
-    const query = {};
-    if (role) query.role = role;
-    if (status === 'active') query.isActive = true;
-    if (status === 'inactive') query.isActive = false;
+    const where = {};
+    
+    if (role) {
+      where.role = role.toUpperCase();
+    }
+    
+    if (status === 'active') {
+      where.isActive = true;
+    } else if (status === 'inactive') {
+      where.isActive = false;
+    }
+    
     if (search) {
-      query.$or = [
-        { email: { $regex: search, $options: 'i' } },
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } }
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } }
       ];
     }
 
-    const users = await User.find(query)
-      .select('-password')
-      .sort('-createdAt')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
-
-    const count = await User.countDocuments(query);
+    const [users, count] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          phone: true,
+          isVerified: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: parseInt(limit),
+        skip: (parseInt(page) - 1) * parseInt(limit)
+      }),
+      prisma.user.count({ where })
+    ]);
 
     res.json({
       success: true,
@@ -38,10 +56,11 @@ exports.getAllUsers = async (req, res, next) => {
       pagination: {
         total: count,
         page: parseInt(page),
-        pages: Math.ceil(count / limit)
+        pages: Math.ceil(count / parseInt(limit))
       }
     });
   } catch (error) {
+    logger.error('Get all users error:', error);
     next(error);
   }
 };
@@ -49,22 +68,46 @@ exports.getAllUsers = async (req, res, next) => {
 // Get single user
 exports.getUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        phone: true,
+        profilePicture: true,
+        linkedinUrl: true,
+        githubUrl: true,
+        bio: true,
+        isVerified: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        candidateProfile: {
+          select: {
+            skills: true,
+            experienceLevel: true,
+            education: true,
+            workExperience: true
+          }
+        }
+      }
+    });
 
     if (!user) {
       return next(new AppError('User not found', 404));
     }
 
-    let profile = {};
-    if (user.role === 'employer') {
-      profile = await Company.findOne({ userId: user._id });
-    }
-
     res.json({
       success: true,
-      data: { user, profile }
+      data: user
     });
   } catch (error) {
+    logger.error('Get user error:', error);
     next(error);
   }
 };
@@ -72,35 +115,39 @@ exports.getUser = async (req, res, next) => {
 // Update user status
 exports.updateUserStatus = async (req, res, next) => {
   try {
-    const { isActive, isLocked } = req.body;
+    const { id } = req.params;
+    const { isActive } = req.body;
 
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return next(new AppError('User not found', 404));
-    }
-
-    if (isActive !== undefined) user.isActive = isActive;
-    if (isLocked !== undefined) user.isLocked = isLocked;
-
-    await user.save();
-
-    // Log activity
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'update_user_status',
-      targetId: user._id,
-      targetType: 'User',
-      details: { isActive, isLocked }
+    const user = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { isActive },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        isActive: true
+      }
     });
 
-    logger.info(`User status updated: ${user.email} by ${req.user.email}`);
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'USER_STATUS_UPDATED',
+        description: `Updated user ${user.email} status to ${isActive ? 'active' : 'inactive'}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
+    });
 
     res.json({
       success: true,
-      message: 'User status updated',
+      message: 'User status updated successfully',
       data: user
     });
   } catch (error) {
+    logger.error('Update user status error:', error);
     next(error);
   }
 };
@@ -108,30 +155,43 @@ exports.updateUserStatus = async (req, res, next) => {
 // Update user role
 exports.updateUserRole = async (req, res, next) => {
   try {
+    const { id } = req.params;
     const { role } = req.body;
 
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return next(new AppError('User not found', 404));
+    if (!['CANDIDATE', 'EMPLOYER', 'ADMIN'].includes(role.toUpperCase())) {
+      return next(new AppError('Invalid role', 400));
     }
 
-    user.role = role;
-    await user.save();
+    const user = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { role: role.toUpperCase() },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true
+      }
+    });
 
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'update_user_role',
-      targetId: user._id,
-      targetType: 'User',
-      details: { newRole: role }
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'USER_ROLE_UPDATED',
+        description: `Updated user ${user.email} role to ${role}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
     });
 
     res.json({
       success: true,
-      message: 'User role updated',
+      message: 'User role updated successfully',
       data: user
     });
   } catch (error) {
+    logger.error('Update user role error:', error);
     next(error);
   }
 };
@@ -139,27 +199,38 @@ exports.updateUserRole = async (req, res, next) => {
 // Delete user
 exports.deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      select: { email: true }
+    });
+
     if (!user) {
       return next(new AppError('User not found', 404));
     }
 
-    await user.remove();
-
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'delete_user',
-      targetId: user._id,
-      targetType: 'User'
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
     });
 
-    logger.warn(`User deleted: ${user.email} by ${req.user.email}`);
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'USER_DELETED',
+        description: `Deleted user ${user.email}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
+    });
 
     res.json({
       success: true,
       message: 'User deleted successfully'
     });
   } catch (error) {
+    logger.error('Delete user error:', error);
     next(error);
   }
 };
@@ -167,16 +238,26 @@ exports.deleteUser = async (req, res, next) => {
 // Get pending companies
 exports.getPendingCompanies = async (req, res, next) => {
   try {
-    const companies = await Company.find({ isVerified: false })
-      .populate('userId', 'email firstName lastName')
-      .sort('-createdAt')
-      .lean();
+    const companies = await prisma.company.findMany({
+      where: { isVerified: false },
+      include: {
+        createdBy: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     res.json({
       success: true,
       data: companies
     });
   } catch (error) {
+    logger.error('Get pending companies error:', error);
     next(error);
   }
 };
@@ -184,40 +265,51 @@ exports.getPendingCompanies = async (req, res, next) => {
 // Verify company
 exports.verifyCompany = async (req, res, next) => {
   try {
-    const company = await Company.findById(req.params.id).populate('userId');
+    const { id } = req.params;
 
-    if (!company) {
-      return next(new AppError('Company not found', 404));
-    }
+    const company = await prisma.company.update({
+      where: { id: parseInt(id) },
+      data: { isVerified: true },
+      include: {
+        createdBy: {
+          select: {
+            email: true,
+            firstName: true
+          }
+        }
+      }
+    });
 
-    company.isVerified = true;
-    company.verifiedAt = new Date();
-    company.verifiedBy = req.user.id;
-    await company.save();
-
-    // Send email
+    // Send email notification
     await sendEmail({
-      to: company.userId.email,
+      to: company.createdBy.email,
       subject: 'Company Verified - SimuAI',
       html: `
         <h1>Company Verified!</h1>
-        <p>Your company ${company.name} has been verified.</p>
+        <p>Hi ${company.createdBy.firstName},</p>
+        <p>Your company "${company.name}" has been verified and approved.</p>
         <p>You can now post jobs and access all employer features.</p>
       `
     });
 
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'verify_company',
-      targetId: company._id,
-      targetType: 'Company'
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'COMPANY_VERIFIED',
+        description: `Verified company ${company.name}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
     });
 
     res.json({
       success: true,
-      message: 'Company verified successfully'
+      message: 'Company verified successfully',
+      data: company
     });
   } catch (error) {
+    logger.error('Verify company error:', error);
     next(error);
   }
 };
@@ -225,8 +317,20 @@ exports.verifyCompany = async (req, res, next) => {
 // Reject company
 exports.rejectCompany = async (req, res, next) => {
   try {
+    const { id } = req.params;
     const { reason } = req.body;
-    const company = await Company.findById(req.params.id).populate('userId');
+
+    const company = await prisma.company.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        createdBy: {
+          select: {
+            email: true,
+            firstName: true
+          }
+        }
+      }
+    });
 
     if (!company) {
       return next(new AppError('Company not found', 404));
@@ -234,22 +338,26 @@ exports.rejectCompany = async (req, res, next) => {
 
     // Send rejection email
     await sendEmail({
-      to: company.userId.email,
+      to: company.createdBy.email,
       subject: 'Company Verification - SimuAI',
       html: `
         <h1>Company Verification Update</h1>
-        <p>Unfortunately, we cannot verify your company at this time.</p>
-        <p>Reason: ${reason}</p>
+        <p>Hi ${company.createdBy.firstName},</p>
+        <p>Unfortunately, your company "${company.name}" verification was not approved.</p>
+        ${reason ? `<p>Reason: ${reason}</p>` : ''}
         <p>Please contact support for more information.</p>
       `
     });
 
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'reject_company',
-      targetId: company._id,
-      targetType: 'Company',
-      details: { reason }
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'COMPANY_REJECTED',
+        description: `Rejected company ${company.name}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
     });
 
     res.json({
@@ -257,6 +365,7 @@ exports.rejectCompany = async (req, res, next) => {
       message: 'Company rejected'
     });
   } catch (error) {
+    logger.error('Reject company error:', error);
     next(error);
   }
 };
@@ -264,16 +373,31 @@ exports.rejectCompany = async (req, res, next) => {
 // Get pending jobs
 exports.getPendingJobs = async (req, res, next) => {
   try {
-    const jobs = await Job.find({ isApproved: false })
-      .populate('companyId', 'name')
-      .sort('-createdAt')
-      .lean();
+    const jobs = await prisma.job.findMany({
+      where: { status: 'DRAFT' },
+      include: {
+        company: {
+          select: {
+            name: true
+          }
+        },
+        createdBy: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     res.json({
       success: true,
       data: jobs
     });
   } catch (error) {
+    logger.error('Get pending jobs error:', error);
     next(error);
   }
 };
@@ -281,29 +405,50 @@ exports.getPendingJobs = async (req, res, next) => {
 // Approve job
 exports.approveJob = async (req, res, next) => {
   try {
-    const job = await Job.findById(req.params.id);
+    const { id } = req.params;
 
-    if (!job) {
-      return next(new AppError('Job not found', 404));
-    }
+    const job = await prisma.job.update({
+      where: { id: parseInt(id) },
+      data: { status: 'ACTIVE' },
+      include: {
+        createdBy: {
+          select: {
+            email: true,
+            firstName: true
+          }
+        }
+      }
+    });
 
-    job.isApproved = true;
-    job.approvedAt = new Date();
-    job.approvedBy = req.user.id;
-    await job.save();
+    // Send email notification
+    await sendEmail({
+      to: job.createdBy.email,
+      subject: 'Job Approved - SimuAI',
+      html: `
+        <h1>Job Approved!</h1>
+        <p>Hi ${job.createdBy.firstName},</p>
+        <p>Your job posting "${job.title}" has been approved and is now live.</p>
+      `
+    });
 
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'approve_job',
-      targetId: job._id,
-      targetType: 'Job'
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'JOB_APPROVED',
+        description: `Approved job ${job.title}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
     });
 
     res.json({
       success: true,
-      message: 'Job approved successfully'
+      message: 'Job approved successfully',
+      data: job
     });
   } catch (error) {
+    logger.error('Approve job error:', error);
     next(error);
   }
 };
@@ -311,23 +456,43 @@ exports.approveJob = async (req, res, next) => {
 // Reject job
 exports.rejectJob = async (req, res, next) => {
   try {
+    const { id } = req.params;
     const { reason } = req.body;
-    const job = await Job.findById(req.params.id);
 
-    if (!job) {
-      return next(new AppError('Job not found', 404));
-    }
+    const job = await prisma.job.update({
+      where: { id: parseInt(id) },
+      data: { status: 'CLOSED' },
+      include: {
+        createdBy: {
+          select: {
+            email: true,
+            firstName: true
+          }
+        }
+      }
+    });
 
-    job.status = 'rejected';
-    job.rejectionReason = reason;
-    await job.save();
+    // Send rejection email
+    await sendEmail({
+      to: job.createdBy.email,
+      subject: 'Job Posting Update - SimuAI',
+      html: `
+        <h1>Job Posting Update</h1>
+        <p>Hi ${job.createdBy.firstName},</p>
+        <p>Your job posting "${job.title}" was not approved.</p>
+        ${reason ? `<p>Reason: ${reason}</p>` : ''}
+      `
+    });
 
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'reject_job',
-      targetId: job._id,
-      targetType: 'Job',
-      details: { reason }
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'JOB_REJECTED',
+        description: `Rejected job ${job.title}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
     });
 
     res.json({
@@ -335,6 +500,7 @@ exports.rejectJob = async (req, res, next) => {
       message: 'Job rejected'
     });
   } catch (error) {
+    logger.error('Reject job error:', error);
     next(error);
   }
 };
@@ -342,20 +508,30 @@ exports.rejectJob = async (req, res, next) => {
 // Get activity logs
 exports.getActivityLogs = async (req, res, next) => {
   try {
-    const { action, userId, page = 1, limit = 50 } = req.query;
+    const { page = 1, limit = 50, action, userId } = req.query;
 
-    const query = {};
-    if (action) query.action = action;
-    if (userId) query.userId = userId;
+    const where = {};
+    if (action) where.action = action;
+    if (userId) where.userId = parseInt(userId);
 
-    const logs = await ActivityLog.find(query)
-      .populate('userId', 'email firstName lastName')
-      .sort('-createdAt')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
-
-    const count = await ActivityLog.countDocuments(query);
+    const [logs, count] = await Promise.all([
+      prisma.activityLog.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: parseInt(limit),
+        skip: (parseInt(page) - 1) * parseInt(limit)
+      }),
+      prisma.activityLog.count({ where })
+    ]);
 
     res.json({
       success: true,
@@ -363,10 +539,11 @@ exports.getActivityLogs = async (req, res, next) => {
       pagination: {
         total: count,
         page: parseInt(page),
-        pages: Math.ceil(count / limit)
+        pages: Math.ceil(count / parseInt(limit))
       }
     });
   } catch (error) {
+    logger.error('Get activity logs error:', error);
     next(error);
   }
 };
@@ -374,46 +551,45 @@ exports.getActivityLogs = async (req, res, next) => {
 // Get suspicious activity
 exports.getSuspiciousActivity = async (req, res, next) => {
   try {
-    // Find users with high failed login attempts
-    const suspiciousLogins = await User.find({
-      loginAttempts: { $gte: 3 }
-    }).select('email loginAttempts lastLogin').lean();
-
-    // Find interviews with high cheating scores
-    const suspiciousInterviews = await Interview.find({
-      'antiCheatData.tabSwitches': { $gte: 5 }
-    })
-      .populate('candidateId', 'email firstName lastName')
-      .populate('jobId', 'title')
-      .lean();
+    // Get failed login attempts
+    const suspiciousLogs = await prisma.activityLog.findMany({
+      where: {
+        action: {
+          in: ['LOGIN_FAILED', 'UNAUTHORIZED_ACCESS', 'SUSPICIOUS_ACTIVITY']
+        }
+      },
+      include: {
+        user: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100
+    });
 
     res.json({
       success: true,
-      data: {
-        suspiciousLogins,
-        suspiciousInterviews
-      }
+      data: suspiciousLogs
     });
   } catch (error) {
+    logger.error('Get suspicious activity error:', error);
     next(error);
   }
 };
 
-// Get settings
+// Get settings (placeholder)
 exports.getSettings = async (req, res, next) => {
   try {
-    // In production, store settings in database
+    // This would typically fetch from a settings table
     const settings = {
-      platformName: 'SimuAI',
+      siteName: 'SimuAI',
       maintenanceMode: false,
-      allowRegistration: true,
-      requireEmailVerification: true,
-      aiCostPerQuestion: 0.05,
-      subscriptionPlans: {
-        basic: { price: 99, credits: 100 },
-        pro: { price: 299, credits: 500 },
-        enterprise: { price: 999, credits: 2000 }
-      }
+      registrationEnabled: true,
+      emailVerificationRequired: true
     };
 
     res.json({
@@ -421,21 +597,18 @@ exports.getSettings = async (req, res, next) => {
       data: settings
     });
   } catch (error) {
+    logger.error('Get settings error:', error);
     next(error);
   }
 };
 
-// Update settings
+// Update settings (placeholder)
 exports.updateSettings = async (req, res, next) => {
   try {
-    // In production, update settings in database
     const settings = req.body;
 
-    await ActivityLog.create({
-      userId: req.user.id,
-      action: 'update_settings',
-      details: settings
-    });
+    // This would typically update a settings table
+    // For now, just return success
 
     res.json({
       success: true,
@@ -443,6 +616,7 @@ exports.updateSettings = async (req, res, next) => {
       data: settings
     });
   } catch (error) {
+    logger.error('Update settings error:', error);
     next(error);
   }
 };

@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { uploadToCloud } = require('../utils/cloudStorage');
 const bcrypt = require('bcryptjs');

@@ -1,41 +1,72 @@
-const User = require('../models/User');
-const Job = require('../models/Job');
-const Interview = require('../models/Interview');
-const Application = require('../models/Application');
-const Payment = require('../models/Payment');
-const Company = require('../models/Company');
+const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
+const { logger } = require('../utils/logger');
 
 // Candidate dashboard analytics
 exports.getCandidateDashboard = async (req, res, next) => {
   try {
     const candidateId = req.user.id;
 
-    const [applications, interviews, avgScore] = await Promise.all([
-      Application.countDocuments({ candidateId }),
-      Interview.countDocuments({ candidateId }),
-      Interview.aggregate([
-        { $match: { candidateId: candidateId, status: 'completed' } },
-        { $group: { _id: null, avgScore: { $avg: '$aiEvaluation.overallScore' } } }
-      ])
+    const [applicationsCount, interviewsCount, completedInterviews] = await Promise.all([
+      prisma.application.count({
+        where: { candidateId }
+      }),
+      prisma.interview.count({
+        where: { candidateId }
+      }),
+      prisma.interview.findMany({
+        where: {
+          candidateId,
+          status: 'COMPLETED'
+        },
+        select: {
+          overallScore: true
+        }
+      })
     ]);
 
-    const recentInterviews = await Interview.find({ candidateId })
-      .populate('jobId', 'title')
-      .sort('-createdAt')
-      .limit(5)
-      .lean();
+    // Calculate average score
+    const avgScore = completedInterviews.length > 0
+      ? completedInterviews.reduce((sum, i) => sum + (i.overallScore || 0), 0) / completedInterviews.length
+      : 0;
+
+    // Get recent interviews
+    const recentInterviews = await prisma.interview.findMany({
+      where: { candidateId },
+      include: {
+        job: {
+          select: {
+            title: true,
+            company: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5
+    });
 
     res.json({
       success: true,
       data: {
-        totalApplications: applications,
-        totalInterviews: interviews,
-        averageScore: avgScore[0]?.avgScore || 0,
-        recentInterviews
+        applications: applicationsCount,
+        interviews: interviewsCount,
+        averageScore: Math.round(avgScore),
+        recentInterviews: recentInterviews.map(interview => ({
+          id: interview.id,
+          jobTitle: interview.job.title,
+          companyName: interview.job.company.name,
+          status: interview.status,
+          score: interview.overallScore,
+          date: interview.createdAt
+        }))
       }
     });
   } catch (error) {
+    logger.error('Get candidate dashboard error:', error);
     next(error);
   }
 };
@@ -45,36 +76,36 @@ exports.getCandidatePerformance = async (req, res, next) => {
   try {
     const candidateId = req.user.id;
 
-    const interviews = await Interview.find({
-      candidateId,
-      status: 'completed'
-    }).sort('completedAt').lean();
-
-    const performanceData = interviews.map(interview => ({
-      date: interview.completedAt,
-      score: interview.aiEvaluation?.overallScore || 0,
-      jobTitle: interview.jobId?.title
-    }));
-
-    const skillsAnalysis = await Interview.aggregate([
-      { $match: { candidateId: candidateId, status: 'completed' } },
-      { $unwind: '$aiEvaluation.skillScores' },
-      {
-        $group: {
-          _id: '$aiEvaluation.skillScores.skill',
-          avgScore: { $avg: '$aiEvaluation.skillScores.score' }
-        }
-      }
-    ]);
+    const interviews = await prisma.interview.findMany({
+      where: {
+        candidateId,
+        status: 'COMPLETED'
+      },
+      select: {
+        overallScore: true,
+        technicalScore: true,
+        communicationScore: true,
+        problemSolvingScore: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'asc' }
+    });
 
     res.json({
       success: true,
       data: {
-        performanceTrend: performanceData,
-        skillsAnalysis
+        totalInterviews: interviews.length,
+        scores: interviews.map(i => ({
+          date: i.createdAt,
+          overall: i.overallScore,
+          technical: i.technicalScore,
+          communication: i.communicationScore,
+          problemSolving: i.problemSolvingScore
+        }))
       }
     });
   } catch (error) {
+    logger.error('Get candidate performance error:', error);
     next(error);
   }
 };
@@ -82,112 +113,123 @@ exports.getCandidatePerformance = async (req, res, next) => {
 // Employer dashboard analytics
 exports.getEmployerDashboard = async (req, res, next) => {
   try {
-    const company = await Company.findOne({ userId: req.user.id });
-    if (!company) {
-      return next(new AppError('Company not found', 404));
-    }
+    const employerId = req.user.id;
 
-    const jobs = await Job.find({ companyId: company._id });
-    const jobIds = jobs.map(j => j._id);
-
-    const [totalJobs, activeJobs, totalApplications, totalInterviews] = await Promise.all([
-      Job.countDocuments({ companyId: company._id }),
-      Job.countDocuments({ companyId: company._id, status: 'active' }),
-      Application.countDocuments({ jobId: { $in: jobIds } }),
-      Interview.countDocuments({ jobId: { $in: jobIds } })
-    ]);
-
-    const applicationsByStatus = await Application.aggregate([
-      { $match: { jobId: { $in: jobIds } } },
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ]);
-
-    const topJobs = await Application.aggregate([
-      { $match: { jobId: { $in: jobIds } } },
-      { $group: { _id: '$jobId', applications: { $sum: 1 } } },
-      { $sort: { applications: -1 } },
-      { $limit: 5 },
-      {
-        $lookup: {
-          from: 'jobs',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'job'
+    const [jobsCount, applicationsCount, interviewsCount] = await Promise.all([
+      prisma.job.count({
+        where: { createdById: employerId }
+      }),
+      prisma.application.count({
+        where: {
+          job: {
+            createdById: employerId
+          }
         }
-      }
+      }),
+      prisma.interview.count({
+        where: {
+          job: {
+            createdById: employerId
+          }
+        }
+      })
     ]);
+
+    // Get recent applications
+    const recentApplications = await prisma.application.findMany({
+      where: {
+        job: {
+          createdById: employerId
+        }
+      },
+      include: {
+        candidate: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        job: {
+          select: {
+            title: true
+          }
+        }
+      },
+      orderBy: { appliedAt: 'desc' },
+      take: 10
+    });
 
     res.json({
       success: true,
       data: {
-        totalJobs,
-        activeJobs,
-        totalApplications,
-        totalInterviews,
-        applicationsByStatus,
-        topJobs,
-        subscription: company.subscription,
-        aiCredits: company.aiCredits
+        jobs: jobsCount,
+        applications: applicationsCount,
+        interviews: interviewsCount,
+        recentApplications: recentApplications.map(app => ({
+          id: app.id,
+          candidateName: `${app.candidate.firstName} ${app.candidate.lastName}`,
+          candidateEmail: app.candidate.email,
+          jobTitle: app.job.title,
+          status: app.status,
+          appliedAt: app.appliedAt
+        }))
       }
     });
   } catch (error) {
+    logger.error('Get employer dashboard error:', error);
     next(error);
   }
 };
 
-// Job analytics
+// Job analytics for employer
 exports.getJobAnalytics = async (req, res, next) => {
   try {
     const { jobId } = req.params;
+    const employerId = req.user.id;
 
-    const job = await Job.findById(jobId);
+    // Verify job belongs to employer
+    const job = await prisma.job.findFirst({
+      where: {
+        id: parseInt(jobId),
+        createdById: employerId
+      }
+    });
+
     if (!job) {
       return next(new AppError('Job not found', 404));
     }
 
-    const company = await Company.findOne({ userId: req.user.id });
-    if (!company || job.companyId.toString() !== company._id.toString()) {
-      return next(new AppError('Not authorized', 403));
-    }
-
-    const [applications, interviews, avgScore] = await Promise.all([
-      Application.countDocuments({ jobId }),
-      Interview.countDocuments({ jobId }),
-      Interview.aggregate([
-        { $match: { jobId: jobId, status: 'completed' } },
-        { $group: { _id: null, avgScore: { $avg: '$aiEvaluation.overallScore' } } }
-      ])
+    const [applicationsCount, interviewsCount, applications] = await Promise.all([
+      prisma.application.count({
+        where: { jobId: parseInt(jobId) }
+      }),
+      prisma.interview.count({
+        where: { jobId: parseInt(jobId) }
+      }),
+      prisma.application.groupBy({
+        by: ['status'],
+        where: { jobId: parseInt(jobId) },
+        _count: true
+      })
     ]);
 
-    const applicationTrend = await Application.aggregate([
-      { $match: { jobId: jobId } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
-
-    const topCandidates = await Interview.find({ jobId, status: 'completed' })
-      .populate('candidateId', 'firstName lastName email')
-      .sort('-aiEvaluation.overallScore')
-      .limit(10)
-      .lean();
+    const statusBreakdown = applications.reduce((acc, item) => {
+      acc[item.status.toLowerCase()] = item._count;
+      return acc;
+    }, {});
 
     res.json({
       success: true,
       data: {
-        job,
-        totalApplications: applications,
-        totalInterviews: interviews,
-        averageScore: avgScore[0]?.avgScore || 0,
-        applicationTrend,
-        topCandidates
+        jobTitle: job.title,
+        totalApplications: applicationsCount,
+        totalInterviews: interviewsCount,
+        statusBreakdown
       }
     });
   } catch (error) {
+    logger.error('Get job analytics error:', error);
     next(error);
   }
 };
@@ -195,142 +237,148 @@ exports.getJobAnalytics = async (req, res, next) => {
 // Admin dashboard analytics
 exports.getAdminDashboard = async (req, res, next) => {
   try {
-    const [totalUsers, totalJobs, totalInterviews, totalRevenue] = await Promise.all([
-      User.countDocuments({ isActive: true }),
-      Job.countDocuments(),
-      Interview.countDocuments(),
-      Payment.aggregate([
-        { $match: { status: 'completed' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ])
+    const [usersCount, jobsCount, applicationsCount, interviewsCount, paymentsCount] = await Promise.all([
+      prisma.user.count(),
+      prisma.job.count(),
+      prisma.application.count(),
+      prisma.interview.count(),
+      prisma.payment.count()
     ]);
 
-    const usersByRole = await User.aggregate([
-      { $match: { isActive: true } },
-      { $group: { _id: '$role', count: { $sum: 1 } } }
-    ]);
-
-    const userGrowth = await User.aggregate([
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } },
-      { $limit: 12 }
-    ]);
-
-    const revenueByMonth = await Payment.aggregate([
-      { $match: { status: 'completed' } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m', date: '$paidAt' } },
-          revenue: { $sum: '$amount' }
-        }
-      },
-      { $sort: { _id: 1 } },
-      { $limit: 12 }
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        totalUsers,
-        totalJobs,
-        totalInterviews,
-        totalRevenue: totalRevenue[0]?.total || 0,
-        usersByRole,
-        userGrowth,
-        revenueByMonth
-      }
+    // Get user breakdown by role
+    const usersByRole = await prisma.user.groupBy({
+      by: ['role'],
+      _count: true
     });
-  } catch (error) {
-    next(error);
-  }
-};
 
-// Revenue analytics
-exports.getRevenueAnalytics = async (req, res, next) => {
-  try {
-    const { startDate, endDate } = req.query;
+    const roleBreakdown = usersByRole.reduce((acc, item) => {
+      acc[item.role.toLowerCase()] = item._count;
+      return acc;
+    }, {});
 
-    const dateFilter = {};
-    if (startDate) dateFilter.$gte = new Date(startDate);
-    if (endDate) dateFilter.$lte = new Date(endDate);
-
-    const query = { status: 'completed' };
-    if (Object.keys(dateFilter).length > 0) {
-      query.paidAt = dateFilter;
-    }
-
-    const [totalRevenue, revenueByType, recentPayments] = await Promise.all([
-      Payment.aggregate([
-        { $match: query },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]),
-      Payment.aggregate([
-        { $match: query },
-        { $group: { _id: '$type', total: { $sum: '$amount' }, count: { $sum: 1 } } }
-      ]),
-      Payment.find(query)
-        .populate('userId', 'firstName lastName email')
-        .sort('-paidAt')
-        .limit(20)
-        .lean()
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        totalRevenue: totalRevenue[0]?.total || 0,
-        revenueByType,
-        recentPayments
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// User analytics
-exports.getUserAnalytics = async (req, res, next) => {
-  try {
-    const activeUsers = await User.countDocuments({ isActive: true });
-    const inactiveUsers = await User.countDocuments({ isActive: false });
-    const verifiedUsers = await User.countDocuments({ isEmailVerified: true });
-
-    const userActivity = await User.aggregate([
-      {
-        $project: {
-          role: 1,
-          lastLogin: 1,
-          daysSinceLogin: {
-            $divide: [
-              { $subtract: [new Date(), '$lastLogin'] },
-              1000 * 60 * 60 * 24
-            ]
+    // Get recent activity
+    const recentActivity = await prisma.activityLog.findMany({
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true
           }
         }
       },
-      {
-        $group: {
-          _id: '$role',
-          avgDaysSinceLogin: { $avg: '$daysSinceLogin' }
-        }
-      }
-    ]);
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    });
 
     res.json({
       success: true,
       data: {
-        activeUsers,
-        inactiveUsers,
-        verifiedUsers,
-        userActivity
+        users: usersCount,
+        jobs: jobsCount,
+        applications: applicationsCount,
+        interviews: interviewsCount,
+        payments: paymentsCount,
+        usersByRole: roleBreakdown,
+        recentActivity: recentActivity.map(log => ({
+          id: log.id,
+          action: log.action,
+          description: log.description,
+          userName: log.user ? `${log.user.firstName} ${log.user.lastName}` : 'System',
+          timestamp: log.createdAt
+        }))
       }
     });
   } catch (error) {
+    logger.error('Get admin dashboard error:', error);
+    next(error);
+  }
+};
+
+// Revenue analytics for admin
+exports.getRevenueAnalytics = async (req, res, next) => {
+  try {
+    const payments = await prisma.payment.findMany({
+      where: {
+        status: 'COMPLETED'
+      },
+      select: {
+        amount: true,
+        createdAt: true,
+        currency: true
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+    // Group by month
+    const monthlyRevenue = payments.reduce((acc, payment) => {
+      const month = payment.createdAt.toISOString().slice(0, 7); // YYYY-MM
+      if (!acc[month]) {
+        acc[month] = 0;
+      }
+      acc[month] += parseFloat(payment.amount);
+      return acc;
+    }, {});
+
+    res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        currency: payments[0]?.currency || 'ETB',
+        monthlyRevenue: Object.entries(monthlyRevenue).map(([month, amount]) => ({
+          month,
+          amount
+        }))
+      }
+    });
+  } catch (error) {
+    logger.error('Get revenue analytics error:', error);
+    next(error);
+  }
+};
+
+// User analytics for admin
+exports.getUserAnalytics = async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        createdAt: true,
+        role: true,
+        isActive: true
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    // Group by month
+    const userGrowth = users.reduce((acc, user) => {
+      const month = user.createdAt.toISOString().slice(0, 7);
+      if (!acc[month]) {
+        acc[month] = { total: 0, candidate: 0, employer: 0, admin: 0 };
+      }
+      acc[month].total++;
+      acc[month][user.role.toLowerCase()]++;
+      return acc;
+    }, {});
+
+    const activeUsers = users.filter(u => u.isActive).length;
+    const inactiveUsers = users.length - activeUsers;
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers: users.length,
+        activeUsers,
+        inactiveUsers,
+        userGrowth: Object.entries(userGrowth).map(([month, data]) => ({
+          month,
+          ...data
+        }))
+      }
+    });
+  } catch (error) {
+    logger.error('Get user analytics error:', error);
     next(error);
   }
 };

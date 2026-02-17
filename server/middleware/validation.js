@@ -23,11 +23,11 @@ const validateRegister = [
     .withMessage('Password must be at least 6 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
-  body('first_name')
+  body('firstName')
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('First name must be between 2 and 50 characters'),
-  body('last_name')
+  body('lastName')
     .trim()
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),

@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { initializeChapa, verifyChapa } = require('../services/chapaService');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
