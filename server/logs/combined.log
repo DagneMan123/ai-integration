@@ -187,3 +187,11 @@
 {"level":"info","message":"Prisma Info Starting a postgresql pool with 10 connections.","service":"simuai-api","target":"quaint::pooled","timestamp":"2026-02-17T13:08:44.128Z"}
 {"error":"Connection closed unexpectedly","level":"error","message":"Failed to send email","service":"simuai-api","subject":"Verify Your Email - SimuAI","timestamp":"2026-02-17T13:09:07.377Z","to":"abu1232@gmail.com"}
 {"email":"abu1232@gmail.com","error":"Connection closed unexpectedly","level":"warn","message":"Failed to send verification email","service":"simuai-api","timestamp":"2026-02-17T13:09:07.379Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T17:57:24.309Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T17:57:27.037Z"}
+{"level":"info","message":"Prisma Info Starting a postgresql pool with 10 connections.","service":"simuai-api","target":"quaint::pooled","timestamp":"2026-02-17T18:19:09.291Z"}
+{"level":"error","message":"Invalid credentials - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-17T18:19:12.513Z"}
+{"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-17T18:19:12.548Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-02-17T21:12:08.169Z"}
+{"level":"info","message":"✅ Prisma Client is ready","service":"simuai-api","timestamp":"2026-02-17T21:12:09.773Z"}
+{"level":"info","message":"Prisma Info Starting a postgresql pool with 10 connections.","service":"simuai-api","target":"quaint::pooled","timestamp":"2026-02-17T21:14:46.061Z"}

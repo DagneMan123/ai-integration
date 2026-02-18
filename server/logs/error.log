@@ -80,3 +80,5 @@
 {"error":"nodemailer.createTransport is not a function","level":"error","message":"Failed to send email","service":"simuai-api","subject":"Verify Your Email - SimuAI","timestamp":"2026-02-17T11:49:18.464Z","to":"dagne123@gmail.com"}
 {"error":"nodemailer.createTransport is not a function","level":"error","message":"Failed to send email","service":"simuai-api","subject":"Verify Your Email - SimuAI","timestamp":"2026-02-17T12:56:43.777Z","to":"gezmu123@gmail.com"}
 {"error":"Connection closed unexpectedly","level":"error","message":"Failed to send email","service":"simuai-api","subject":"Verify Your Email - SimuAI","timestamp":"2026-02-17T13:09:07.377Z","to":"abu1232@gmail.com"}
+{"level":"error","message":"Invalid credentials - /api/auth/login - POST - ::1","service":"simuai-api","timestamp":"2026-02-17T18:19:12.513Z"}
+{"level":"error","message":"Refresh token required - /api/auth/refresh-token - POST - ::1","service":"simuai-api","timestamp":"2026-02-17T18:19:12.548Z"}

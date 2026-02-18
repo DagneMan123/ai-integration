@@ -4,19 +4,20 @@ const { sendEmail } = require('../utils/email');
 const { AppError } = require('../middleware/errorHandler');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const { logger, logActivity } = require('../utils/logger'); // logActivity ተጨምሯል
+const { logger, logActivity } = require('../utils/logger');
 
 // Password hashing helper
 const hashPassword = async (password) => {
   return await bcrypt.hash(password, 12);
 };
 
-// Register user
+// 1. Register User
 exports.register = async (req, res, next) => {
   try {
     const { email, password, role, firstName, lastName, companyName } = req.body;
+    const normalizedEmail = email.toLowerCase().trim();
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return next(new AppError('Email already registered', 400));
     }
@@ -26,13 +27,12 @@ exports.register = async (req, res, next) => {
     const verificationToken = crypto.createHash('sha256').update(rawToken).digest('hex');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); 
 
-    // Convert role to uppercase for enum
     const userRole = role ? role.toUpperCase() : 'CANDIDATE';
 
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
-          email,
+          email: normalizedEmail,
           passwordHash: hashedPassword,
           role: userRole,
           firstName,
@@ -44,9 +44,7 @@ exports.register = async (req, res, next) => {
       });
 
       if (role === 'candidate') {
-        await tx.candidateProfile.create({
-          data: { userId: newUser.id }
-        });
+        await tx.candidateProfile.create({ data: { userId: newUser.id } });
       } else if (role === 'employer') {
         await tx.company.create({
           data: {
@@ -59,29 +57,24 @@ exports.register = async (req, res, next) => {
       return newUser;
     });
 
-    // Log Activity
-    await logActivity(user.id, 'register', 'user', user.id, { role }, req.ip, req.get('User-Agent'));
+    // ID-ን ወደ Number ቀይሮ መላክ (Type fix)
+    await logActivity(Number(user.id), 'register', 'user', String(user.id), { role }, req.ip, req.get('User-Agent'));
 
-    // Try to send verification email (don't fail registration if email fails)
     try {
       const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${rawToken}`;
       await sendEmail({
-        to: email,
+        to: user.email,
         subject: 'Verify Your Email - SimuAI',
         html: `<h1>Welcome!</h1><p>Please verify your email: <a href="${verificationUrl}">Verify Email</a></p>`
       });
     } catch (emailError) {
-      logger.warn('Failed to send verification email', { email, error: emailError.message });
-      // Continue with registration even if email fails
+      logger.warn('Failed to send verification email', { email: user.email, error: emailError.message });
     }
-
-    const token = generateToken({ id: user.id, role: user.role });
-    const refreshToken = generateRefreshToken({ id: user.id });
 
     res.status(201).json({
       success: true,
-      token,
-      refreshToken,
+      token: generateToken({ id: user.id, role: user.role }),
+      refreshToken: generateRefreshToken({ id: user.id }),
       user: { id: user.id, email: user.email, role: user.role.toLowerCase() }
     });
   } catch (error) {
@@ -89,50 +82,32 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// Login user
+// 2. Login User
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = email.toLowerCase().trim();
 
     const user = await prisma.user.findUnique({ 
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
-        id: true,
-        email: true,
-        passwordHash: true,
-        role: true,
-        firstName: true,
-        lastName: true,
-        isLocked: true,
-        loginAttempts: true,
-        isVerified: true
+        id: true, email: true, passwordHash: true, role: true, 
+        isLocked: true, loginAttempts: true, isVerified: true
       }
     });
     
-    if (!user) {
-      return next(new AppError('Invalid credentials', 401));
-    }
+    if (!user) return next(new AppError('Invalid credentials', 401));
+    if (user.isLocked) return next(new AppError('Account is locked', 403));
 
-    if (!user.passwordHash) {
-      logger.error('User has no password', { email });
-      return next(new AppError('Invalid credentials', 401));
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
     
-    if (!isPasswordValid) {
+    if (!isMatch) {
+      const newAttempts = user.loginAttempts + 1;
       await prisma.user.update({
         where: { id: user.id },
-        data: { 
-          loginAttempts: { increment: 1 },
-          isLocked: user.loginAttempts + 1 >= 5 ? true : false
-        }
+        data: { loginAttempts: newAttempts, isLocked: newAttempts >= 5 }
       });
       return next(new AppError('Invalid credentials', 401));
-    }
-
-    if (user.isLocked) {
-      return next(new AppError('Account is locked', 403));
     }
 
     await prisma.user.update({
@@ -140,43 +115,36 @@ exports.login = async (req, res, next) => {
       data: { loginAttempts: 0, lastLogin: new Date() }
     });
 
-    // Log Activity
-    await logActivity(user.id, 'login', 'user', user.id, {}, req.ip, req.get('User-Agent'));
-
-    const token = generateToken({ id: user.id, role: user.role });
-    const refreshToken = generateRefreshToken({ id: user.id });
+    await logActivity(Number(user.id), 'login', 'user', String(user.id), {}, req.ip, req.get('User-Agent'));
 
     res.json({
       success: true,
-      token,
-      refreshToken,
-      user: { id: user.id, email: user.email, role: user.role.toLowerCase(), firstName: user.firstName, lastName: user.lastName }
+      token: generateToken({ id: user.id, role: user.role }),
+      refreshToken: generateRefreshToken({ id: user.id }),
+      user: { id: user.id, email: user.email, role: user.role.toLowerCase() }
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Forgot password
+// 3. Forgot Password
 exports.forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return next(new AppError('No user found', 404));
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (!user) return next(new AppError('No user found with this email', 404));
 
     const rawToken = crypto.randomBytes(32).toString('hex');
     const resetToken = crypto.createHash('sha256').update(rawToken).digest('hex');
 
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        resetPasswordToken: resetToken,
-        resetPasswordExpires: new Date(Date.now() + 3600000) 
-      }
+      data: { resetPasswordToken: resetToken, resetPasswordExpires: new Date(Date.now() + 3600000) }
     });
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${rawToken}`;
-    await sendEmail({ to: email, subject: 'Password Reset', html: `<a href="${resetUrl}">Reset Password</a>` });
+    await sendEmail({ to: user.email, subject: 'Password Reset', html: `<a href="${resetUrl}">Reset Password</a>` });
 
     res.json({ success: true, message: 'Reset link sent' });
   } catch (error) {
@@ -184,7 +152,7 @@ exports.forgotPassword = async (req, res, next) => {
   }
 };
 
-// Reset password
+// 4. Reset Password
 exports.resetPassword = async (req, res, next) => {
   try {
     const { token } = req.params;
@@ -192,10 +160,7 @@ exports.resetPassword = async (req, res, next) => {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await prisma.user.findFirst({
-      where: {
-        resetPasswordToken: hashedToken,
-        resetPasswordExpires: { gt: new Date() }
-      }
+      where: { resetPasswordToken: hashedToken, resetPasswordExpires: { gt: new Date() } }
     });
 
     if (!user) return next(new AppError('Invalid or expired token', 400));
@@ -203,56 +168,53 @@ exports.resetPassword = async (req, res, next) => {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        password: await hashPassword(password),
+        passwordHash: await hashPassword(password),
         resetPasswordToken: null,
-        resetPasswordExpires: null
+        resetPasswordExpires: null,
+        isLocked: false,
+        loginAttempts: 0
       }
     });
 
-    await logActivity(user.id, 'password_reset', 'user', user.id, {}, req.ip, req.get('User-Agent'));
-
+    await logActivity(Number(user.id), 'password_reset', 'user', String(user.id), {}, req.ip, req.get('User-Agent'));
     res.json({ success: true, message: 'Password reset successful' });
   } catch (error) {
     next(error);
   }
 };
 
-// Verify email
+// 5. Verify Email
 exports.verifyEmail = async (req, res, next) => {
   try {
     const { token } = req.params;
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await prisma.user.findFirst({
-      where: {
-        emailVerificationToken: hashedToken,
-        emailVerificationExpires: { gt: new Date() }
-      }
+      where: { emailVerificationToken: hashedToken, emailVerificationExpires: { gt: new Date() } }
     });
 
-    if (!user) return next(new AppError('Invalid or expired token', 400));
+    if (!user) return next(new AppError('Invalid token', 400));
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { isEmailVerified: true, emailVerificationToken: null, emailVerificationExpires: null }
+      data: { isVerified: true, emailVerificationToken: null, emailVerificationExpires: null }
     });
 
-    await logActivity(user.id, 'email_verified', 'user', user.id, {}, req.ip, req.get('User-Agent'));
-
+    await logActivity(Number(user.id), 'email_verified', 'user', String(user.id), {}, req.ip, req.get('User-Agent'));
     res.json({ success: true, message: 'Email verified' });
   } catch (error) {
     next(error);
   }
 };
 
-// FIXED: Added missing resendVerification function
+// 6. Resend Verification (ይህ ስላልነበረ ነው አፑ የቆመው)
 exports.resendVerification = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
 
     if (!user) return next(new AppError('User not found', 404));
-    if (user.isEmailVerified) return next(new AppError('Email already verified', 400));
+    if (user.isVerified) return next(new AppError('Email already verified', 400));
 
     const rawToken = crypto.randomBytes(32).toString('hex');
     const verificationToken = crypto.createHash('sha256').update(rawToken).digest('hex');
@@ -266,11 +228,7 @@ exports.resendVerification = async (req, res, next) => {
     });
 
     const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${rawToken}`;
-    await sendEmail({
-      to: email,
-      subject: 'Verify Your Email - SimuAI',
-      html: `<p>Please verify your email: <a href="${verificationUrl}">Verify Email</a></p>`
-    });
+    await sendEmail({ to: user.email, subject: 'Verify Email', html: `<a href="${verificationUrl}">Verify Now</a>` });
 
     res.json({ success: true, message: 'Verification email sent' });
   } catch (error) {
@@ -278,7 +236,7 @@ exports.resendVerification = async (req, res, next) => {
   }
 };
 
-// Refresh token
+// 7. Refresh Token
 exports.refreshToken = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
@@ -299,6 +257,7 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
+// 8. Logout
 exports.logout = async (req, res) => {
-  res.json({ success: true, message: 'Logged out' });
+  res.json({ success: true, message: 'Logged out successfully' });
 };

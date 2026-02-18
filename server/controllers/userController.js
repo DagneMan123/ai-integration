@@ -6,12 +6,11 @@ const bcrypt = require('bcryptjs');
 // Get user profile
 exports.getProfile = async (req, res, next) => {
   try {
-    // Prisma uses findUnique and 'include' for relations
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       include: {
         candidateProfile: true,
-        companies: true
+        company: true
       }
     });
 
@@ -19,7 +18,6 @@ exports.getProfile = async (req, res, next) => {
       return next(new AppError('User not found', 404));
     }
 
-    // Don't send password back
     const { passwordHash, ...userWithoutPassword } = user;
 
     res.json({
@@ -36,21 +34,19 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const { firstName, lastName, phone, ...otherFields } = req.body;
 
-    // 1. Update basic user info
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: { firstName, lastName, phone }
     });
 
-    // 2. Update role-specific profile
-    if (user.role === 'candidate') {
+    if (user.role === 'CANDIDATE') {
       await prisma.candidateProfile.update({
         where: { userId: user.id },
         data: otherFields
       });
-    } else if (user.role === 'employer') {
+    } else if (user.role === 'EMPLOYER') {
       await prisma.company.update({
-        where: { userId: user.id },
+        where: { createdById: user.id },
         data: otherFields
       });
     }
@@ -71,20 +67,19 @@ exports.updatePassword = async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id }
+      where: { id: req.user.id },
+      select: { passwordHash: true }
     });
 
-    // Verify current password
-    const isValid = await bcrypt.compare(currentPassword, user.password);
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!isValid) {
       return next(new AppError('Current password is incorrect', 401));
     }
 
-    // Hash new password and save
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({
       where: { id: req.user.id },
-      data: { password: hashedPassword }
+      data: { passwordHash: hashedPassword }
     });
 
     res.json({
@@ -103,10 +98,8 @@ exports.uploadAvatar = async (req, res, next) => {
       return next(new AppError('Please upload a file', 400));
     }
 
-    // Upload to cloud storage
     const avatarUrl = await uploadToCloud(req.file, 'avatars');
 
-    // Update user
     await prisma.user.update({
       where: { id: req.user.id },
       data: { avatar: avatarUrl }

@@ -19,7 +19,8 @@ const Login: React.FC = () => {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      const response = await authAPI.login(data);
+      const response: any = await authAPI.login(data);
+      
       const { user, token, refreshToken } = response.data;
       
       setAuth(user, token, refreshToken);
@@ -58,7 +59,7 @@ const Login: React.FC = () => {
               placeholder="Enter your email"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-danger">{errors.email.message}</p>
+              <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
             )}
           </div>
 
@@ -73,7 +74,7 @@ const Login: React.FC = () => {
               placeholder="Enter your password"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-danger">{errors.password.message}</p>
+              <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
             )}
           </div>
 
