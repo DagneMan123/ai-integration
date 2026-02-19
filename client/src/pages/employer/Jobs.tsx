@@ -105,7 +105,7 @@ const EmployerJobs: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {Array.isArray(job.skills) && job.skills.slice(0, 5).map((skill, index) => (
+                  {Array.isArray(job.requiredSkills || job.skills) && (job.requiredSkills || job.skills)?.slice(0, 5).map((skill, index) => (
                     <span
                       key={index}
                       className="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full"

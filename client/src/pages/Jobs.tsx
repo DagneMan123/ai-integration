@@ -144,9 +144,9 @@ const Jobs: React.FC = () => {
                     )}
                   </div>
 
-                  {Array.isArray(job.skills) && job.skills.length > 0 && (
+                  {Array.isArray(job.requiredSkills || job.skills) && (job.requiredSkills || job.skills) && (job.requiredSkills || job.skills)!.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {job.skills.slice(0, 5).map((skill, index) => (
+                      {(job.requiredSkills || job.skills)!.slice(0, 5).map((skill, index) => (
                         <span
                           key={index}
                           className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full"
@@ -154,9 +154,9 @@ const Jobs: React.FC = () => {
                           {skill}
                         </span>
                       ))}
-                      {job.skills.length > 5 && (
+                      {(job.requiredSkills || job.skills)!.length > 5 && (
                         <span className="inline-block text-gray-500 text-xs px-3 py-1">
-                          +{job.skills.length - 5} more
+                          +{(job.requiredSkills || job.skills)!.length - 5} more
                         </span>
                       )}
                     </div>

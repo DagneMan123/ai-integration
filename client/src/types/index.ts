@@ -29,18 +29,20 @@ export interface Job {
   description: string;
   companyId?: Company;
   company?: Company;
-  category?: string;
   experienceLevel?: string;
   location?: string;
+  salaryMin?: number;
+  salaryMax?: number;
   salary?: {
     min: number;
     max: number;
     currency: string;
   };
-  salaryMin?: number;
-  salaryMax?: number;
-  skills: string[];
-  status: 'active' | 'closed' | 'draft' | 'ACTIVE' | 'CLOSED' | 'DRAFT';
+  requiredSkills?: string[];
+  skills?: string[];
+  jobType?: string;
+  interviewType?: string;
+  status: 'ACTIVE' | 'CLOSED' | 'DRAFT' | 'PAUSED' | 'EXPIRED' | 'active' | 'closed' | 'draft';
   isApproved?: boolean;
   views?: number;
   createdAt: string;

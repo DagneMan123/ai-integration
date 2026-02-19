@@ -30,9 +30,13 @@ const JobDetails: React.FC = () => {
       setLoading(true);
       const response = await jobAPI.getJob(id!);
       
-      // Safety check for response structure
-      const data = response.data?.data || response.data;
-      setJob(data || null);
+      // Extract job data from response
+      const jobData = response.data?.data;
+      if (jobData && typeof jobData === 'object' && 'title' in jobData) {
+        setJob(jobData as Job);
+      } else {
+        setJob(null);
+      }
     } catch (error) {
       console.error('Failed to fetch job', error);
       toast.error('Could not load job details');
@@ -130,7 +134,7 @@ const JobDetails: React.FC = () => {
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-3">Required Skills</h2>
             <div className="flex flex-wrap gap-2">
-              {Array.isArray(job.skills) && job.skills.map((skill, index) => (
+              {Array.isArray(job.requiredSkills || job.skills) && (job.requiredSkills || job.skills)?.map((skill, index) => (
                 <span
                   key={index}
                   className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium border border-blue-100"

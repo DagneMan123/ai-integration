@@ -7,35 +7,30 @@ exports.getAllJobs = async (req, res, next) => {
   try {
     const { 
       search, 
-      category, 
       experienceLevel, 
       location, 
       page = 1, 
       limit = 10,
-      sort = 'createdAt' // Prisma sorting uses field name
+      sort = 'createdAt'
     } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
-    // Build filter object
     const where = {
-      status: 'ACTIVE',
-      // Remove isApproved as it's not in schema
+      status: 'ACTIVE'
     };
 
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
       ];
     }
 
-    if (category) where.category = category;
     if (experienceLevel) where.experienceLevel = experienceLevel;
     if (location) where.location = { contains: location, mode: 'insensitive' };
 
-    // Sorting logic (Mongoose '-createdAt' to Prisma object)
     const orderBy = {};
     if (sort.startsWith('-')) {
       orderBy[sort.substring(1)] = 'desc';
@@ -43,13 +38,18 @@ exports.getAllJobs = async (req, res, next) => {
       orderBy[sort] = 'asc';
     }
 
-    // Execute query with transaction for count and data
     const [jobs, count] = await prisma.$transaction([
       prisma.job.findMany({
         where,
         include: {
           company: {
-            select: { name: true, logoUrl: true, industry: true, isVerified: true }
+            select: { 
+              id: true, 
+              name: true, 
+              logoUrl: true, 
+              industry: true, 
+              isVerified: true 
+            }
           }
         },
         orderBy: Object.keys(orderBy).length ? orderBy : { createdAt: 'desc' },
@@ -78,13 +78,11 @@ exports.getJob = async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    // Reject if ID is literally "undefined" string or empty
     if (!id || id === 'undefined' || id.trim() === '') {
       return next(new AppError('Invalid job ID', 400));
     }
     
     const jobId = parseInt(id);
-    
     if (isNaN(jobId)) {
       return next(new AppError('Invalid job ID', 400));
     }
@@ -93,7 +91,15 @@ exports.getJob = async (req, res, next) => {
       where: { id: jobId },
       include: {
         company: {
-          select: { name: true, logo: true, industry: true, description: true, website: true, isVerified: true }
+          select: { 
+            id: true, 
+            name: true, 
+            logoUrl: true, 
+            industry: true, 
+            description: true, 
+            website: true, 
+            isVerified: true 
+          }
         }
       }
     });
@@ -126,7 +132,7 @@ exports.createJob = async (req, res, next) => {
       data: {
         ...req.body,
         companyId: company.id,
-        createdBy: req.user.id
+        createdById: req.user.id
       }
     });
 
@@ -164,8 +170,7 @@ exports.updateJob = async (req, res, next) => {
       return next(new AppError('Job not found', 404));
     }
 
-    // Check ownership
-    if (job.createdBy !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdById !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized to update this job', 403));
     }
 
@@ -206,7 +211,7 @@ exports.deleteJob = async (req, res, next) => {
       return next(new AppError('Job not found', 404));
     }
 
-    if (job.createdBy !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdById !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized to delete this job', 403));
     }
 
@@ -271,7 +276,7 @@ exports.updateJobStatus = async (req, res, next) => {
       return next(new AppError('Job not found', 404));
     }
 
-    if (job.createdBy !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdById !== req.user.id && req.user.role !== 'admin') {
       return next(new AppError('Not authorized', 403));
     }
 
