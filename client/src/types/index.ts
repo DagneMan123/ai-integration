@@ -23,22 +23,26 @@ export interface AuthState {
 }
 
 export interface Job {
-  _id: string;
+  id?: string;
+  _id?: string;
   title: string;
   description: string;
-  companyId: Company;
-  category: string;
-  experienceLevel: string;
-  location: string;
+  companyId?: Company;
+  company?: Company;
+  category?: string;
+  experienceLevel?: string;
+  location?: string;
   salary?: {
     min: number;
     max: number;
     currency: string;
   };
+  salaryMin?: number;
+  salaryMax?: number;
   skills: string[];
-  status: 'active' | 'closed' | 'draft';
-  isApproved: boolean;
-  views: number;
+  status: 'active' | 'closed' | 'draft' | 'ACTIVE' | 'CLOSED' | 'DRAFT';
+  isApproved?: boolean;
+  views?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -65,15 +65,19 @@ const EmployerJobs: React.FC = () => {
 
         <div className="space-y-4">
           {jobs.length > 0 ? (
-            jobs.map((job) => (
-              <div key={job._id} className="bg-white rounded-lg shadow-md p-6">
+            jobs.map((job) => {
+              const jobId = job.id || job._id;
+              if (!jobId) return null;
+              
+              return (
+              <div key={jobId} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          job.status === 'active'
+                          (job.status === 'ACTIVE' || job.status === 'active')
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}
@@ -90,10 +94,10 @@ const EmployerJobs: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-600 mb-2">{job.location} • {job.experienceLevel}</p>
+                    <p className="text-gray-600 mb-2">{job.location || 'Not specified'} • {job.experienceLevel || 'Not specified'}</p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <span className="flex items-center gap-1">
-                        <FiEye /> {job.views} views
+                        <FiEye /> {job.views || 0} views
                       </span>
                       <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -101,7 +105,7 @@ const EmployerJobs: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {job.skills.slice(0, 5).map((skill, index) => (
+                  {Array.isArray(job.skills) && job.skills.slice(0, 5).map((skill, index) => (
                     <span
                       key={index}
                       className="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full"
@@ -113,32 +117,33 @@ const EmployerJobs: React.FC = () => {
 
                 <div className="flex gap-3">
                   <Link
-                    to={`/employer/jobs/${job._id}/candidates`}
+                    to={`/employer/jobs/${jobId}/candidates`}
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm"
                   >
                     <FiUsers /> View Candidates
                   </Link>
                   <Link
-                    to={`/employer/jobs/${job._id}/edit`}
+                    to={`/employer/jobs/${jobId}/edit`}
                     className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm"
                   >
                     <FiEdit /> Edit
                   </Link>
                   <button
-                    onClick={() => handleToggleStatus(job._id, job.status)}
+                    onClick={() => handleToggleStatus(String(jobId), job.status)}
                     className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition text-sm"
                   >
-                    {job.status === 'active' ? 'Close' : 'Activate'}
+                    {job.status === 'ACTIVE' || job.status === 'active' ? 'Close' : 'Activate'}
                   </button>
                   <button
-                    onClick={() => handleDelete(job._id)}
+                    onClick={() => handleDelete(String(jobId))}
                     className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm"
                   >
                     <FiTrash2 /> Delete
                   </button>
                 </div>
               </div>
-            ))
+            );
+            })
           ) : (
             <div className="text-center py-12 bg-white rounded-lg shadow-md">
               <p className="text-gray-500 text-lg mb-4">No jobs posted yet</p>

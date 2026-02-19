@@ -16,15 +16,26 @@ const JobDetails: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchJob();
+    // Block both null and the literal string "undefined"
+    if (id && id !== 'undefined') {
+      fetchJob();
+    } else {
+      setLoading(false);
+      setJob(null);
+    }
   }, [id]);
 
   const fetchJob = async () => {
     try {
+      setLoading(true);
       const response = await jobAPI.getJob(id!);
-      setJob(response.data.data || null);
+      
+      // Safety check for response structure
+      const data = response.data?.data || response.data;
+      setJob(data || null);
     } catch (error) {
       console.error('Failed to fetch job', error);
+      toast.error('Could not load job details');
       setJob(null);
     } finally {
       setLoading(false);
@@ -42,6 +53,11 @@ const JobDetails: React.FC = () => {
       return;
     }
 
+    if (!id || id === 'undefined') {
+      toast.error('Invalid Job ID');
+      return;
+    }
+
     setApplying(true);
     try {
       await applicationAPI.createApplication({ jobId: id });
@@ -55,7 +71,20 @@ const JobDetails: React.FC = () => {
   };
 
   if (loading) return <Loading />;
-  if (!job) return <div className="text-center py-12">Job not found</div>;
+  
+  if (!job) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-semibold text-gray-600">Job not found</h2>
+        <button 
+          onClick={() => navigate('/jobs')}
+          className="mt-4 text-blue-600 hover:underline"
+        >
+          Back to Jobs
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -64,9 +93,11 @@ const JobDetails: React.FC = () => {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
-              <p className="text-xl text-gray-600">{job.companyId?.name}</p>
+              <p className="text-xl text-gray-600">
+                {typeof job.companyId === 'object' ? job.companyId?.name : 'Company'}
+              </p>
             </div>
-            {job.companyId?.isVerified && (
+            {typeof job.companyId === 'object' && job.companyId?.isVerified && (
               <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium">
                 ✓ Verified Company
               </span>
@@ -75,34 +106,34 @@ const JobDetails: React.FC = () => {
 
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div className="flex items-center gap-2 text-gray-600">
-              <FiMapPin className="text-primary" />
-              <span>{job.location}</span>
+              <FiMapPin className="text-blue-600" />
+              <span>{job.location || 'Remote'}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-600">
-              <FiBriefcase className="text-primary" />
+              <FiBriefcase className="text-blue-600" />
               <span>{job.experienceLevel}</span>
             </div>
             {job.salary && (
               <div className="flex items-center gap-2 text-gray-600">
-                <FiDollarSign className="text-primary" />
+                <FiDollarSign className="text-blue-600" />
                 <span>
-                  {job.salary.min} - {job.salary.max} {job.salary.currency}
+                  {job.salary.min?.toLocaleString()} - {job.salary.max?.toLocaleString()} {job.salary.currency || 'USD'}
                 </span>
               </div>
             )}
             <div className="flex items-center gap-2 text-gray-600">
-              <FiClock className="text-primary" />
-              <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
+              <FiClock className="text-blue-600" />
+              <span>Posted {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Recently'}</span>
             </div>
           </div>
 
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-3">Required Skills</h2>
             <div className="flex flex-wrap gap-2">
-              {job.skills.map((skill, index) => (
+              {Array.isArray(job.skills) && job.skills.map((skill, index) => (
                 <span
                   key={index}
-                  className="bg-primary-light text-primary px-4 py-2 rounded-lg font-medium"
+                  className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium border border-blue-100"
                 >
                   {skill}
                 </span>
@@ -110,49 +141,49 @@ const JobDetails: React.FC = () => {
             </div>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-900 mb-3">Job Description</h2>
-            <p className="text-gray-700 whitespace-pre-line">{job.description}</p>
+            <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+              {job.description}
+            </p>
           </div>
 
-          {user?.role === 'candidate' && (
+          {user?.role === 'candidate' ? (
             <button
               onClick={handleApply}
               disabled={applying}
-              className="w-full bg-primary text-white py-4 rounded-lg font-semibold hover:bg-primary-dark transition disabled:opacity-50 text-lg"
+              className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 text-lg shadow-lg"
             >
               {applying ? 'Applying...' : 'Apply Now'}
             </button>
-          )}
-
-          {!user && (
+          ) : !user ? (
             <button
               onClick={() => navigate('/login')}
-              className="w-full bg-primary text-white py-4 rounded-lg font-semibold hover:bg-primary-dark transition text-lg"
+              className="w-full bg-gray-800 text-white py-4 rounded-lg font-semibold hover:bg-gray-900 transition text-lg"
             >
               Login to Apply
             </button>
-          )}
+          ) : null}
         </div>
 
-        {job.companyId && (
-          <div className="bg-white rounded-lg shadow-md p-8">
+        {typeof job.companyId === 'object' && job.companyId && (
+          <div className="bg-white rounded-lg shadow-md p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">About the Company</h2>
             <div className="flex items-start gap-4">
               {job.companyId.logo && (
                 <img
                   src={job.companyId.logo}
                   alt={job.companyId.name}
-                  className="w-16 h-16 rounded-lg object-cover"
+                  className="w-16 h-16 rounded-lg object-cover border"
                 />
               )}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 mb-1">
                   {job.companyId.name}
                 </h3>
-                <p className="text-gray-600 mb-2">{job.companyId.industry}</p>
+                <p className="text-blue-600 text-sm font-medium mb-2">{job.companyId.industry}</p>
                 {job.companyId.description && (
-                  <p className="text-gray-700">{job.companyId.description}</p>
+                  <p className="text-gray-600 leading-relaxed">{job.companyId.description}</p>
                 )}
               </div>
             </div>

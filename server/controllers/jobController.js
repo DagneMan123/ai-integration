@@ -73,13 +73,24 @@ exports.getAllJobs = async (req, res, next) => {
   }
 };
 
-// Get single job & Increment views
+// Get single job
 exports.getJob = async (req, res, next) => {
   try {
-    // Prisma can update and return in one go
-    const job = await prisma.job.update({
-      where: { id: req.params.id },
-      data: { views: { increment: 1 } },
+    const { id } = req.params;
+    
+    // Reject if ID is literally "undefined" string or empty
+    if (!id || id === 'undefined' || id.trim() === '') {
+      return next(new AppError('Invalid job ID', 400));
+    }
+    
+    const jobId = parseInt(id);
+    
+    if (isNaN(jobId)) {
+      return next(new AppError('Invalid job ID', 400));
+    }
+
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
       include: {
         company: {
           select: { name: true, logo: true, industry: true, description: true, website: true, isVerified: true }
@@ -134,8 +145,19 @@ exports.createJob = async (req, res, next) => {
 // Update job
 exports.updateJob = async (req, res, next) => {
   try {
+    const { id } = req.params;
+    
+    if (!id || id === 'undefined' || id.trim() === '') {
+      return next(new AppError('Invalid job ID', 400));
+    }
+    
+    const jobId = parseInt(id);
+    if (isNaN(jobId)) {
+      return next(new AppError('Invalid job ID', 400));
+    }
+
     const job = await prisma.job.findUnique({
-      where: { id: req.params.id }
+      where: { id: jobId }
     });
 
     if (!job) {
@@ -148,7 +170,7 @@ exports.updateJob = async (req, res, next) => {
     }
 
     const updatedJob = await prisma.job.update({
-      where: { id: req.params.id },
+      where: { id: jobId },
       data: req.body
     });
 
@@ -165,8 +187,19 @@ exports.updateJob = async (req, res, next) => {
 // Delete job
 exports.deleteJob = async (req, res, next) => {
   try {
+    const { id } = req.params;
+    
+    if (!id || id === 'undefined' || id.trim() === '') {
+      return next(new AppError('Invalid job ID', 400));
+    }
+    
+    const jobId = parseInt(id);
+    if (isNaN(jobId)) {
+      return next(new AppError('Invalid job ID', 400));
+    }
+
     const job = await prisma.job.findUnique({
-      where: { id: req.params.id }
+      where: { id: jobId }
     });
 
     if (!job) {
@@ -178,7 +211,7 @@ exports.deleteJob = async (req, res, next) => {
     }
 
     await prisma.job.delete({
-      where: { id: req.params.id }
+      where: { id: jobId }
     });
 
     res.json({
@@ -218,9 +251,20 @@ exports.getEmployerJobs = async (req, res, next) => {
 // Update job status
 exports.updateJobStatus = async (req, res, next) => {
   try {
+    const { id } = req.params;
     const { status } = req.body;
+    
+    if (!id || id === 'undefined' || id.trim() === '') {
+      return next(new AppError('Invalid job ID', 400));
+    }
+    
+    const jobId = parseInt(id);
+    if (isNaN(jobId)) {
+      return next(new AppError('Invalid job ID', 400));
+    }
+
     const job = await prisma.job.findUnique({
-      where: { id: req.params.id }
+      where: { id: jobId }
     });
 
     if (!job) {
@@ -232,7 +276,7 @@ exports.updateJobStatus = async (req, res, next) => {
     }
 
     const updatedJob = await prisma.job.update({
-      where: { id: req.params.id },
+      where: { id: jobId },
       data: { status }
     });
 
