@@ -26,11 +26,20 @@ const Register: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setLoading(true);
     try {
+      console.log('Sending registration data:', data);
       const response = await authAPI.register(data);
+      console.log('Registration response:', response.data);
       
-      // Don't auto-login, redirect to login page instead
-      toast.success('Registration successful! Please login to continue.');
-      navigate('/login');
+      // Auto-login after successful registration
+      if (response.data.success && response.data.token) {
+        const { user, token, refreshToken } = response.data;
+        setAuth(user, token, refreshToken);
+        toast.success('Registration successful!');
+        navigate(`/${user.role}/dashboard`);
+      } else {
+        toast.success('Registration successful! Please login to continue.');
+        navigate('/login');
+      }
     } catch (error: any) {
       console.error('Registration error:', error);
       const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Registration failed';

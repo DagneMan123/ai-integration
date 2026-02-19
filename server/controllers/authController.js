@@ -75,7 +75,15 @@ exports.register = async (req, res, next) => {
       success: true,
       token: generateToken({ id: user.id, role: user.role }),
       refreshToken: generateRefreshToken({ id: user.id }),
-      user: { id: user.id, email: user.email, role: user.role.toLowerCase() }
+      user: { 
+        id: String(user.id), 
+        email: user.email, 
+        role: user.role.toLowerCase(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isEmailVerified: user.isVerified,
+        isActive: true
+      }
     });
   } catch (error) {
     next(error);
@@ -92,6 +100,7 @@ exports.login = async (req, res, next) => {
       where: { email: normalizedEmail },
       select: {
         id: true, email: true, passwordHash: true, role: true, 
+        firstName: true, lastName: true,
         isLocked: true, loginAttempts: true, isVerified: true
       }
     });
@@ -121,7 +130,15 @@ exports.login = async (req, res, next) => {
       success: true,
       token: generateToken({ id: user.id, role: user.role }),
       refreshToken: generateRefreshToken({ id: user.id }),
-      user: { id: user.id, email: user.email, role: user.role.toLowerCase() }
+      user: { 
+        id: String(user.id), 
+        email: user.email, 
+        role: user.role.toLowerCase(),
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        isEmailVerified: user.isVerified,
+        isActive: true
+      }
     });
   } catch (error) {
     next(error);

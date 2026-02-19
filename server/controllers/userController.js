@@ -10,7 +10,7 @@ exports.getProfile = async (req, res, next) => {
       where: { id: req.user.id },
       include: {
         candidateProfile: true,
-        company: true
+        companies: true
       }
     });
 
@@ -32,7 +32,7 @@ exports.getProfile = async (req, res, next) => {
 // Update user profile
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { firstName, lastName, phone, ...otherFields } = req.body;
+    const { firstName, lastName, phone, skills, experience, education, ...otherFields } = req.body;
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
@@ -40,15 +40,44 @@ exports.updateProfile = async (req, res, next) => {
     });
 
     if (user.role === 'CANDIDATE') {
+      // Prepare candidate profile data
+      const candidateData = { ...otherFields };
+      
+      // Handle skills - convert to array if string
+      if (skills) {
+        candidateData.skills = Array.isArray(skills) 
+          ? skills 
+          : skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      
+      // Handle experience_level
+      if (experience) {
+        candidateData.experienceLevel = experience;
+      }
+      
+      // Handle education - convert to JSON if string
+      if (education) {
+        candidateData.education = typeof education === 'string' 
+          ? { description: education }
+          : education;
+      }
+
       await prisma.candidateProfile.update({
         where: { userId: user.id },
-        data: otherFields
+        data: candidateData
       });
     } else if (user.role === 'EMPLOYER') {
-      await prisma.company.update({
-        where: { createdById: user.id },
-        data: otherFields
+      // Find the company created by this user
+      const company = await prisma.company.findFirst({
+        where: { createdById: user.id }
       });
+      
+      if (company) {
+        await prisma.company.update({
+          where: { id: company.id },
+          data: otherFields
+        });
+      }
     }
 
     res.json({

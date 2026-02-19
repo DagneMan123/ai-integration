@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
-import { ApiResponse, User, Job, Application, Interview, Payment, DashboardData } from '../types';
+import { ApiResponse, AuthResponse, User, Job, Application, Interview, Payment, DashboardData } from '../types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -38,6 +38,12 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
+        
+        // Don't try to refresh if we don't have a refresh token
+        if (!refreshToken) {
+          return Promise.reject(error);
+        }
+        
         const response = await axios.post(`${API_URL}/auth/refresh-token`, {
           refreshToken,
         });
@@ -58,9 +64,12 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle other errors
-    const message = error.response?.data?.error || 'An error occurred';
-    toast.error(message);
+    // Don't show toast for auth endpoints - let the component handle it
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+    if (!isAuthEndpoint) {
+      const message = error.response?.data?.error || error.response?.data?.message || 'An error occurred';
+      toast.error(message);
+    }
 
     return Promise.reject(error);
   }
@@ -70,9 +79,9 @@ export default api;
 
 // API methods
 export const authAPI = {
-  register: (data: any): Promise<AxiosResponse<ApiResponse<{ user: User; token: string; refreshToken: string }>>> => 
+  register: (data: any): Promise<AxiosResponse<AuthResponse>> => 
     api.post('/auth/register', data),
-  login: (data: { email: string; password: string }): Promise<AxiosResponse<ApiResponse<{ user: User; token: string; refreshToken: string }>>> => 
+  login: (data: { email: string; password: string }): Promise<AxiosResponse<AuthResponse>> => 
     api.post('/auth/login', data),
   logout: (): Promise<AxiosResponse<ApiResponse>> => 
     api.post('/auth/logout'),
@@ -150,6 +159,13 @@ export const interviewAPI = {
     api.get(`/interviews/job/${jobId}/interviews`),
   evaluateInterview: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
     api.post(`/interviews/${id}/evaluate`, data),
+  // Anti-cheat endpoints
+  recordAntiCheatEvent: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.post(`/interviews/${id}/anti-cheat-event`, data),
+  recordIdentitySnapshot: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.post(`/interviews/${id}/identity-snapshot`, data),
+  getIntegrityReport: (id: string): Promise<AxiosResponse<ApiResponse>> => 
+    api.get(`/interviews/${id}/integrity-report`),
 };
 
 export const paymentAPI = {

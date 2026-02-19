@@ -19,15 +19,22 @@ const Login: React.FC = () => {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      const response: any = await authAPI.login(data);
+      console.log('Attempting login with:', { email: data.email });
+      const response = await authAPI.login(data);
+      console.log('Login response:', response.data);
       
       const { user, token, refreshToken } = response.data;
+      
+      if (!user || !token) {
+        throw new Error('Invalid response from server');
+      }
       
       setAuth(user, token, refreshToken);
       toast.success('Login successful!');
       navigate(`/${user.role}/dashboard`);
     } catch (error: any) {
       console.error('Login error:', error);
+      console.error('Error response:', error.response?.data);
       const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed';
       toast.error(errorMessage);
     } finally {

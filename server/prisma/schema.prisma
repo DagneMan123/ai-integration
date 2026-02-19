@@ -130,13 +130,40 @@ model Interview {
   id                  Int             @id @default(autoincrement())
   jobId               Int             @map("job_id")
   candidateId         Int             @map("candidate_id")
+  applicationId       Int?            @map("application_id")
+  
+  // Interview Content
   questions           Json?
   responses           Json?
+  
+  // AI Evaluation
   evaluation          Json?
   overallScore        Int?            @map("overall_score")
   technicalScore      Int?            @map("technical_score")
   communicationScore  Int?            @map("communication_score")
   problemSolvingScore Int?            @map("problem_solving_score")
+  
+  // NEW: Enhanced Scoring
+  softSkillsScore     Int?            @map("soft_skills_score")
+  confidenceScore     Int?            @map("confidence_score")
+  fluencyScore        Int?            @map("fluency_score")
+  professionalismScore Int?           @map("professionalism_score")
+  integrityScore      Int?            @map("integrity_score")
+  integrityRisk       String?         @map("integrity_risk") // LOW, MEDIUM, HIGH
+  
+  // NEW: Behavioral Analysis
+  behavioralMetrics   Json?           @map("behavioral_metrics") // Speech rate, fillers, sentiment
+  confidenceMetrics   Json?           @map("confidence_metrics") // Eye contact, facial stability
+  
+  // NEW: Anti-Cheating Data
+  antiCheatData       Json?           @map("anti_cheat_data") // Tab switches, copy-paste attempts
+  plagiarismFlags     Json?           @map("plagiarism_flags") // AI-generated content detection
+  identityVerification Json?          @map("identity_verification") // Webcam snapshots metadata
+  
+  // Interview Settings
+  interviewMode       String          @default("text") @map("interview_mode") // text, audio, video
+  strictnessLevel     String?         @map("strictness_level") // lenient, moderate, strict
+  
   status              InterviewStatus @default(PENDING)
   feedback            String?
   startedAt           DateTime?       @map("started_at")

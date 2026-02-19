@@ -6,25 +6,22 @@ let prisma;
 
 // Create Prisma client with proper configuration
 function createPrismaClient() {
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  
   return new PrismaClient({
-    log: [
-      {
-        emit: 'event',
-        level: 'query',
-      },
-      {
-        emit: 'event',
-        level: 'error',
-      },
-      {
-        emit: 'event',
-        level: 'info',
-      },
-      {
-        emit: 'event',
-        level: 'warn',
-      },
-    ],
+    log: isDevelopment 
+      ? [
+          // In development, only log warnings and errors
+          { emit: 'event', level: 'warn' },
+          { emit: 'event', level: 'error' },
+        ]
+      : [
+          // In production, log everything
+          { emit: 'event', level: 'query' },
+          { emit: 'event', level: 'error' },
+          { emit: 'event', level: 'info' },
+          { emit: 'event', level: 'warn' },
+        ],
     errorFormat: 'pretty',
   });
 }
@@ -40,26 +37,29 @@ if (process.env.NODE_ENV === 'production') {
   prisma = global.__prisma;
 }
 
-// Event listeners for logging
-prisma.$on('query', (e) => {
-  logger.debug('Prisma Query', {
-    query: e.query,
-    params: e.params,
-    duration: `${e.duration}ms`,
-    timestamp: e.timestamp
+// Event listeners for logging (only in production or for errors/warnings)
+if (process.env.NODE_ENV === 'production') {
+  prisma.$on('query', (e) => {
+    logger.debug('Prisma Query', {
+      query: e.query,
+      params: e.params,
+      duration: `${e.duration}ms`,
+      timestamp: e.timestamp
+    });
   });
-});
 
+  prisma.$on('info', (e) => {
+    logger.info('Prisma Info', {
+      message: e.message,
+      target: e.target,
+      timestamp: e.timestamp
+    });
+  });
+}
+
+// Always log errors and warnings
 prisma.$on('error', (e) => {
   logger.error('Prisma Error', {
-    message: e.message,
-    target: e.target,
-    timestamp: e.timestamp
-  });
-});
-
-prisma.$on('info', (e) => {
-  logger.info('Prisma Info', {
     message: e.message,
     target: e.target,
     timestamp: e.timestamp

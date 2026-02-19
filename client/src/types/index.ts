@@ -161,3 +161,12 @@ export interface ApiResponse<T = any> {
     pages: number;
   };
 }
+
+// Auth response types
+export interface AuthResponse {
+  success: boolean;
+  token: string;
+  refreshToken: string;
+  user: User;
+  message?: string;
+}
