@@ -120,17 +120,37 @@ exports.getJob = async (req, res, next) => {
 // Create job (employer only)
 exports.createJob = async (req, res, next) => {
   try {
-    const company = await prisma.company.findUnique({
-      where: { userId: req.user.id }
+    // Check if user is employer or admin
+    if (req.user.role !== 'EMPLOYER' && req.user.role !== 'ADMIN') {
+      return next(new AppError('Only employers can create jobs. Please register as an employer to create jobs.', 403));
+    }
+
+    // Find company by createdById using findFirst (not findUnique - createdById is not unique)
+    const company = await prisma.company.findFirst({
+      where: { createdById: req.user.id }
     });
 
     if (!company) {
-      return next(new AppError('Company profile not found', 404));
+      return next(new AppError('Company profile not found. Please complete your company profile first.', 404));
+    }
+
+    // Validate required fields
+    const { title, description, location, requiredSkills, experienceLevel, jobType, interviewType } = req.body;
+    
+    if (!title || !description || !location) {
+      return next(new AppError('Title, description, and location are required', 400));
     }
 
     const job = await prisma.job.create({
       data: {
-        ...req.body,
+        title,
+        description,
+        location,
+        requiredSkills: requiredSkills || [],
+        experienceLevel: experienceLevel || 'entry',
+        jobType: jobType || 'full-time',
+        interviewType: interviewType || 'technical',
+        status: 'ACTIVE',
         companyId: company.id,
         createdById: req.user.id
       }
@@ -144,6 +164,7 @@ exports.createJob = async (req, res, next) => {
       data: job
     });
   } catch (error) {
+    logger.error(`Job creation failed: ${error.message}`);
     next(error);
   }
 };
@@ -151,6 +172,11 @@ exports.createJob = async (req, res, next) => {
 // Update job
 exports.updateJob = async (req, res, next) => {
   try {
+    // Check if user is employer or admin
+    if (req.user.role !== 'EMPLOYER' && req.user.role !== 'ADMIN') {
+      return next(new AppError('Only employers can update jobs', 403));
+    }
+
     const { id } = req.params;
     
     if (!id || id === 'undefined' || id.trim() === '') {
@@ -170,7 +196,7 @@ exports.updateJob = async (req, res, next) => {
       return next(new AppError('Job not found', 404));
     }
 
-    if (job.createdById !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
       return next(new AppError('Not authorized to update this job', 403));
     }
 
@@ -192,6 +218,11 @@ exports.updateJob = async (req, res, next) => {
 // Delete job
 exports.deleteJob = async (req, res, next) => {
   try {
+    // Check if user is employer or admin
+    if (req.user.role !== 'EMPLOYER' && req.user.role !== 'ADMIN') {
+      return next(new AppError('Only employers can delete jobs', 403));
+    }
+
     const { id } = req.params;
     
     if (!id || id === 'undefined' || id.trim() === '') {
@@ -211,7 +242,7 @@ exports.deleteJob = async (req, res, next) => {
       return next(new AppError('Job not found', 404));
     }
 
-    if (job.createdById !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
       return next(new AppError('Not authorized to delete this job', 403));
     }
 
@@ -231,8 +262,13 @@ exports.deleteJob = async (req, res, next) => {
 // Get employer jobs
 exports.getEmployerJobs = async (req, res, next) => {
   try {
-    const company = await prisma.company.findUnique({
-      where: { userId: req.user.id }
+    // Check if user is employer or admin
+    if (req.user.role !== 'EMPLOYER' && req.user.role !== 'ADMIN') {
+      return next(new AppError('Only employers can view their jobs', 403));
+    }
+
+    const company = await prisma.company.findFirst({
+      where: { createdById: req.user.id }
     });
 
     if (!company) {
@@ -256,6 +292,11 @@ exports.getEmployerJobs = async (req, res, next) => {
 // Update job status
 exports.updateJobStatus = async (req, res, next) => {
   try {
+    // Check if user is employer or admin
+    if (req.user.role !== 'EMPLOYER' && req.user.role !== 'ADMIN') {
+      return next(new AppError('Only employers can update job status', 403));
+    }
+
     const { id } = req.params;
     const { status } = req.body;
     
@@ -276,7 +317,7 @@ exports.updateJobStatus = async (req, res, next) => {
       return next(new AppError('Job not found', 404));
     }
 
-    if (job.createdById !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
       return next(new AppError('Not authorized', 403));
     }
 

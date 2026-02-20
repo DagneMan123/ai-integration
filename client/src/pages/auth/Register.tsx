@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authAPI } from '../../utils/api';
-import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 
 interface RegisterFormData {
@@ -19,7 +18,6 @@ const Register: React.FC = () => {
     defaultValues: { role: 'candidate' }
   });
   const [loading, setLoading] = useState(false);
-  const { setAuth } = useAuthStore();
   const navigate = useNavigate();
   const role = watch('role');
 
@@ -30,15 +28,13 @@ const Register: React.FC = () => {
       const response = await authAPI.register(data);
       console.log('Registration response:', response.data);
       
-      // Auto-login after successful registration
-      if (response.data.success && response.data.token) {
-        const { user, token, refreshToken } = response.data;
-        setAuth(user, token, refreshToken);
-        toast.success('Registration successful!');
-        navigate(`/${user.role}/dashboard`);
-      } else {
-        toast.success('Registration successful! Please login to continue.');
+      // Don't auto-login - require user to login manually
+      if (response.data.success) {
+        toast.success('Registration successful! Please login with your credentials.');
+        // Redirect to login page instead of dashboard
         navigate('/login');
+      } else {
+        toast.error('Registration failed. Please try again.');
       }
     } catch (error: any) {
       console.error('Registration error:', error);

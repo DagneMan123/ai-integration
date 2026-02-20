@@ -1,0 +1,174 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              INSUFFICIENT PERMISSIONS ERROR - QUICK FIX                    ║
+║                    February 20, 2026                                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+❌ ERROR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Insufficient permissions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ WHAT IT MEANS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your user role doesn't have access to this endpoint.
+
+This is a SECURITY FEATURE, not a bug.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 WHY THIS HAPPENS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scenario 1: Candidate Trying to Create Job
+  User Role: CANDIDATE
+  Trying to: Create job
+  Required Role: EMPLOYER
+  Result: ❌ Insufficient permissions
+
+Scenario 2: Employer Trying to Access Admin Panel
+  User Role: EMPLOYER
+  Trying to: View all users
+  Required Role: ADMIN
+  Result: ❌ Insufficient permissions
+
+Scenario 3: Candidate Trying to Update Job
+  User Role: CANDIDATE
+  Trying to: Update job
+  Required Role: EMPLOYER
+  Result: ❌ Insufficient permissions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ ROLE-BASED ACCESS CONTROL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CANDIDATE Role:
+  ✅ Can: View jobs, Apply for jobs, Take interviews
+  ❌ Cannot: Create jobs, Update jobs, Access admin panel
+
+EMPLOYER Role:
+  ✅ Can: Create jobs, Update own jobs, View applications
+  ❌ Cannot: Access admin panel, Manage other employers' jobs
+
+ADMIN Role:
+  ✅ Can: Everything (view all, manage all, access admin panel)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 HOW TO FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Fix 1: Use Correct Account
+
+  Want to create jobs?
+    ❌ Don't use CANDIDATE account
+    ✅ Use EMPLOYER account
+
+  Want to apply for jobs?
+    ❌ Don't use EMPLOYER account
+    ✅ Use CANDIDATE account
+
+  Want to manage users?
+    ❌ Don't use EMPLOYER account
+    ✅ Use ADMIN account
+
+Fix 2: Check Your Role
+
+  1. Login to your account
+  2. Open DevTools (F12)
+  3. Go to Application tab
+  4. Check localStorage for user role
+  5. Make sure it matches what you're trying to do
+
+Fix 3: Register with Correct Role
+
+  If you registered as wrong role:
+    1. Logout
+    2. Register new account with correct role
+    3. Login with new account
+    4. Try again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 TESTING BY ROLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test as CANDIDATE:
+  ✅ Can: View jobs, Apply for jobs
+  ❌ Cannot: Create jobs, Update jobs
+
+Test as EMPLOYER:
+  ✅ Can: Create jobs, Update own jobs
+  ❌ Cannot: Access admin panel
+
+Test as ADMIN:
+  ✅ Can: Everything
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 PROTECTED ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Job Endpoints:
+  POST /jobs → EMPLOYER, ADMIN
+  PUT /jobs/:id → EMPLOYER, ADMIN
+  DELETE /jobs/:id → EMPLOYER, ADMIN
+  GET /jobs/employer/my-jobs → EMPLOYER
+
+Application Endpoints:
+  POST /applications → CANDIDATE
+  GET /applications/my-applications → CANDIDATE
+  DELETE /applications/:id → CANDIDATE
+  GET /applications/job/:jobId → EMPLOYER, ADMIN
+  PATCH /applications/:id/status → EMPLOYER, ADMIN
+
+Admin Endpoints:
+  GET /admin/users → ADMIN
+  GET /admin/companies/pending → ADMIN
+  GET /admin/jobs/pending → ADMIN
+  (All admin endpoints require ADMIN role)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ COMMON MISTAKES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Mistake 1: Registering as CANDIDATE but trying to create jobs
+  ❌ Wrong: CANDIDATE account → Create job
+  ✅ Right: EMPLOYER account → Create job
+
+Mistake 2: Registering as EMPLOYER but trying to apply for jobs
+  ❌ Wrong: EMPLOYER account → Apply for job
+  ✅ Right: CANDIDATE account → Apply for job
+
+Mistake 3: Using EMPLOYER account to access admin panel
+  ❌ Wrong: EMPLOYER account → Admin panel
+  ✅ Right: ADMIN account → Admin panel
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 QUICK CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before trying an action:
+  ✅ Am I logged in?
+  ✅ What is my role? (CANDIDATE, EMPLOYER, ADMIN)
+  ✅ Does my role have access to this action?
+  ✅ Am I using the right account?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Error: Insufficient permissions
+Meaning: Your role doesn't have access
+Fix: Use correct account for the action
+Status: ✅ Working as intended (security feature)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Insufficient Permissions Error - Quick Fix - February 20, 2026

@@ -7,12 +7,13 @@ import toast from 'react-hot-toast';
 interface JobFormData {
   title: string;
   description: string;
-  category: string;
   experienceLevel: string;
   location: string;
-  salaryMin: number;
-  salaryMax: number;
-  skills: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  requiredSkills: string;
+  jobType?: string;
+  interviewType?: string;
 }
 
 const CreateJob: React.FC = () => {
@@ -24,20 +25,25 @@ const CreateJob: React.FC = () => {
     setSubmitting(true);
     try {
       const jobData = {
-        ...data,
-        skills: data.skills.split(',').map(s => s.trim()),
-        salary: {
-          min: data.salaryMin,
-          max: data.salaryMax,
-          currency: 'ETB'
-        }
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        experienceLevel: data.experienceLevel || 'entry',
+        jobType: data.jobType || 'full-time',
+        interviewType: data.interviewType || 'technical',
+        requiredSkills: data.requiredSkills
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s.length > 0)
       };
 
       await jobAPI.createJob(jobData);
       toast.success('Job created successfully!');
       navigate('/employer/jobs');
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create job');
+      console.error('Job creation error:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to create job';
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -59,24 +65,6 @@ const CreateJob: React.FC = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
               {errors.title && <p className="mt-1 text-sm text-danger">{errors.title.message}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-              <select
-                {...register('category', { required: 'Category is required' })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="">Select Category</option>
-                <option value="technology">Technology</option>
-                <option value="marketing">Marketing</option>
-                <option value="sales">Sales</option>
-                <option value="design">Design</option>
-                <option value="finance">Finance</option>
-                <option value="hr">Human Resources</option>
-                <option value="other">Other</option>
-              </select>
-              {errors.category && <p className="mt-1 text-sm text-danger">{errors.category.message}</p>}
             </div>
 
             <div>
@@ -130,11 +118,11 @@ const CreateJob: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Required Skills * (comma separated)</label>
               <input
                 type="text"
-                {...register('skills', { required: 'Skills are required' })}
+                {...register('requiredSkills', { required: 'Skills are required' })}
                 placeholder="JavaScript, React, Node.js"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
-              {errors.skills && <p className="mt-1 text-sm text-danger">{errors.skills.message}</p>}
+              {errors.requiredSkills && <p className="mt-1 text-sm text-danger">{errors.requiredSkills.message}</p>}
             </div>
 
             <div>

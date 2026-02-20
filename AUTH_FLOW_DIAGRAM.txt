@@ -1,0 +1,302 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    AUTHENTICATION FLOW DIAGRAM                             ║
+║                    February 20, 2026                                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📝 REGISTRATION FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User visits /register
+        ↓
+Fills registration form
+  • Email: test@example.com
+  • Password: Password123
+  • First Name: John
+  • Last Name: Doe
+        ↓
+Clicks "Create Account"
+        ↓
+Frontend validates input
+  ✓ Email format valid?
+  ✓ Password requirements met?
+  ✓ Name provided?
+        ↓
+Sends POST /api/auth/register
+        ↓
+Backend validates
+  ✓ Email format valid?
+  ✓ Password requirements met?
+  ✓ Email not already registered?
+        ↓
+    ┌─────────────────────────────────────┐
+    │ Email already exists?               │
+    └─────────────────────────────────────┘
+         YES ↓                    NO ↓
+    ❌ Error                  ✅ Continue
+    "Email already            
+     registered"              
+                              Hash password
+                                    ↓
+                              Create user
+                                    ↓
+                              Create profile
+                                    ↓
+                              Send verification email
+                                    ↓
+                              Return success
+                                    ↓
+                          Frontend shows toast
+                          "Registration successful!"
+                                    ↓
+                          Redirect to /login
+                                    ↓
+                          User must login manually
+                          (NO auto-login)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 LOGIN FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User visits /login
+        ↓
+Fills login form
+  • Email: test@example.com
+  • Password: Password123
+        ↓
+Clicks "Sign In"
+        ↓
+Frontend validates input
+  ✓ Email provided?
+  ✓ Password provided?
+        ↓
+Sends POST /api/auth/login
+        ↓
+Backend validates
+  ✓ Email format valid?
+  ✓ Password format valid?
+        ↓
+Find user by email
+        ↓
+    ┌─────────────────────────────────────┐
+    │ User found?                         │
+    └─────────────────────────────────────┘
+         NO ↓                     YES ↓
+    ❌ Error                  Check if locked
+    "Invalid                        ↓
+     credentials"         ┌─────────────────────┐
+                          │ Account locked?     │
+                          └─────────────────────┘
+                               YES ↓    NO ↓
+                          ❌ Error    Compare
+                          "Account    password
+                           is locked"      ↓
+                                    ┌──────────────────┐
+                                    │ Password match?  │
+                                    └──────────────────┘
+                                    YES ↓        NO ↓
+                              ✅ Success    Increment
+                              Generate     attempts
+                              token             ↓
+                                    ↓      ┌──────────────┐
+                              Return     │ Attempts ≥ 5?│
+                              token      └──────────────┘
+                                    ↓      YES ↓  NO ↓
+                              Frontend   Lock   ❌ Error
+                              stores     account "Invalid
+                              token            credentials"
+                                    ↓
+                              Show toast
+                              "Login successful!"
+                                    ↓
+                              Redirect to
+                              /[role]/dashboard
+                                    ↓
+                              Access dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ ERROR SCENARIOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SCENARIO 1: Duplicate Email Registration
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+First attempt:
+  Email: john@example.com
+  Password: Password123
+  Result: ✅ Registration successful
+
+Second attempt (same email):
+  Email: john@example.com
+  Password: DifferentPassword123
+  Result: ❌ "Email already registered"
+
+Fix: Use different email
+  Email: john2@example.com
+  Password: DifferentPassword123
+  Result: ✅ Registration successful
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SCENARIO 2: Invalid Credentials on Login
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Registration:
+  Email: john@example.com
+  Password: Password123
+  Result: ✅ Account created
+
+Login attempt 1 (wrong password):
+  Email: john@example.com
+  Password: WrongPassword123
+  Result: ❌ "Invalid credentials"
+  Attempts: 1/5
+
+Login attempt 2 (wrong password):
+  Email: john@example.com
+  Password: WrongPassword456
+  Result: ❌ "Invalid credentials"
+  Attempts: 2/5
+
+Login attempt 3 (correct password):
+  Email: john@example.com
+  Password: Password123
+  Result: ✅ Login successful
+  Attempts: Reset to 0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SCENARIO 3: Account Lockout
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Failed attempts:
+  Attempt 1: ❌ Wrong password (1/5)
+  Attempt 2: ❌ Wrong password (2/5)
+  Attempt 3: ❌ Wrong password (3/5)
+  Attempt 4: ❌ Wrong password (4/5)
+  Attempt 5: ❌ Wrong password (5/5)
+  
+Result: ❌ "Account is locked"
+
+Fix: Reset password
+  1. Go to /forgot-password
+  2. Enter email
+  3. Click link in email
+  4. Create new password
+  5. Login with new password
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SUCCESS SCENARIOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SCENARIO 1: Successful Registration & Login
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: Register
+  Email: john@example.com
+  Password: Password123
+  Result: ✅ "Registration successful!"
+  Action: Redirect to /login
+
+Step 2: Login
+  Email: john@example.com
+  Password: Password123
+  Result: ✅ "Login successful!"
+  Action: Redirect to /candidate/dashboard
+
+Step 3: Access Dashboard
+  Result: ✅ Dashboard loaded
+  Action: Can access all features
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SCENARIO 2: Multiple Users
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User 1:
+  Email: john@example.com
+  Password: Password123
+  Result: ✅ Registered & Logged in
+
+User 2:
+  Email: jane@example.com
+  Password: Password456
+  Result: ✅ Registered & Logged in
+
+User 3:
+  Email: bob@example.com
+  Password: Password789
+  Result: ✅ Registered & Logged in
+
+All users can login independently with their own credentials.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 VALIDATION RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EMAIL VALIDATION
+  ✓ Format: user@domain.com
+  ✓ Min length: 5 characters
+  ✓ Max length: 254 characters
+  ✓ Must be unique
+  ✓ Case-insensitive
+
+PASSWORD VALIDATION (Registration)
+  ✓ Min length: 6 characters
+  ✓ Max length: 128 characters
+  ✓ Must have uppercase (A-Z)
+  ✓ Must have lowercase (a-z)
+  ✓ Must have number (0-9)
+  ✓ Case-sensitive
+
+PASSWORD VALIDATION (Login)
+  ✓ Min length: 6 characters
+  ✓ Max length: 128 characters
+  ✓ Case-sensitive
+  ✓ Must match registration password
+
+NAME VALIDATION
+  ✓ Min length: 2 characters
+  ✓ Max length: 50 characters
+  ✓ Letters, spaces, hyphens, apostrophes only
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔒 SECURITY FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Password hashing with bcrypt (12 rounds)
+✓ Account lockout after 5 failed attempts
+✓ Email verification required
+✓ Password reset functionality
+✓ Session tokens with expiry
+✓ Activity logging
+✓ Input validation and sanitization
+✓ SQL injection prevention (Prisma ORM)
+✓ XSS prevention (React escaping)
+✓ CSRF protection (token-based)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The errors you're seeing are CORRECT behavior:
+
+❌ "Email already registered"
+   → Duplicate email prevention is working ✅
+
+❌ "Invalid credentials"
+   → Wrong email/password detection is working ✅
+
+To fix:
+  1. Use DIFFERENT email for each registration
+  2. Use CORRECT password for login
+  3. Follow password requirements
+
+Status: ✅ Authentication System Working Perfectly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

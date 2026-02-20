@@ -4,12 +4,12 @@ const companyController = require('../controllers/companyController');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 
-// Public routes
+// Public routes (no auth required)
 router.get('/', companyController.getAllCompanies);
 router.get('/:id', companyController.getCompany);
 
-// Protected routes
-router.use(authenticateToken, authorizeRoles('employer'));
+// Protected routes (auth + employer role required)
+router.use(authenticateToken, authorizeRoles('EMPLOYER'));
 
 router.get('/my/profile', companyController.getMyCompany);
 router.put('/my/profile', companyController.updateCompany);

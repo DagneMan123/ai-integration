@@ -86,7 +86,11 @@ const authorizeRoles = (...roles) => {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
+    // Convert user role to uppercase for comparison
+    const userRole = req.user.role?.toUpperCase();
+    const normalizedRoles = roles.map(r => r.toUpperCase());
+
+    if (!normalizedRoles.includes(userRole)) {
       // Log unauthorized access
       logActivity(
         req.user.id, 
@@ -94,8 +98,8 @@ const authorizeRoles = (...roles) => {
         'role_check', 
         null, 
         {
-          required_roles: roles,
-          user_role: req.user.role,
+          required_roles: normalizedRoles,
+          user_role: userRole,
           endpoint: req.originalUrl
         }, 
         req.ip, 

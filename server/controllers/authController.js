@@ -43,9 +43,9 @@ exports.register = async (req, res, next) => {
         },
       });
 
-      if (role === 'candidate') {
+      if (role && role.toLowerCase() === 'candidate') {
         await tx.candidateProfile.create({ data: { userId: newUser.id } });
-      } else if (role === 'employer') {
+      } else if (role && role.toLowerCase() === 'employer') {
         await tx.company.create({
           data: {
             name: companyName || `${firstName}'s Company`,

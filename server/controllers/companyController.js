@@ -81,12 +81,12 @@ exports.getCompany = async (req, res, next) => {
 // Get my company profile
 exports.getMyCompany = async (req, res, next) => {
   try {
-    const company = await prisma.company.findUnique({
-      where: { userId: req.user.id }
+    const company = await prisma.company.findFirst({
+      where: { createdById: req.user.id }
     });
 
     if (!company) {
-      return next(new AppError('Company profile not found', 404));
+      return next(new AppError('Company profile not found. Please complete your company profile first.', 404));
     }
 
     res.json({
@@ -101,23 +101,41 @@ exports.getMyCompany = async (req, res, next) => {
 // Update company profile
 exports.updateCompany = async (req, res, next) => {
   try {
+    // Validate user is authenticated
+    if (!req.user || !req.user.id) {
+      return next(new AppError('User not authenticated', 401));
+    }
+
     // Check if company exists first
-    const existingCompany = await prisma.company.findUnique({
-      where: { userId: req.user.id }
+    const existingCompany = await prisma.company.findFirst({
+      where: { createdById: req.user.id }
     });
 
     if (!existingCompany) {
-      return next(new AppError('Company profile not found', 404));
+      return next(new AppError('Company profile not found. Please complete your company profile first.', 404));
+    }
+
+    // Validate input data
+    const { name, industry, description, website, address } = req.body;
+    
+    if (!name || !industry) {
+      return next(new AppError('Company name and industry are required', 400));
     }
 
     const company = await prisma.company.update({
-      where: { userId: req.user.id },
-      data: req.body
+      where: { id: existingCompany.id },
+      data: {
+        name,
+        industry,
+        description: description || existingCompany.description,
+        website: website || existingCompany.website,
+        address: address || existingCompany.address
+      }
     });
 
     res.json({
       success: true,
-      message: 'Company updated successfully',
+      message: 'Company profile updated successfully',
       data: company
     });
   } catch (error) {
@@ -133,8 +151,8 @@ exports.uploadLogo = async (req, res, next) => {
     }
 
     // Check if company exists
-    const existingCompany = await prisma.company.findUnique({
-      where: { userId: req.user.id }
+    const existingCompany = await prisma.company.findFirst({
+      where: { createdById: req.user.id }
     });
 
     if (!existingCompany) {
@@ -144,7 +162,7 @@ exports.uploadLogo = async (req, res, next) => {
     const logoUrl = await uploadToCloud(req.file, 'logos');
 
     const company = await prisma.company.update({
-      where: { userId: req.user.id },
+      where: { id: existingCompany.id },
       data: { logo: logoUrl }
     });
 

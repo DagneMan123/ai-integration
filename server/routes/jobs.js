@@ -10,11 +10,11 @@ router.get('/:id', jobController.getJob);
 // Protected routes
 router.use(authenticateToken);
 
-// Employer routes
-router.post('/', authorizeRoles('employer', 'admin'), jobController.createJob);
-router.put('/:id', authorizeRoles('employer', 'admin'), jobController.updateJob);
-router.delete('/:id', authorizeRoles('employer', 'admin'), jobController.deleteJob);
-router.get('/employer/my-jobs', authorizeRoles('employer'), jobController.getEmployerJobs);
-router.patch('/:id/status', authorizeRoles('employer', 'admin'), jobController.updateJobStatus);
+// Employer routes - role check done in controller for better error messages
+router.post('/', jobController.createJob);
+router.put('/:id', jobController.updateJob);
+router.delete('/:id', jobController.deleteJob);
+router.get('/employer/my-jobs', jobController.getEmployerJobs);
+router.patch('/:id/status', jobController.updateJobStatus);
 
 module.exports = router;

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
+import Loading from './components/Loading';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -16,37 +17,35 @@ import About from './pages/About';
 import Jobs from './pages/Jobs';
 import JobDetails from './pages/JobDetails';
 
-// Candidate Pages
-import CandidateDashboard from './pages/candidate/Dashboard';
-import CandidateProfile from './pages/candidate/Profile';
-import CandidateApplications from './pages/candidate/Applications';
-import CandidateInterviews from './pages/candidate/Interviews';
-import InterviewSession from './pages/candidate/InterviewSession';
-import InterviewReport from './pages/candidate/InterviewReport';
-import CandidatePayments from './pages/candidate/Payments';
-
-// Employer Pages
-import EmployerDashboard from './pages/employer/Dashboard';
-import EmployerProfile from './pages/employer/Profile';
-import EmployerJobs from './pages/employer/Jobs';
-import CreateJob from './pages/employer/CreateJob';
-import EditJob from './pages/employer/EditJob';
-import JobCandidates from './pages/employer/JobCandidates';
-import EmployerAnalytics from './pages/employer/Analytics';
-import EmployerSubscription from './pages/employer/Subscription';
-
-// Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminUsers from './pages/admin/Users';
-import AdminCompanies from './pages/admin/Companies';
-import AdminJobs from './pages/admin/Jobs';
-import AdminPayments from './pages/admin/Payments';
-import AdminAnalytics from './pages/admin/Analytics';
-import AdminLogs from './pages/admin/Logs';
-
 // Components
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
+
+// Lazy load dashboard pages for better performance
+const CandidateDashboard = lazy(() => import('./pages/candidate/Dashboard'));
+const CandidateProfile = lazy(() => import('./pages/candidate/Profile'));
+const CandidateApplications = lazy(() => import('./pages/candidate/Applications'));
+const CandidateInterviews = lazy(() => import('./pages/candidate/Interviews'));
+const InterviewSession = lazy(() => import('./pages/candidate/InterviewSession'));
+const InterviewReport = lazy(() => import('./pages/candidate/InterviewReport'));
+const CandidatePayments = lazy(() => import('./pages/candidate/Payments'));
+
+const EmployerDashboard = lazy(() => import('./pages/employer/Dashboard'));
+const EmployerProfile = lazy(() => import('./pages/employer/Profile'));
+const EmployerJobs = lazy(() => import('./pages/employer/Jobs'));
+const CreateJob = lazy(() => import('./pages/employer/CreateJob'));
+const EditJob = lazy(() => import('./pages/employer/EditJob'));
+const JobCandidates = lazy(() => import('./pages/employer/JobCandidates'));
+const EmployerAnalytics = lazy(() => import('./pages/employer/Analytics'));
+const EmployerSubscription = lazy(() => import('./pages/employer/Subscription'));
+
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
+const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
+const AdminPayments = lazy(() => import('./pages/admin/Payments'));
+const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
+const AdminLogs = lazy(() => import('./pages/admin/Logs'));
 
 const App: React.FC = () => {
   const { user } = useAuthStore();
@@ -82,7 +81,9 @@ const App: React.FC = () => {
             path="/candidate/dashboard" 
             element={
               <PrivateRoute role="candidate">
-                <CandidateDashboard />
+                <Suspense fallback={<Loading />}>
+                  <CandidateDashboard />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -90,7 +91,9 @@ const App: React.FC = () => {
             path="/candidate/profile" 
             element={
               <PrivateRoute role="candidate">
-                <CandidateProfile />
+                <Suspense fallback={<Loading />}>
+                  <CandidateProfile />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -98,7 +101,9 @@ const App: React.FC = () => {
             path="/candidate/applications" 
             element={
               <PrivateRoute role="candidate">
-                <CandidateApplications />
+                <Suspense fallback={<Loading />}>
+                  <CandidateApplications />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -106,7 +111,9 @@ const App: React.FC = () => {
             path="/candidate/interviews" 
             element={
               <PrivateRoute role="candidate">
-                <CandidateInterviews />
+                <Suspense fallback={<Loading />}>
+                  <CandidateInterviews />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -114,7 +121,9 @@ const App: React.FC = () => {
             path="/candidate/interview/:id" 
             element={
               <PrivateRoute role="candidate">
-                <InterviewSession />
+                <Suspense fallback={<Loading />}>
+                  <InterviewSession />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -122,7 +131,9 @@ const App: React.FC = () => {
             path="/candidate/interview/:id/report" 
             element={
               <PrivateRoute role="candidate">
-                <InterviewReport />
+                <Suspense fallback={<Loading />}>
+                  <InterviewReport />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -130,7 +141,9 @@ const App: React.FC = () => {
             path="/candidate/payments" 
             element={
               <PrivateRoute role="candidate">
-                <CandidatePayments />
+                <Suspense fallback={<Loading />}>
+                  <CandidatePayments />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -140,7 +153,9 @@ const App: React.FC = () => {
             path="/employer/dashboard" 
             element={
               <PrivateRoute role="employer">
-                <EmployerDashboard />
+                <Suspense fallback={<Loading />}>
+                  <EmployerDashboard />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -148,7 +163,9 @@ const App: React.FC = () => {
             path="/employer/profile" 
             element={
               <PrivateRoute role="employer">
-                <EmployerProfile />
+                <Suspense fallback={<Loading />}>
+                  <EmployerProfile />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -156,7 +173,9 @@ const App: React.FC = () => {
             path="/employer/jobs" 
             element={
               <PrivateRoute role="employer">
-                <EmployerJobs />
+                <Suspense fallback={<Loading />}>
+                  <EmployerJobs />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -164,7 +183,9 @@ const App: React.FC = () => {
             path="/employer/jobs/create" 
             element={
               <PrivateRoute role="employer">
-                <CreateJob />
+                <Suspense fallback={<Loading />}>
+                  <CreateJob />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -172,7 +193,9 @@ const App: React.FC = () => {
             path="/employer/jobs/:id/edit" 
             element={
               <PrivateRoute role="employer">
-                <EditJob />
+                <Suspense fallback={<Loading />}>
+                  <EditJob />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -180,7 +203,9 @@ const App: React.FC = () => {
             path="/employer/jobs/:id/candidates" 
             element={
               <PrivateRoute role="employer">
-                <JobCandidates />
+                <Suspense fallback={<Loading />}>
+                  <JobCandidates />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -188,7 +213,9 @@ const App: React.FC = () => {
             path="/employer/analytics" 
             element={
               <PrivateRoute role="employer">
-                <EmployerAnalytics />
+                <Suspense fallback={<Loading />}>
+                  <EmployerAnalytics />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -196,7 +223,9 @@ const App: React.FC = () => {
             path="/employer/subscription" 
             element={
               <PrivateRoute role="employer">
-                <EmployerSubscription />
+                <Suspense fallback={<Loading />}>
+                  <EmployerSubscription />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -206,7 +235,9 @@ const App: React.FC = () => {
             path="/admin/dashboard" 
             element={
               <PrivateRoute role="admin">
-                <AdminDashboard />
+                <Suspense fallback={<Loading />}>
+                  <AdminDashboard />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -214,7 +245,9 @@ const App: React.FC = () => {
             path="/admin/users" 
             element={
               <PrivateRoute role="admin">
-                <AdminUsers />
+                <Suspense fallback={<Loading />}>
+                  <AdminUsers />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -222,7 +255,9 @@ const App: React.FC = () => {
             path="/admin/companies" 
             element={
               <PrivateRoute role="admin">
-                <AdminCompanies />
+                <Suspense fallback={<Loading />}>
+                  <AdminCompanies />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -230,7 +265,9 @@ const App: React.FC = () => {
             path="/admin/jobs" 
             element={
               <PrivateRoute role="admin">
-                <AdminJobs />
+                <Suspense fallback={<Loading />}>
+                  <AdminJobs />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -238,7 +275,9 @@ const App: React.FC = () => {
             path="/admin/payments" 
             element={
               <PrivateRoute role="admin">
-                <AdminPayments />
+                <Suspense fallback={<Loading />}>
+                  <AdminPayments />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -246,7 +285,9 @@ const App: React.FC = () => {
             path="/admin/analytics" 
             element={
               <PrivateRoute role="admin">
-                <AdminAnalytics />
+                <Suspense fallback={<Loading />}>
+                  <AdminAnalytics />
+                </Suspense>
               </PrivateRoute>
             } 
           />
@@ -254,7 +295,9 @@ const App: React.FC = () => {
             path="/admin/logs" 
             element={
               <PrivateRoute role="admin">
-                <AdminLogs />
+                <Suspense fallback={<Loading />}>
+                  <AdminLogs />
+                </Suspense>
               </PrivateRoute>
             } 
           />
