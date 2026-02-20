@@ -441,6 +441,246 @@ class AIService {
     return defaultQuestions;
   }
 
+  // Generate job recommendations for candidates
+  async generateJobRecommendations(candidateProfile, availableJobs) {
+    try {
+      logAI('info', 'Generating job recommendations', { 
+        candidateSkills: candidateProfile.skills?.length || 0,
+        availableJobs: availableJobs.length 
+      });
+
+      const prompt = `
+        Based on the candidate profile and available jobs, recommend the best matching positions:
+
+        Candidate Profile:
+        - Experience Level: ${candidateProfile.experience_level || 'Not specified'}
+        - Skills: ${candidateProfile.skills ? candidateProfile.skills.join(', ') : 'Not specified'}
+        - Salary Expectation: ${candidateProfile.salary_expectation || 'Not specified'}
+        - Availability: ${candidateProfile.availability || 'Not specified'}
+
+        Available Jobs:
+        ${availableJobs.map((job, i) => `
+          ${i + 1}. ${job.title}
+             Company: ${job.company?.name || 'Unknown'}
+             Required Skills: ${job.requiredSkills?.join(', ') || 'Not specified'}
+             Experience Level: ${job.experienceLevel || 'Not specified'}
+             Salary Range: ${job.salaryMin || 'Not specified'} - ${job.salaryMax || 'Not specified'}
+        `).join('\n')}
+
+        Provide:
+        1. Top 3 job recommendations with match scores (0-100)
+        2. Why each job is a good fit
+        3. Skills gaps to address
+        4. Preparation tips for interviews
+
+        Format as JSON with job_id, match_score, and reasons.
+      `;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert career advisor. Provide personalized job recommendations based on candidate profiles and job requirements."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      });
+
+      const recommendations = this.parseJobRecommendations(response.choices[0].message.content);
+      logAI('info', 'Job recommendations generated', { count: recommendations.length });
+      return recommendations;
+    } catch (error) {
+      logAI('error', 'Failed to generate job recommendations', { error: error.message });
+      throw new Error('Failed to generate job recommendations');
+    }
+  }
+
+  // Generate cover letter
+  async generateCoverLetter(candidateProfile, jobDetails) {
+    try {
+      logAI('info', 'Generating cover letter', { 
+        jobTitle: jobDetails.title,
+        candidateName: candidateProfile.firstName 
+      });
+
+      const prompt = `
+        Generate a professional cover letter for the following:
+
+        Candidate Information:
+        - Name: ${candidateProfile.firstName} ${candidateProfile.lastName}
+        - Experience Level: ${candidateProfile.experience_level || 'Not specified'}
+        - Skills: ${candidateProfile.skills ? candidateProfile.skills.join(', ') : 'Not specified'}
+        - Bio: ${candidateProfile.bio || 'Not specified'}
+
+        Job Details:
+        - Position: ${jobDetails.title}
+        - Company: ${jobDetails.company?.name || 'Not specified'}
+        - Description: ${jobDetails.description || 'Not specified'}
+        - Required Skills: ${jobDetails.requiredSkills?.join(', ') || 'Not specified'}
+
+        Generate a compelling, professional cover letter that:
+        1. Highlights relevant experience
+        2. Demonstrates knowledge of the company
+        3. Shows enthusiasm for the role
+        4. Addresses key job requirements
+        5. Is 3-4 paragraphs long
+
+        Make it personalized and impactful.
+      `;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert cover letter writer. Create compelling, professional cover letters that help candidates stand out."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1500
+      });
+
+      const coverLetter = response.choices[0].message.content;
+      logAI('info', 'Cover letter generated successfully');
+      return { coverLetter, generated_at: new Date() };
+    } catch (error) {
+      logAI('error', 'Failed to generate cover letter', { error: error.message });
+      throw new Error('Failed to generate cover letter');
+    }
+  }
+
+  // Analyze interview performance
+  async analyzeInterviewPerformance(interviewData) {
+    try {
+      logAI('info', 'Analyzing interview performance');
+
+      const prompt = `
+        Analyze the following interview performance data and provide insights:
+
+        Interview Data:
+        - Duration: ${interviewData.duration || 'Not specified'} minutes
+        - Questions Asked: ${interviewData.questionsCount || 0}
+        - Responses Quality: ${interviewData.responseQuality || 'Not specified'}
+        - Technical Score: ${interviewData.technicalScore || 0}/100
+        - Communication Score: ${interviewData.communicationScore || 0}/100
+        - Problem Solving Score: ${interviewData.problemSolvingScore || 0}/100
+        - Overall Score: ${interviewData.overallScore || 0}/100
+
+        Provide:
+        1. Performance summary
+        2. Key strengths demonstrated
+        3. Areas needing improvement
+        4. Specific feedback for each competency
+        5. Recommendations for the candidate
+        6. Hiring recommendation
+
+        Be constructive and encouraging.
+      `;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert interview analyst. Provide detailed, constructive analysis of interview performance."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      });
+
+      const analysis = response.choices[0].message.content;
+      logAI('info', 'Interview performance analysis completed');
+      return { analysis, analyzed_at: new Date() };
+    } catch (error) {
+      logAI('error', 'Failed to analyze interview performance', { error: error.message });
+      throw new Error('Failed to analyze interview performance');
+    }
+  }
+
+  // Generate skill development plan
+  async generateSkillDevelopmentPlan(candidateProfile, targetSkills) {
+    try {
+      logAI('info', 'Generating skill development plan', { 
+        targetSkillsCount: targetSkills.length 
+      });
+
+      const prompt = `
+        Create a personalized skill development plan for the candidate:
+
+        Current Profile:
+        - Experience Level: ${candidateProfile.experience_level || 'Not specified'}
+        - Current Skills: ${candidateProfile.skills ? candidateProfile.skills.join(', ') : 'Not specified'}
+        - Learning Style: ${candidateProfile.learningStyle || 'Not specified'}
+
+        Target Skills to Develop:
+        ${targetSkills.join(', ')}
+
+        Create a comprehensive plan that includes:
+        1. Priority ranking of skills to learn
+        2. Recommended learning resources (courses, books, projects)
+        3. Timeline for skill development (3-6 months)
+        4. Milestones and checkpoints
+        5. Practice projects and exercises
+        6. Success metrics
+
+        Make it practical and achievable.
+      `;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert career coach and learning strategist. Create personalized, achievable skill development plans."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2500
+      });
+
+      const developmentPlan = response.choices[0].message.content;
+      logAI('info', 'Skill development plan generated');
+      return { developmentPlan, created_at: new Date() };
+    } catch (error) {
+      logAI('error', 'Failed to generate skill development plan', { error: error.message });
+      throw new Error('Failed to generate skill development plan');
+    }
+  }
+
+  // Parse job recommendations
+  parseJobRecommendations(aiResponse) {
+    try {
+      const jsonMatch = aiResponse.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      }
+      return [];
+    } catch (error) {
+      logAI('error', 'Failed to parse job recommendations', { error: error.message });
+      return [];
+    }
+  }
+
   // Check if AI service is available
   async checkAvailability() {
     try {

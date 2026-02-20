@@ -66,7 +66,9 @@ api.interceptors.response.use(
 
     // Don't show toast for auth endpoints - let the component handle it
     const isAuthEndpoint = originalRequest.url?.includes('/auth/');
-    if (!isAuthEndpoint) {
+    const is403Error = error.response?.status === 403;
+    
+    if (!isAuthEndpoint && !is403Error) {
       const message = error.response?.data?.error || error.response?.data?.message || 'An error occurred';
       toast.error(message);
     }
@@ -244,4 +246,42 @@ export const companyAPI = {
     api.post('/companies/my/logo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }),
+};
+
+export const aiAPI = {
+  // Check AI service status
+  checkStatus: (): Promise<AxiosResponse<ApiResponse>> => 
+    api.get('/ai/status'),
+  
+  // Generate interview questions
+  generateQuestions: (jobDetails: any, questionCount?: number): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/generate-questions', { jobDetails, questionCount }),
+  
+  // Evaluate interview responses
+  evaluateResponses: (questions: any[], responses: any[], jobDetails: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/evaluate-responses', { questions, responses, jobDetails }),
+  
+  // Generate personalized feedback
+  generateFeedback: (evaluation: any, candidateProfile: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/generate-feedback', { evaluation, candidateProfile }),
+  
+  // Analyze resume
+  analyzeResume: (resumeText: string, jobRequirements: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/analyze-resume', { resumeText, jobRequirements }),
+  
+  // Generate job recommendations
+  generateJobRecommendations: (candidateProfile: any, availableJobs: any[]): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/job-recommendations', { candidateProfile, availableJobs }),
+  
+  // Generate cover letter
+  generateCoverLetter: (candidateProfile: any, jobDetails: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/generate-cover-letter', { candidateProfile, jobDetails }),
+  
+  // Analyze interview performance
+  analyzePerformance: (interviewData: any): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/analyze-performance', { interviewData }),
+  
+  // Generate skill development plan
+  generateSkillPlan: (candidateProfile: any, targetSkills: string[]): Promise<AxiosResponse<ApiResponse>> => 
+    api.post('/ai/skill-development-plan', { candidateProfile, targetSkills }),
 };

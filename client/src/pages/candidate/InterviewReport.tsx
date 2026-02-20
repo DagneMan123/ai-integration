@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { interviewAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
@@ -9,11 +9,7 @@ const InterviewReport: React.FC = () => {
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchReport();
-  }, [id]);
-
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       const response = await interviewAPI.getInterviewReport(id!);
       setReport(response.data.data);
@@ -22,7 +18,11 @@ const InterviewReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchReport();
+  }, [id, fetchReport]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -39,7 +39,7 @@ const InterviewReport: React.FC = () => {
   if (loading) return <Loading />;
   if (!report) return <div className="text-center py-12">Report not found</div>;
 
-  const { interview, report: aiReport } = report;
+  const { interview } = report;
   const evaluation = interview.aiEvaluation;
 
   return (

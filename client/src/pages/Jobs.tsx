@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { jobAPI } from '../utils/api';
 import { Job } from '../types';
@@ -11,11 +11,7 @@ const Jobs: React.FC = () => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
 
-  useEffect(() => {
-    fetchJobs();
-  }, [search, category]);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await jobAPI.getAllJobs({ search, category });
@@ -48,7 +44,11 @@ const Jobs: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, category]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [search, category, fetchJobs]);
 
   if (loading) return <Loading />;
 

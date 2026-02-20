@@ -128,14 +128,22 @@ const Register: React.FC = () => {
                 required: 'Email is required',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address'
+                  message: 'Please provide a valid email address (e.g., user@example.com)'
+                },
+                minLength: {
+                  value: 5,
+                  message: 'Email must be at least 5 characters'
+                },
+                maxLength: {
+                  value: 254,
+                  message: 'Email must not exceed 254 characters'
                 }
               })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
               placeholder="john@example.com"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-danger">{errors.email.message}</p>
+              <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
             )}
           </div>
 
@@ -150,16 +158,24 @@ const Register: React.FC = () => {
                 minLength: {
                   value: 6,
                   message: 'Password must be at least 6 characters'
+                },
+                maxLength: {
+                  value: 128,
+                  message: 'Password must not exceed 128 characters'
+                },
+                pattern: {
+                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                  message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
                 }
               })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-              placeholder="Create a password (min 6 characters)"
+              placeholder="Create a password"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-danger">{errors.password.message}</p>
+              <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Use at least 6 characters
+              At least 6 characters with uppercase, lowercase, and number (e.g., Password123)
             </p>
           </div>
 

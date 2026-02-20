@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobAPI, applicationAPI } from '../utils/api';
 import { Job } from '../types';
@@ -15,17 +15,7 @@ const JobDetails: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Block both null and the literal string "undefined"
-    if (id && id !== 'undefined') {
-      fetchJob();
-    } else {
-      setLoading(false);
-      setJob(null);
-    }
-  }, [id]);
-
-  const fetchJob = async () => {
+  const fetchJob = useCallback(async () => {
     try {
       setLoading(true);
       const response = await jobAPI.getJob(id!);
@@ -44,7 +34,17 @@ const JobDetails: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    // Block both null and the literal string "undefined"
+    if (id && id !== 'undefined') {
+      fetchJob();
+    } else {
+      setLoading(false);
+      setJob(null);
+    }
+  }, [id, fetchJob]);
 
   const handleApply = async () => {
     if (!user) {

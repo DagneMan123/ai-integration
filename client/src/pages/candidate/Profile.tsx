@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { userAPI } from '../../utils/api';
 import { useAuthStore } from '../../store/authStore';
@@ -20,11 +20,7 @@ const CandidateProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const response = await userAPI.getProfile();
       const profile = response.data.data;
@@ -36,7 +32,11 @@ const CandidateProfile: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setValue]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const onSubmit = async (data: ProfileFormData) => {
     setSaving(true);

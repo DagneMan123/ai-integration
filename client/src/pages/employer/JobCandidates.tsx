@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { applicationAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
@@ -8,11 +8,7 @@ const JobCandidates: React.FC = () => {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchApplications();
-  }, [id]);
-
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       const response = await applicationAPI.getJobApplications(id!);
       setApplications(response.data.data || []);
@@ -21,7 +17,11 @@ const JobCandidates: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [id, fetchApplications]);
 
   if (loading) return <Loading />;
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiCheckCircle, FiUsers, FiBriefcase, FiTrendingUp } from 'react-icons/fi';
+import { FiCheckCircle, FiUsers, FiBriefcase } from 'react-icons/fi';
 
 const Home: React.FC = () => {
   return (

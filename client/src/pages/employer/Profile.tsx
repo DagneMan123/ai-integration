@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { companyAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -18,11 +18,7 @@ const EmployerProfile: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState<any>(null);
 
-  useEffect(() => {
-    fetchCompany();
-  }, []);
-
-  const fetchCompany = async () => {
+  const fetchCompany = useCallback(async () => {
     try {
       const response = await companyAPI.getMyCompany();
       const data = response.data.data;
@@ -37,7 +33,11 @@ const EmployerProfile: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setValue]);
+
+  useEffect(() => {
+    fetchCompany();
+  }, [fetchCompany]);
 
   const onSubmit = async (data: CompanyFormData) => {
     setSaving(true);

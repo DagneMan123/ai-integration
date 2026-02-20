@@ -59,7 +59,15 @@ const Login: React.FC = () => {
                 required: 'Email is required',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address'
+                  message: 'Please provide a valid email address (e.g., user@example.com)'
+                },
+                minLength: {
+                  value: 5,
+                  message: 'Email must be at least 5 characters'
+                },
+                maxLength: {
+                  value: 254,
+                  message: 'Email must not exceed 254 characters'
                 }
               })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
@@ -76,7 +84,17 @@ const Login: React.FC = () => {
             </label>
             <input
               type="password"
-              {...register('password', { required: 'Password is required' })}
+              {...register('password', { 
+                required: 'Password is required',
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters'
+                },
+                maxLength: {
+                  value: 128,
+                  message: 'Password must not exceed 128 characters'
+                }
+              })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
               placeholder="Enter your password"
             />

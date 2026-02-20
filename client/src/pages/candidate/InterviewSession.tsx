@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interviewAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
@@ -15,18 +15,7 @@ const InterviewSession: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
 
-  useEffect(() => {
-    fetchInterview();
-  }, [id]);
-
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [timeLeft]);
-
-  const fetchInterview = async () => {
+  const fetchInterview = useCallback(async () => {
     try {
       const response = await interviewAPI.getInterviewReport(id!);
       const data = response.data.data.interview;
@@ -41,7 +30,18 @@ const InterviewSession: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    fetchInterview();
+  }, [id, fetchInterview]);
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [timeLeft]);
 
   const handleSubmitAnswer = async () => {
     if (!answer.trim()) {
