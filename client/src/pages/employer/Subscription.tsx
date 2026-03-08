@@ -63,6 +63,7 @@ const EmployerSubscription: React.FC = () => {
 
     setLoading(true);
     try {
+      // Step 1: Initialize payment on backend
       const response = await paymentAPI.initializePayment({
         amount: plan.price,
         type: 'subscription',
@@ -70,7 +71,8 @@ const EmployerSubscription: React.FC = () => {
       });
 
       if (response.data.success && response.data.data.checkoutUrl) {
-        // Redirect to Chapa checkout
+        // Step 2: Redirect to Chapa checkout
+        // Chapa will redirect back to /payment/success?tx_ref=XXX&status=success
         window.location.href = response.data.data.checkoutUrl;
       } else {
         toast.error('Failed to initialize payment');

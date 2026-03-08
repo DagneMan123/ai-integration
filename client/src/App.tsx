@@ -46,6 +46,7 @@ const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
 const AdminPayments = lazy(() => import('./pages/admin/Payments'));
 const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
 const AdminLogs = lazy(() => import('./pages/admin/Logs'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 const App: React.FC = () => {
   const { user } = useAuthStore();
@@ -75,6 +76,18 @@ const App: React.FC = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          
+          {/* Payment Routes */}
+          <Route 
+            path="/payment/success" 
+            element={
+              <PrivateRoute>
+                <Suspense fallback={<Loading />}>
+                  <PaymentSuccess />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
           
           {/* Candidate Routes */}
           <Route 

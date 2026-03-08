@@ -3,7 +3,10 @@ const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-// ሁሉም ሮውቶች ቶከን ይፈልጋሉ
+// Webhook - NO authentication required
+router.post('/webhook', paymentController.chapaWebhook);
+
+// All other routes require authentication
 router.use(authenticateToken);
 
 // Initialize payment
@@ -11,9 +14,6 @@ router.post('/initialize', paymentController.initializePayment);
 
 // Verify payment
 router.get('/verify/:tx_ref', paymentController.verifyPayment);
-
-// Webhook 
-router.post('/webhook', paymentController.chapaWebhook);
 
 // Get payment history
 router.get('/history', paymentController.getPaymentHistory);

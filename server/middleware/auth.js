@@ -15,7 +15,31 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        // Allow payment verification with expired token (grace period)
+        if (req.path.includes('/payments/verify') || req.path.includes('/payments/webhook')) {
+          try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+          } catch (innerError) {
+            return res.status(401).json({
+              success: false,
+              message: 'Token expired'
+            });
+          }
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: 'Token expired'
+          });
+        }
+      } else {
+        throw error;
+      }
+    }
     
     // Prisma query (findByPk በ findUnique ተተክቷል)
     const user = await prisma.user.findUnique({
