@@ -166,10 +166,16 @@ exports.withdrawApplication = async (req, res, next) => {
 exports.getJobApplications = async (req, res, next) => {
   try {
     const { jobId } = req.params;
-    const { status, sort = 'createdAt' } = req.query;
+    const { status, sort = 'appliedAt' } = req.query;
+
+    // Convert jobId to integer
+    const jobIdInt = parseInt(jobId, 10);
+    if (isNaN(jobIdInt)) {
+      return next(new AppError('Invalid job ID', 400));
+    }
 
     const job = await prisma.job.findUnique({
-      where: { id: jobId }
+      where: { id: jobIdInt }
     });
 
     if (!job) {
@@ -177,11 +183,11 @@ exports.getJobApplications = async (req, res, next) => {
     }
 
     // Check ownership
-    if (job.createdBy !== req.user.id && req.user.role !== 'admin') {
+    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
       return next(new AppError('Not authorized', 403));
     }
 
-    const where = { jobId };
+    const where = { jobId: jobIdInt };
     if (status) where.status = status;
 
     // Build sorting

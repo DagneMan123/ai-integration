@@ -25,7 +25,9 @@ const EmployerProfile: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [company, setCompany] = useState<any>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
 
   const fetchCompany = useCallback(async () => {
@@ -38,6 +40,9 @@ const EmployerProfile: React.FC = () => {
       setValue('description', data.description || '');
       setValue('website', data.website || '');
       setValue('address', data.address || '');
+      if (data.logo) {
+        setLogoPreview(data.logo);
+      }
     } catch (error) {
       console.error('Failed to fetch company', error);
       toast.error('Failed to load company profile');
@@ -56,8 +61,8 @@ const EmployerProfile: React.FC = () => {
     try {
       const response = await companyAPI.updateCompany(data);
       setCompany(response.data.data);
-      setSuccessMessage('Company profile updated successfully!');
-      toast.success('Company profile updated successfully!');
+      setSuccessMessage(response.data.message || 'Company profile updated successfully!');
+      toast.success(response.data.message || 'Company profile updated successfully!');
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -70,6 +75,50 @@ const EmployerProfile: React.FC = () => {
       toast.error(errorMessage);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload file
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+      
+      const response = await companyAPI.uploadLogo(formData);
+      setCompany(response.data.data?.company || company);
+      toast.success('Logo uploaded successfully!');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Failed to upload logo';
+      toast.error(errorMessage);
+      setLogoPreview(company?.logo || null);
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -111,6 +160,57 @@ const EmployerProfile: React.FC = () => {
         {/* Form Card */}
         <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Logo Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Company Logo
+              </label>
+              <div className="flex items-center gap-6">
+                {/* Logo Preview */}
+                <div className="w-24 h-24 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Company logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </div>
+
+                {/* Upload Input */}
+                <div className="flex-1">
+                  <label className="relative cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      disabled={uploadingLogo}
+                      className="hidden"
+                    />
+                    <div className={`px-4 py-3 rounded-lg border-2 border-dashed transition-colors text-center ${
+                      uploadingLogo
+                        ? 'border-gray-300 bg-gray-50 cursor-not-allowed'
+                        : 'border-blue-300 bg-blue-50 hover:border-blue-400 hover:bg-blue-100'
+                    }`}>
+                      {uploadingLogo ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <svg className="w-5 h-5 animate-spin text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="text-sm font-medium text-blue-600">Uploading...</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-sm font-medium text-blue-600">Click to upload</p>
+                          <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             {/* Company Name */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">

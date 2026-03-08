@@ -86,7 +86,21 @@ exports.getMyCompany = async (req, res, next) => {
     });
 
     if (!company) {
-      return next(new AppError('Company profile not found. Please complete your company profile first.', 404));
+      // Return empty company data instead of error for new employers
+      return res.json({
+        success: true,
+        data: {
+          id: null,
+          name: '',
+          industry: '',
+          description: '',
+          website: '',
+          address: '',
+          logo: null,
+          isVerified: false,
+          createdById: req.user.id
+        }
+      });
     }
 
     res.json({
@@ -106,15 +120,6 @@ exports.updateCompany = async (req, res, next) => {
       return next(new AppError('User not authenticated', 401));
     }
 
-    // Check if company exists first
-    const existingCompany = await prisma.company.findFirst({
-      where: { createdById: req.user.id }
-    });
-
-    if (!existingCompany) {
-      return next(new AppError('Company profile not found. Please complete your company profile first.', 404));
-    }
-
     // Validate input data
     const { name, industry, description, website, address } = req.body;
     
@@ -122,20 +127,43 @@ exports.updateCompany = async (req, res, next) => {
       return next(new AppError('Company name and industry are required', 400));
     }
 
-    const company = await prisma.company.update({
-      where: { id: existingCompany.id },
-      data: {
-        name,
-        industry,
-        description: description || existingCompany.description,
-        website: website || existingCompany.website,
-        address: address || existingCompany.address
-      }
+    // Check if company exists
+    let existingCompany = await prisma.company.findFirst({
+      where: { createdById: req.user.id }
     });
+
+    let company;
+
+    if (!existingCompany) {
+      // Create new company if it doesn't exist
+      company = await prisma.company.create({
+        data: {
+          name,
+          industry,
+          description: description || '',
+          website: website || '',
+          address: address || '',
+          createdById: req.user.id,
+          isVerified: false
+        }
+      });
+    } else {
+      // Update existing company
+      company = await prisma.company.update({
+        where: { id: existingCompany.id },
+        data: {
+          name,
+          industry,
+          description: description || existingCompany.description,
+          website: website || existingCompany.website,
+          address: address || existingCompany.address
+        }
+      });
+    }
 
     res.json({
       success: true,
-      message: 'Company profile updated successfully',
+      message: existingCompany ? 'Company profile updated successfully' : 'Company profile created successfully',
       data: company
     });
   } catch (error) {
@@ -151,12 +179,12 @@ exports.uploadLogo = async (req, res, next) => {
     }
 
     // Check if company exists
-    const existingCompany = await prisma.company.findFirst({
+    let existingCompany = await prisma.company.findFirst({
       where: { createdById: req.user.id }
     });
 
     if (!existingCompany) {
-      return next(new AppError('Company profile not found', 404));
+      return next(new AppError('Please create a company profile first', 400));
     }
 
     const logoUrl = await uploadToCloud(req.file, 'logos');
@@ -169,7 +197,7 @@ exports.uploadLogo = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Logo uploaded successfully',
-      data: { logoUrl }
+      data: { logoUrl, company }
     });
   } catch (error) {
     next(error);

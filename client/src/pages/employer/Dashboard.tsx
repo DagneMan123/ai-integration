@@ -6,25 +6,48 @@ import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { employerMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
+import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 
 const EmployerDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Initialize dashboard communication
+  const { broadcastDataUpdate, notifyStatusChange, sendNotification } = useDashboardCommunication({
+    role: 'employer',
+    onDataUpdate: (event) => {
+      console.log('[Employer] Received data update from:', event.source);
+    },
+    onActionRequired: (event) => {
+      console.log('[Employer] Action required:', event.payload);
+      if (event.payload.action === 'job-approved' || event.payload.action === 'job-rejected') {
+        toast.success(`Job ${event.payload.action}: ${event.payload.data.jobTitle}`);
+      }
+    },
+  });
+
   const fetchDashboardData = useCallback(async () => {
     try {
       const response = await analyticsAPI.getEmployerDashboard();
-      setData(response.data.data || null);
+      const dashboardData = response.data.data || null;
+      setData(dashboardData);
+      
+      // Broadcast data update to other dashboards
+      if (dashboardData) {
+        broadcastDataUpdate(dashboardData);
+        notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
+      }
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
       toast.error('Failed to load dashboard data');
       setData(null);
+      sendNotification('Failed to load employer dashboard data', 'high');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [broadcastDataUpdate, notifyStatusChange, sendNotification]);
 
   useEffect(() => {
     fetchDashboardData();

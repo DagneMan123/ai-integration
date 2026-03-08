@@ -147,13 +147,30 @@ export interface Payment {
 
 export interface DashboardData {
   totalApplications?: number;
+  applications?: number;
   totalInterviews?: number;
+  interviews?: number;
   averageScore?: number;
   recentInterviews?: Interview[];
   totalJobs?: number;
+  jobs?: number;
   activeJobs?: number;
   totalUsers?: number;
   totalRevenue?: number;
+  pendingCompanies?: number;
+  pendingJobs?: number;
+  recentActivity?: Array<{
+    action: string;
+    description: string;
+    timestamp: string;
+  }>;
+  recentApplications?: Array<{
+    id: string;
+    candidateName: string;
+    jobTitle: string;
+    candidateEmail: string;
+    status: string;
+  }>;
 }
 
 export interface ApiResponse<T = any> {

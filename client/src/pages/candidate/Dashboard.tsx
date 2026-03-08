@@ -6,25 +6,52 @@ import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
+import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 
 const CandidateDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Initialize dashboard communication
+  const { broadcastDataUpdate, notifyStatusChange, sendNotification } = useDashboardCommunication({
+    role: 'candidate',
+    onDataUpdate: (event) => {
+      console.log('[Candidate] Received data update from:', event.source);
+    },
+    onNotification: (event) => {
+      console.log('[Candidate] Notification:', event.payload.message);
+      toast.success(event.payload.message);
+    },
+    onActionRequired: (event) => {
+      console.log('[Candidate] Action required:', event.payload);
+      if (event.payload.action === 'interview-scheduled') {
+        toast.success(`Interview scheduled: ${event.payload.data.jobTitle}`);
+      }
+    },
+  });
+
   const fetchDashboardData = useCallback(async () => {
     try {
       const response = await analyticsAPI.getCandidateDashboard();
-      setData(response.data.data || null);
+      const dashboardData = response.data.data || null;
+      setData(dashboardData);
+      
+      // Broadcast data update to other dashboards
+      if (dashboardData) {
+        broadcastDataUpdate(dashboardData);
+        notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
+      }
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
       toast.error('Failed to load dashboard data');
       setData(null);
+      sendNotification('Failed to load candidate dashboard data', 'high');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [broadcastDataUpdate, notifyStatusChange, sendNotification]);
 
   useEffect(() => {
     fetchDashboardData();

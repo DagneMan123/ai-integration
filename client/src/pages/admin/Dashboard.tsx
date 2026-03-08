@@ -6,25 +6,48 @@ import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { adminMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
+import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 
 const AdminDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Initialize dashboard communication
+  const { broadcastDataUpdate, notifyStatusChange, sendNotification } = useDashboardCommunication({
+    role: 'admin',
+    onDataUpdate: (event) => {
+      console.log('[Admin] Received data update from:', event.source);
+    },
+    onStatusChange: (event) => {
+      console.log('[Admin] Status change notification:', event.payload);
+    },
+    onActionRequired: (event) => {
+      console.log('[Admin] Action required:', event.payload);
+    },
+  });
+
   const fetchDashboardData = useCallback(async () => {
     try {
       const response = await analyticsAPI.getAdminDashboard();
-      setData(response.data.data || null);
+      const dashboardData = response.data.data || null;
+      setData(dashboardData);
+      
+      // Broadcast data update to other dashboards
+      if (dashboardData) {
+        broadcastDataUpdate(dashboardData);
+        notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
+      }
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
       toast.error('Failed to load dashboard data');
       setData(null);
+      sendNotification('Failed to load admin dashboard data', 'high');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [broadcastDataUpdate, notifyStatusChange, sendNotification]);
 
   useEffect(() => {
     fetchDashboardData();
