@@ -191,7 +191,7 @@ exports.uploadLogo = async (req, res, next) => {
 
     const company = await prisma.company.update({
       where: { id: existingCompany.id },
-      data: { logo: logoUrl }
+      data: { logoUrl: logoUrl }
     });
 
     res.json({

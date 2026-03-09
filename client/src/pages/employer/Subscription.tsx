@@ -71,8 +71,15 @@ const EmployerSubscription: React.FC = () => {
       });
 
       if (response.data.success && response.data.data.checkoutUrl) {
-        // Step 2: Redirect to Chapa checkout
-        // Chapa will redirect back to /payment/success?tx_ref=XXX&status=success
+        // Step 2: Store tx_ref in localStorage before redirecting
+        // This is needed because Chapa doesn't pass tx_ref back in return URL
+        const txRef = response.data.data.txRef;
+        if (txRef) {
+          localStorage.setItem('pendingPaymentTxRef', txRef);
+          localStorage.setItem('pendingPaymentTime', Date.now().toString());
+        }
+        
+        // Step 3: Redirect to Chapa checkout
         window.location.href = response.data.data.checkoutUrl;
       } else {
         toast.error('Failed to initialize payment');

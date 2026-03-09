@@ -14,8 +14,14 @@ const PaymentSuccess: React.FC = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        // Get tx_ref from URL
-        const txRef = searchParams.get('tx_ref');
+        // Try to get tx_ref from URL first (if Chapa passes it)
+        let txRef = searchParams.get('tx_ref');
+        
+        // If not in URL, get from localStorage (fallback)
+        if (!txRef) {
+          txRef = localStorage.getItem('pendingPaymentTxRef');
+        }
+
         const chapaStatus = searchParams.get('status');
 
         if (!txRef) {
@@ -25,11 +31,9 @@ const PaymentSuccess: React.FC = () => {
           return;
         }
 
-        if (chapaStatus !== 'success') {
-          setStatus('error');
-          setMessage('Payment was not completed');
-          setLoading(false);
-          return;
+        if (chapaStatus !== 'success' && !chapaStatus) {
+          // If no status in URL, assume success (user was redirected back)
+          // This is because Chapa might not pass status parameter
         }
 
         // Call backend to verify payment (server-side verification)
@@ -39,6 +43,10 @@ const PaymentSuccess: React.FC = () => {
           setStatus('success');
           setMessage('Payment verified! Generating AI response...');
           toast.success('Payment verified successfully!');
+          
+          // Clear localStorage
+          localStorage.removeItem('pendingPaymentTxRef');
+          localStorage.removeItem('pendingPaymentTime');
 
           // Redirect to appropriate page after 2 seconds
           setTimeout(() => {

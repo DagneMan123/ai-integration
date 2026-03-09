@@ -1,0 +1,106 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              TEST COMPANY PROFILE - SAVE BUTTON FIX                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+WHAT WAS FIXED:
+- Save button was always disabled
+- Now enables when you make changes
+- Disables after successful save
+
+HOW TO TEST:
+
+1. CLEAR BROWSER CACHE
+   - Press Ctrl+Shift+Delete
+   - Select "All time"
+   - Check "Cached images and files"
+   - Click "Clear data"
+   - Hard refresh: Ctrl+F5
+
+2. LOGIN AS EMPLOYER
+   - Go to http://localhost:3000/login
+   - Email: employer@example.com
+   - Password: password123
+
+3. GO TO COMPANY PROFILE
+   - Click "Employer Dashboard"
+   - Click "Company Profile" (or go to /employer/profile)
+
+4. TEST NEW COMPANY (First Time)
+   - Form should load with empty fields
+   - Save button should be DISABLED (grayed out)
+   - Type in "Company Name" field
+   - Save button should become ENABLED (blue)
+   - Fill in other fields (Industry, Address, Website, Description)
+   - Click "Save Changes"
+   - Should see success message: "Company profile created successfully"
+   - Save button should become DISABLED again
+
+5. TEST EXISTING COMPANY (Second Time)
+   - Form should load with your company data
+   - Save button should be DISABLED
+   - Change any field (e.g., company name)
+   - Save button should become ENABLED
+   - Click "Save Changes"
+   - Should see success message: "Company profile updated successfully"
+   - Save button should become DISABLED again
+
+6. TEST LOGO UPLOAD
+   - Click "Click to upload" in logo section
+   - Select an image file (PNG, JPG, max 5MB)
+   - Logo should upload
+   - Logo preview should update
+   - Save button should NOT be affected by logo upload
+
+EXPECTED BEHAVIOR:
+
+✅ Save button disabled on page load
+✅ Save button enabled when you type in any field
+✅ Save button disabled after successful save
+✅ Success message appears after save
+✅ Form data persists after save
+✅ Logo upload works independently
+
+TROUBLESHOOTING:
+
+If save button is still disabled:
+1. Hard refresh: Ctrl+F5
+2. Clear cache: Ctrl+Shift+Delete
+3. Stop client: Ctrl+C
+4. Delete cache: rmdir /s /q client/node_modules\.cache
+5. Restart: npm start
+
+If save fails:
+1. Check browser console: F12 → Console
+2. Check server logs: tail -f server/logs/error.log
+3. Verify you're logged in as employer
+4. Verify server is running on port 5000
+
+If form doesn't load:
+1. Check network tab: F12 → Network
+2. Look for GET /api/companies/my/profile
+3. Should return 200 status
+4. Check server logs for errors
+
+SUCCESS INDICATORS:
+
+✅ Save button changes from gray to blue when you type
+✅ Success message appears after clicking save
+✅ Form data is saved and persists on page reload
+✅ No errors in browser console
+✅ No errors in server logs
+
+QUICK CHECKLIST:
+
+☐ Browser cache cleared
+☐ Hard refresh done (Ctrl+F5)
+☐ Logged in as employer
+☐ On /employer/profile page
+☐ Form loads with data
+☐ Save button is disabled initially
+☐ Save button enables when you type
+☐ Save button works when clicked
+☐ Success message appears
+☐ Save button disables after save
+
+TIME TO TEST: ~5 minutes
+

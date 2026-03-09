@@ -29,6 +29,7 @@ const EmployerProfile: React.FC = () => {
   const [company, setCompany] = useState<any>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [hasChanges, setHasChanges] = useState(false);
 
   const fetchCompany = useCallback(async () => {
     try {
@@ -63,6 +64,7 @@ const EmployerProfile: React.FC = () => {
       setCompany(response.data.data);
       setSuccessMessage(response.data.message || 'Company profile updated successfully!');
       toast.success(response.data.message || 'Company profile updated successfully!');
+      setHasChanges(false);
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -220,7 +222,8 @@ const EmployerProfile: React.FC = () => {
                 type="text"
                 {...register('name', { 
                   required: 'Company name is required',
-                  minLength: { value: 2, message: 'Company name must be at least 2 characters' }
+                  minLength: { value: 2, message: 'Company name must be at least 2 characters' },
+                  onChange: () => setHasChanges(true)
                 })}
                 className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                   errors.name 
@@ -245,7 +248,10 @@ const EmployerProfile: React.FC = () => {
                 Industry <span className="text-red-500">*</span>
               </label>
               <select
-                {...register('industry', { required: 'Industry is required' })}
+                {...register('industry', { 
+                  required: 'Industry is required',
+                  onChange: () => setHasChanges(true)
+                })}
                 className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                   errors.industry 
                     ? 'border-red-300 focus:ring-red-500 focus:border-transparent' 
@@ -276,7 +282,9 @@ const EmployerProfile: React.FC = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
               <input
                 type="text"
-                {...register('address')}
+                {...register('address', {
+                  onChange: () => setHasChanges(true)
+                })}
                 placeholder="City, Country"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               />
@@ -287,7 +295,9 @@ const EmployerProfile: React.FC = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-2">Website</label>
               <input
                 type="url"
-                {...register('website')}
+                {...register('website', {
+                  onChange: () => setHasChanges(true)
+                })}
                 placeholder="https://example.com"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               />
@@ -297,7 +307,9 @@ const EmployerProfile: React.FC = () => {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
               <textarea
-                {...register('description')}
+                {...register('description', {
+                  onChange: () => setHasChanges(true)
+                })}
                 rows={5}
                 placeholder="Tell us about your company, mission, and values..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
@@ -308,9 +320,9 @@ const EmployerProfile: React.FC = () => {
             <div className="flex gap-3 pt-6">
               <button
                 type="submit"
-                disabled={saving || !isDirty}
+                disabled={saving || !hasChanges}
                 className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                  saving || !isDirty
+                  saving || !hasChanges
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl active:scale-95'
                 }`}
@@ -334,7 +346,7 @@ const EmployerProfile: React.FC = () => {
             </div>
 
             {/* Info Text */}
-            {!isDirty && (
+            {!hasChanges && (
               <p className="text-center text-sm text-gray-500 pt-2">Make changes to enable the save button</p>
             )}
           </form>
