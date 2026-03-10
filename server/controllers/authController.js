@@ -96,6 +96,8 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
     const normalizedEmail = email.toLowerCase().trim();
 
+    logActivity(null, 'login_attempt', 'auth', normalizedEmail, { email: normalizedEmail }, req.ip, req.get('User-Agent'));
+
     const user = await prisma.user.findUnique({ 
       where: { email: normalizedEmail },
       select: {
@@ -105,12 +107,26 @@ exports.login = async (req, res, next) => {
       }
     });
     
-    if (!user) return next(new AppError('Invalid credentials', 401));
-    if (user.isLocked) return next(new AppError('Account is locked', 403));
+    if (!user) {
+      logger.warn('Login attempt with non-existent email', { email: normalizedEmail });
+      return next(new AppError('Invalid credentials', 401));
+    }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (user.isLocked) {
+      logger.warn('Login attempt on locked account', { email: normalizedEmail });
+      return next(new AppError('Account is locked', 403));
+    }
+
+    let isMatch = false;
+    try {
+      isMatch = await bcrypt.compare(password, user.passwordHash);
+    } catch (bcryptError) {
+      logger.error('Bcrypt comparison error', { error: bcryptError.message, email: normalizedEmail });
+      return next(new AppError('Invalid credentials', 401));
+    }
     
     if (!isMatch) {
+      logger.warn('Login attempt with wrong password', { email: normalizedEmail });
       const newAttempts = user.loginAttempts + 1;
       await prisma.user.update({
         where: { id: user.id },
@@ -125,6 +141,8 @@ exports.login = async (req, res, next) => {
     });
 
     await logActivity(Number(user.id), 'login', 'user', String(user.id), {}, req.ip, req.get('User-Agent'));
+
+    logger.info('User logged in successfully', { email: normalizedEmail, userId: user.id });
 
     res.json({
       success: true,
@@ -141,6 +159,7 @@ exports.login = async (req, res, next) => {
       }
     });
   } catch (error) {
+    logger.error('Login error', { error: error.message });
     next(error);
   }
 };

@@ -82,7 +82,7 @@ exports.getCandidateApplications = async (req, res, next) => {
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { appliedAt: 'desc' }
     });
 
     res.json({
@@ -205,7 +205,7 @@ exports.getJobApplications = async (req, res, next) => {
           select: { firstName: true, lastName: true, email: true, avatar: true }
         }
       },
-      orderBy: Object.keys(orderBy).length ? orderBy : { createdAt: 'desc' }
+      orderBy: Object.keys(orderBy).length ? orderBy : { appliedAt: 'desc' }
     });
 
     res.json({
