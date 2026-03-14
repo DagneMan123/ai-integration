@@ -32,16 +32,24 @@ exports.getProfile = async (req, res, next) => {
 // Update user profile
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { firstName, lastName, phone, skills, experience, education, ...otherFields } = req.body;
+    const { firstName, lastName, phone, email, bio, skills, experience, education, ...otherFields } = req.body;
+
+    // Update User table with user-level fields
+    const userData = {};
+    if (firstName) userData.firstName = firstName;
+    if (lastName) userData.lastName = lastName;
+    if (phone) userData.phone = phone;
+    if (email) userData.email = email;
+    if (bio) userData.bio = bio;
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { firstName, lastName, phone }
+      data: userData
     });
 
     if (user.role === 'CANDIDATE') {
       // Prepare candidate profile data
-      const candidateData = { ...otherFields };
+      const candidateData = {};
       
       // Handle skills - convert to array if string
       if (skills) {
@@ -62,10 +70,13 @@ exports.updateProfile = async (req, res, next) => {
           : education;
       }
 
-      await prisma.candidateProfile.update({
-        where: { userId: user.id },
-        data: candidateData
-      });
+      // Only update if there's candidate data to update
+      if (Object.keys(candidateData).length > 0) {
+        await prisma.candidateProfile.update({
+          where: { userId: user.id },
+          data: candidateData
+        });
+      }
     } else if (user.role === 'EMPLOYER') {
       // Find the company created by this user
       const company = await prisma.company.findFirst({
@@ -131,7 +142,7 @@ exports.uploadAvatar = async (req, res, next) => {
 
     await prisma.user.update({
       where: { id: req.user.id },
-      data: { avatar: avatarUrl }
+      data: { profilePicture: avatarUrl }
     });
 
     res.json({

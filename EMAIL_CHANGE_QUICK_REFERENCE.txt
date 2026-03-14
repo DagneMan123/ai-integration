@@ -1,0 +1,190 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                    EMAIL CHANGE FEATURE - QUICK GUIDE                     ║
+║                                                                            ║
+║                            March 9, 2026                                   ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ WHAT'S NEW:
+
+✅ Dynamic Email Change
+   → Users can now change their email address
+   → No longer read-only/disabled
+   → Easy-to-use interface
+
+✅ Email Validation
+   → Validates email format
+   → Prevents duplicate emails
+   → Real-time error messages
+
+✅ User-Friendly Interface
+   → "Change" button to start editing
+   → "Confirm" button to save
+   → "Cancel" button to discard
+
+✅ Success Feedback
+   → Success message appears
+   → Toast notification
+   → Auto-dismisses after 3 seconds
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 HOW TO USE:
+
+Step 1: Go to My Profile
+   → Click "My Profile" in dashboard
+   → Scroll to Email section
+
+Step 2: Click "Change" Button
+   → Email field becomes editable
+   → New input appears
+
+Step 3: Enter New Email
+   → Type your new email address
+   → Make sure it's correct
+
+Step 4: Click "Confirm"
+   → Email is validated
+   → Email is updated
+   → Success message appears
+
+Step 5: Done!
+   → Email is now updated
+   → You can change it again anytime
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 VALID EMAIL FORMAT:
+
+✅ Valid Examples:
+   • user@example.com
+   • john.doe@company.co.uk
+   • test+tag@domain.org
+   • firstname.lastname@email.com
+
+❌ Invalid Examples:
+   • userexample.com (missing @)
+   • user@example (missing extension)
+   • user @example.com (space in email)
+   • @example.com (missing username)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ VALIDATION RULES:
+
+1. Email Format
+   → Must be valid email format
+   → Must contain @ symbol
+   → Must have domain and extension
+
+2. Duplicate Check
+   → Cannot use same email as current
+   → Must be different from existing email
+
+3. Error Messages
+   → "Please enter a valid email address"
+   → "New email must be different from current email"
+   → "Failed to update email"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 FEATURES:
+
+✅ Dynamic Email Change
+   → Change email anytime
+   → No restrictions
+   → Easy process
+
+✅ Email Validation
+   → Format validation
+   → Duplicate prevention
+   → Real-time feedback
+
+✅ User-Friendly
+   → Clear buttons
+   → Easy to understand
+   → Professional interface
+
+✅ Error Handling
+   → Clear error messages
+   → Helpful hints
+   → Easy to fix
+
+✅ Success Feedback
+   → Success message
+   → Toast notification
+   → Confirmation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ TROUBLESHOOTING:
+
+Issue: "Change" button not working
+→ Refresh the page
+→ Check internet connection
+→ Try again
+
+Issue: Error message appears
+→ Check email format
+→ Make sure email is different
+→ Try a different email
+
+Issue: Email not updating
+→ Check internet connection
+→ Wait for success message
+→ Refresh page to verify
+
+Issue: Can't click "Confirm"
+→ Make sure email is valid
+→ Check for error messages
+→ Try entering email again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔒 SECURITY:
+
+✅ Email Format Validation
+   → Prevents invalid emails
+   → Ensures correct format
+
+✅ Duplicate Prevention
+   → Prevents same email
+   → Ensures unique emails
+
+✅ HTTPS Encryption
+   → Secure communication
+   → Data protection
+
+✅ Authentication Required
+   → Only logged-in users
+   → User verification
+
+✅ Error Security
+   → No sensitive data in errors
+   → Safe error messages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 SUPPORT:
+
+Need Help?
+• Check this guide for common issues
+• Review the troubleshooting section
+• Contact support if problems persist
+
+Contact Support:
+• Email: support@simuai.com
+• Chat: Available in the app
+• Phone: +1 (555) 000-0000
+• Hours: 24/7 support available
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ STATUS: PRODUCTION READY
+
+Email change feature is now live and ready to use!
+
+═══════════════════════════════════════════════════════════════════════════════

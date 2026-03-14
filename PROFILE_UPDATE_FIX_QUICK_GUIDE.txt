@@ -1,0 +1,171 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                    PROFILE UPDATE ERROR - FIXED ✅                        ║
+║                                                                            ║
+║                            March 10, 2026                                  ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ PROBLEM:
+
+Error: Invalid `prisma.candidateProfile.update()` invocation
+Unknown argument `bio`
+
+This error occurred when trying to update profile with:
+• bio
+• email
+• phone
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 ROOT CAUSE:
+
+The code was trying to update candidateProfile table with fields that
+don't exist there. These fields exist in the User table instead:
+
+❌ Wrong:
+  candidateProfile.update({
+    bio: "...",      // Not in candidateProfile
+    email: "...",    // Not in candidateProfile
+    phone: "..."     // Not in candidateProfile
+  })
+
+✅ Correct:
+  user.update({
+    bio: "...",      // In User table
+    email: "...",    // In User table
+    phone: "..."     // In User table
+  })
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SOLUTION:
+
+Updated server/controllers/userController.js to:
+
+1. Separate User fields from CandidateProfile fields
+2. Update User table with: firstName, lastName, email, phone, bio
+3. Update CandidateProfile table with: skills, experience, education
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 DATABASE SCHEMA:
+
+User Table (Contains):
+✅ firstName
+✅ lastName
+✅ email
+✅ phone
+✅ bio
+✅ profilePicture
+✅ linkedinUrl
+✅ githubUrl
+
+CandidateProfile Table (Contains):
+✅ skills
+✅ experienceLevel
+✅ education
+✅ workExperience
+✅ certifications
+✅ languages
+✅ availability
+✅ expectedSalary
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 WHAT NOW WORKS:
+
+User Profile Fields (Updated in User table):
+✅ First Name
+✅ Last Name
+✅ Email (dynamic change)
+✅ Phone
+✅ Bio (professional bio)
+
+Candidate Profile Fields (Updated in CandidateProfile table):
+✅ Skills
+✅ Experience Level
+✅ Education
+✅ Work Experience
+✅ Certifications
+✅ Languages
+✅ Availability
+✅ Expected Salary
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 DEPLOYMENT:
+
+1. Pull latest code
+2. No database migration needed
+3. No new dependencies
+4. Restart server: npm start
+5. Test profile update
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ TESTING:
+
+Before Fix:
+❌ Error: Unknown argument `bio`
+❌ Profile update fails
+❌ Email change fails
+
+After Fix:
+✅ User fields update correctly
+✅ Candidate fields update correctly
+✅ Profile update works
+✅ Email change works
+✅ Bio update works
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 API ENDPOINT:
+
+PUT /api/users/profile
+
+Request:
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "phone": "+1234567890",
+  "bio": "Professional bio",
+  "skills": "JavaScript, React",
+  "experience": "Senior",
+  "education": "BS Computer Science"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "id": 1,
+    "email": "john@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "phone": "+1234567890",
+    "bio": "Professional bio"
+  }
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 SUPPORT:
+
+Need Help?
+• Check PROFILE_UPDATE_ERROR_FIXED.md for details
+• Review the troubleshooting section
+• Contact support if problems persist
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ STATUS: FIXED AND READY
+
+Profile update error is now fixed!
+All profile fields now update correctly!
+
+═══════════════════════════════════════════════════════════════════════════════

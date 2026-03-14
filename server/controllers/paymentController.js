@@ -59,21 +59,22 @@ exports.initializePayment = async (req, res, next) => {
       });
     }
 
-    // Check for completed payment in last 24 hours
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Check for completed payment in last 30 minutes (prevent accidental duplicates)
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     const recentCompleted = await prisma.payment.findFirst({
       where: {
         userId,
         amount: parseFloat(amount),
         status: 'COMPLETED',
-        paidAt: { gte: twentyFourHoursAgo }
+        paidAt: { gte: thirtyMinutesAgo }
       }
     });
 
     if (recentCompleted) {
+      logger.warn(`[PAYMENT] Duplicate payment attempt detected: ${recentCompleted.id}`);
       return res.status(400).json({
         success: false,
-        message: 'Payment already completed recently.'
+        message: 'Payment already completed. Please wait before trying again.'
       });
     }
 

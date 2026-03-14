@@ -10,6 +10,7 @@ const PaymentSuccess: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [message, setMessage] = useState('Verifying payment & generating AI response...');
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -26,41 +27,77 @@ const PaymentSuccess: React.FC = () => {
 
         if (!txRef) {
           setStatus('error');
-          setMessage('No transaction reference found');
+          setMessage('No transaction reference found. Please contact support.');
           setLoading(false);
           return;
         }
 
-        if (chapaStatus !== 'success' && !chapaStatus) {
-          // If no status in URL, assume success (user was redirected back)
-          // This is because Chapa might not pass status parameter
-        }
-
         // Call backend to verify payment (server-side verification)
-        const response = await paymentAPI.verifyPayment(txRef);
+        try {
+          const response = await paymentAPI.verifyPayment(txRef);
 
-        if (response.data.success) {
-          setStatus('success');
-          setMessage('Payment verified! Generating AI response...');
-          toast.success('Payment verified successfully!');
+          if (response.data.success) {
+            setStatus('success');
+            setMessage('Payment verified! Redirecting...');
+            toast.success('Payment verified successfully!');
+            
+            // Clear localStorage
+            localStorage.removeItem('pendingPaymentTxRef');
+            localStorage.removeItem('pendingPaymentTime');
+
+            // Redirect to appropriate page after 2 seconds
+            setTimeout(() => {
+              navigate('/employer/subscription');
+            }, 2000);
+          } else {
+            const errorMsg = response.data.message || 'Payment verification failed';
+            
+            // Check if it's a duplicate payment error
+            if (errorMsg.includes('already completed')) {
+              setStatus('success');
+              setMessage('Payment already processed. Redirecting...');
+              toast.success('Payment already completed!');
+              localStorage.removeItem('pendingPaymentTxRef');
+              localStorage.removeItem('pendingPaymentTime');
+              
+              setTimeout(() => {
+                navigate('/employer/subscription');
+              }, 2000);
+            } else {
+              setStatus('error');
+              setMessage(errorMsg);
+              toast.error(errorMsg);
+            }
+          }
+        } catch (error: any) {
+          const errorMsg = error.response?.data?.message || error.message;
           
-          // Clear localStorage
-          localStorage.removeItem('pendingPaymentTxRef');
-          localStorage.removeItem('pendingPaymentTime');
-
-          // Redirect to appropriate page after 2 seconds
-          setTimeout(() => {
-            navigate('/employer/subscription');
-          }, 2000);
-        } else {
-          setStatus('error');
-          setMessage(response.data.message || 'Payment verification failed');
-          toast.error('Payment verification failed');
+          // Handle session expired - retry with fresh token
+          if (errorMsg.includes('Token expired') || errorMsg.includes('expired') || error.response?.status === 401) {
+            if (retryCount < 2) {
+              setMessage('Session expired, retrying...');
+              setRetryCount(retryCount + 1);
+              
+              // Wait 1 second and retry
+              setTimeout(() => {
+                verifyPayment();
+              }, 1000);
+              return;
+            } else {
+              setStatus('error');
+              setMessage('Session expired. Please login again and check your payment status.');
+              toast.error('Session expired. Please login again.');
+            }
+          } else {
+            setStatus('error');
+            setMessage(errorMsg || 'Payment verification failed');
+            toast.error('Payment verification failed');
+          }
         }
       } catch (error: any) {
         console.error('Payment verification error:', error);
         setStatus('error');
-        setMessage(error.response?.data?.message || 'Payment verification failed');
+        setMessage('An unexpected error occurred. Please contact support.');
         toast.error('Payment verification failed');
       } finally {
         setLoading(false);
@@ -68,7 +105,7 @@ const PaymentSuccess: React.FC = () => {
     };
 
     verifyPayment();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, retryCount]);
 
   if (loading) {
     return (

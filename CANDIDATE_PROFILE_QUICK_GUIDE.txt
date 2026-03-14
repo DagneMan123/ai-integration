@@ -1,0 +1,195 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                  CANDIDATE PROFILE - QUICK GUIDE                          ║
+║                                                                            ║
+║                            March 9, 2026                                   ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ WHAT'S NEW:
+
+✅ Professional Bio Field
+   → Add a professional summary visible to employers
+
+✅ Enhanced UI/UX
+   → Modern gradient background
+   → Professional card design
+   → Better spacing and typography
+
+✅ Success Messages
+   → Visual feedback when profile is saved
+   → Auto-dismissing notifications
+
+✅ Change Tracking
+   → Save button only enabled when changes are made
+   → Prevents accidental saves
+
+✅ Better Error Handling
+   → Improved error messages
+   → Visual error indicators
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 PROFILE FIELDS:
+
+Required:
+• First Name
+• Last Name
+
+Optional:
+• Email (read-only)
+• Phone
+• Professional Bio (visible to employers)
+• Skills (comma-separated)
+• Work Experience
+• Education
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 HOW TO USE:
+
+1. Log in as a candidate
+2. Navigate to "My Profile"
+3. Edit your information
+4. Click "Save Changes"
+5. See success message
+6. Profile is updated!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 TIPS FOR SUCCESS:
+
+Professional Bio:
+• Keep it concise (2-3 sentences)
+• Highlight your key strengths
+• Mention your career goals
+• Example: "Experienced full-stack developer with 5+ years in web 
+  development. Passionate about building scalable applications."
+
+Skills:
+• List relevant technical skills
+• Separate with commas
+• Include both hard and soft skills
+• Example: "JavaScript, React, Node.js, TypeScript, Problem Solving"
+
+Work Experience:
+• Include job titles, companies, and dates
+• Describe key responsibilities
+• Quantify achievements
+• Use bullet points for clarity
+
+Education:
+• List degrees and certifications
+• Include institution names
+• Add graduation dates
+• Include online certifications
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 BEST PRACTICES:
+
+1. Keep Information Current
+   → Update regularly
+   → Add new skills as you learn them
+   → Update when you change jobs
+
+2. Be Honest
+   → Provide accurate information
+   → Don't exaggerate
+   → Employers verify information
+
+3. Be Specific
+   → Use concrete examples
+   → Quantify achievements
+   → Mention specific technologies
+
+4. Optimize for Matching
+   → Include keywords from job descriptions
+   → List all relevant skills
+   → Mention industry experience
+
+5. Professional Tone
+   → Use professional language
+   → Avoid slang
+   → Proofread before saving
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔒 WHAT EMPLOYERS SEE:
+
+✅ Visible:
+• First and last name
+• Professional bio
+• Skills list
+• Work experience
+• Education
+• Phone number (if provided)
+
+🔐 Private:
+• Email address
+• Password
+• Account settings
+• Interview history
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ TROUBLESHOOTING:
+
+Issue: Save button is disabled
+→ Make sure you've made changes to at least one field
+
+Issue: Error message appears
+→ Check your internet connection and try again
+
+Issue: Changes not saved
+→ Make sure you clicked "Save Changes" and waited for success message
+
+Issue: Profile information not loading
+→ Refresh the page or log out and log back in
+
+Issue: Can't edit email
+→ Email cannot be changed from profile page. Contact support.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 INTEGRATION WITH OTHER FEATURES:
+
+Job Recommendations:
+• Your profile is used to recommend jobs
+• More complete profile = better recommendations
+• Skills are matched against job requirements
+
+Interview Preparation:
+• Your skills are used to generate interview questions
+• Your experience level determines question difficulty
+• Your bio helps personalize feedback
+
+Application Matching:
+• Your profile is compared to job requirements
+• Match score is calculated based on skills
+• Experience level is considered
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 SUPPORT:
+
+Need Help?
+• Check this guide for common issues
+• Review the troubleshooting section
+• Contact support if problems persist
+
+Contact Support:
+• Email: support@simuai.com
+• Chat: Available in the app
+• Phone: +1 (555) 000-0000
+• Hours: 24/7 support available
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ STATUS: PRODUCTION READY
+
+Your profile is now enhanced with professional features!
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -46,7 +46,7 @@ exports.getAllJobs = async (req, res, next) => {
             select: { 
               id: true, 
               name: true, 
-              logoUrl: true, 
+              logo: true, 
               industry: true, 
               isVerified: true 
             }
@@ -94,7 +94,7 @@ exports.getJob = async (req, res, next) => {
           select: { 
             id: true, 
             name: true, 
-            logoUrl: true, 
+            logo: true, 
             industry: true, 
             description: true, 
             website: true, 

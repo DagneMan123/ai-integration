@@ -1,27 +1,43 @@
 import { useEffect, useCallback, useRef } from 'react';
+import toast from 'react-hot-toast';
+import { Bell, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 import dashboardService, { DashboardEvent } from '../services/dashboardService';
 import { DashboardData } from '../types';
 
 /**
- * Hook for dashboard communication
- * Enables dashboards to communicate professionally with each other
+ * Enterprise Dashboard Communication Hook
+ * Provides a standardized interface for real-time inter-dashboard events
  */
 
+export type DashboardRole = 'admin' | 'employer' | 'candidate';
+export type EventPriority = 'low' | 'normal' | 'high' | 'critical';
+
 export interface UseDashboardCommunicationOptions {
-  role: 'admin' | 'employer' | 'candidate';
+  role: DashboardRole;
   onDataUpdate?: (event: DashboardEvent) => void;
   onStatusChange?: (event: DashboardEvent) => void;
   onActionRequired?: (event: DashboardEvent) => void;
   onNotification?: (event: DashboardEvent) => void;
   onSyncRequest?: (event: DashboardEvent) => void;
   onAnyEvent?: (event: DashboardEvent) => void;
+  enableAutoToasts?: boolean; // Automatically show toasts for notifications
 }
 
 export const useDashboardCommunication = (options: UseDashboardCommunicationOptions) => {
-  const { role, onDataUpdate, onStatusChange, onActionRequired, onNotification, onSyncRequest, onAnyEvent } = options;
+  const { 
+    role, 
+    onDataUpdate, 
+    onStatusChange, 
+    onActionRequired, 
+    onNotification, 
+    onSyncRequest, 
+    onAnyEvent,
+    enableAutoToasts = true 
+  } = options;
+
   const registeredRef = useRef(false);
 
-  // Register dashboard on mount
+  // 1. Dashboard Lifecycle Management
   useEffect(() => {
     if (!registeredRef.current) {
       dashboardService.registerDashboard(role);
@@ -36,105 +52,94 @@ export const useDashboardCommunication = (options: UseDashboardCommunicationOpti
     };
   }, [role]);
 
-  // Setup event listeners
+  // 2. Automated Notification Handler (UI Integration)
+  const handleAutoToast = useCallback((event: DashboardEvent) => {
+    if (!enableAutoToasts) return;
+
+    const { message, priority } = event.payload;
+    const style = { borderRadius: '12px', background: '#1e293b', color: '#fff', fontSize: '14px' };
+
+    switch (priority as EventPriority) {
+      case 'critical':
+        toast.error(message, { icon: <AlertTriangle className="text-rose-500" />, duration: 6000, style });
+        break;
+      case 'high':
+        toast(message, { icon: <Bell className="text-amber-500" />, style });
+        break;
+      case 'normal':
+        toast.success(message, { icon: <CheckCircle2 className="text-emerald-500" />, style });
+        break;
+      default:
+        toast(message, { icon: <Info className="text-blue-500" />, style });
+    }
+  }, [enableAutoToasts]);
+
+  // 3. Event Listeners Orchestration
   useEffect(() => {
-    const listeners: Array<{ event: string; callback: (e: DashboardEvent) => void }> = [];
+    const activeListeners: Array<{ type: string; handler: (e: DashboardEvent) => void }> = [];
 
-    if (onDataUpdate) {
-      dashboardService.onDashboardEvent('data-update', onDataUpdate);
-      listeners.push({ event: 'data-update', callback: onDataUpdate });
-    }
+    const subscribe = (type: string, handler?: (e: DashboardEvent) => void) => {
+      if (handler) {
+        dashboardService.onDashboardEvent(type as any, handler);
+        activeListeners.push({ type, handler });
+      }
+    };
 
-    if (onStatusChange) {
-      dashboardService.onDashboardEvent('status-change', onStatusChange);
-      listeners.push({ event: 'status-change', callback: onStatusChange });
-    }
-
-    if (onActionRequired) {
-      dashboardService.onDashboardEvent('action-required', onActionRequired);
-      listeners.push({ event: 'action-required', callback: onActionRequired });
-    }
-
-    if (onNotification) {
-      dashboardService.onDashboardEvent('notification', onNotification);
-      listeners.push({ event: 'notification', callback: onNotification });
-    }
-
-    if (onSyncRequest) {
-      dashboardService.onDashboardEvent('sync-request', onSyncRequest);
-      listeners.push({ event: 'sync-request', callback: onSyncRequest });
-    }
+    // Mapping system events
+    subscribe('data-update', onDataUpdate);
+    subscribe('status-change', onStatusChange);
+    subscribe('action-required', onActionRequired);
+    subscribe('sync-request', onSyncRequest);
+    
+    // Notification listener with internal auto-toast logic
+    const internalNotificationHandler = (e: DashboardEvent) => {
+      handleAutoToast(e);
+      onNotification?.(e);
+    };
+    subscribe('notification', internalNotificationHandler);
 
     if (onAnyEvent) {
       dashboardService.onAnyEvent(onAnyEvent);
-      listeners.push({ event: 'any', callback: onAnyEvent });
+      activeListeners.push({ type: 'any', handler: onAnyEvent });
     }
 
+    // Comprehensive Cleanup
     return () => {
-      listeners.forEach(({ event, callback }) => {
-        if (event === 'any') {
-          dashboardService.off('dashboard:event', callback);
+      activeListeners.forEach(({ type, handler }) => {
+        if (type === 'any') {
+          dashboardService.off('dashboard:event', handler);
         } else {
-          dashboardService.offDashboardEvent(event as any, callback);
+          dashboardService.offDashboardEvent(type as any, handler);
         }
       });
     };
-  }, [onDataUpdate, onStatusChange, onActionRequired, onNotification, onSyncRequest, onAnyEvent]);
+  }, [onDataUpdate, onStatusChange, onActionRequired, onNotification, onSyncRequest, onAnyEvent, handleAutoToast]);
 
-  // Broadcast data update
-  const broadcastDataUpdate = useCallback(
-    (data: DashboardData) => {
-      dashboardService.updateDashboardData(role, data);
-    },
-    [role]
-  );
+  // --- API Methods ---
 
-  // Notify status change
-  const notifyStatusChange = useCallback(
-    (status: string, details: any = {}) => {
-      dashboardService.notifyStatusChange(role, status, details);
-    },
-    [role]
-  );
+  const broadcastDataUpdate = useCallback((data: DashboardData) => {
+    dashboardService.updateDashboardData(role, data);
+  }, [role]);
 
-  // Request action from another dashboard
-  const requestAction = useCallback(
-    (target: 'admin' | 'employer' | 'candidate', action: string, data: any = {}) => {
-      dashboardService.requestAction(role, target, action, data);
-    },
-    [role]
-  );
+  const notifyStatusChange = useCallback((status: string, details: any = {}) => {
+    dashboardService.notifyStatusChange(role, status, details);
+  }, [role]);
 
-  // Send notification
-  const sendNotification = useCallback(
-    (message: string, priority: 'low' | 'normal' | 'high' | 'critical' = 'normal') => {
-      dashboardService.sendNotification(role, message, priority);
-    },
-    [role]
-  );
+  const requestAction = useCallback((target: DashboardRole, action: string, data: any = {}) => {
+    dashboardService.requestAction(role, target, action, data);
+  }, [role]);
 
-  // Request sync
-  const requestSync = useCallback(
-    (target?: 'admin' | 'employer' | 'candidate') => {
-      dashboardService.requestSync(role, target);
-    },
-    [role]
-  );
+  const sendNotification = useCallback((message: string, priority: EventPriority = 'normal') => {
+    dashboardService.sendNotification(role, message, priority);
+  }, [role]);
 
-  // Get dashboard state
+  const requestSync = useCallback((target?: DashboardRole) => {
+    dashboardService.requestSync(role, target);
+  }, [role]);
+
   const getDashboardState = useCallback(() => {
     return dashboardService.getDashboardState(role);
   }, [role]);
-
-  // Get all dashboard states
-  const getAllDashboardStates = useCallback(() => {
-    return dashboardService.getAllDashboardStates();
-  }, []);
-
-  // Get event history
-  const getEventHistory = useCallback((limit?: number) => {
-    return dashboardService.getEventHistory(limit);
-  }, []);
 
   return {
     broadcastDataUpdate,
@@ -143,8 +148,8 @@ export const useDashboardCommunication = (options: UseDashboardCommunicationOpti
     sendNotification,
     requestSync,
     getDashboardState,
-    getAllDashboardStates,
-    getEventHistory,
+    getSystemHealth: () => dashboardService.getAllDashboardStates(),
+    getAuditTrail: (limit?: number) => dashboardService.getEventHistory(limit),
   };
 };
 

@@ -13,7 +13,7 @@ const app = express();
 const startDB = async () => {
   await testConnection();
   
-  logger.info('✅ Prisma Client is ready');
+  logger.info(' Prisma Client is ready');
 };
 startDB();
 
@@ -58,7 +58,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
 
 module.exports = app;

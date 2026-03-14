@@ -202,7 +202,7 @@ exports.getJobApplications = async (req, res, next) => {
       where,
       include: {
         candidate: {
-          select: { firstName: true, lastName: true, email: true, avatar: true }
+          select: { firstName: true, lastName: true, email: true, profilePicture: true }
         }
       },
       orderBy: Object.keys(orderBy).length ? orderBy : { appliedAt: 'desc' }

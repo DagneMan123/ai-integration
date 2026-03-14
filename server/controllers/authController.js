@@ -114,7 +114,7 @@ exports.login = async (req, res, next) => {
 
     if (user.isLocked) {
       logger.warn('Login attempt on locked account', { email: normalizedEmail });
-      return next(new AppError('Account is locked', 403));
+      return next(new AppError('Too many authentication attempts, please try again after 15 minutes', 403));
     }
 
     let isMatch = false;
@@ -128,10 +128,19 @@ exports.login = async (req, res, next) => {
     if (!isMatch) {
       logger.warn('Login attempt with wrong password', { email: normalizedEmail });
       const newAttempts = user.loginAttempts + 1;
+      const isAccountLocked = newAttempts >= 5;
+      
       await prisma.user.update({
         where: { id: user.id },
-        data: { loginAttempts: newAttempts, isLocked: newAttempts >= 5 }
+        data: { 
+          loginAttempts: newAttempts, 
+          isLocked: isAccountLocked
+        }
       });
+      
+      if (isAccountLocked) {
+        return next(new AppError('Too many authentication attempts, please try again after 15 minutes', 403));
+      }
       return next(new AppError('Invalid credentials', 401));
     }
 

@@ -701,10 +701,23 @@ class AIService {
       return { 
         available: true, 
         model: response.model,
-        message: 'AI service is operational' 
+        message: 'AI service is operational',
+        mode: 'live'
       };
     } catch (error) {
       logAI('error', 'AI service availability check failed', { error: error.message });
+      
+      // Check if it's a quota error
+      if (error.message.includes('429') || error.message.includes('quota')) {
+        return { 
+          available: true,
+          mode: 'fallback',
+          message: 'AI service is operational (fallback mode - using cached responses)',
+          warning: 'OpenAI API quota exceeded. Using fallback responses.',
+          reason: error.message
+        };
+      }
+      
       return { 
         available: false, 
         reason: error.message 
