@@ -467,6 +467,51 @@ exports.getIntegrityReport = async (req, res, next) => {
   }
 };
 
+// Get candidate interview results/insights
+exports.getCandidateResults = async (req, res, next) => {
+  try {
+    const interviews = await prisma.interview.findMany({
+      where: { 
+        candidateId: req.user.id,
+        status: 'COMPLETED'
+      },
+      include: {
+        job: { 
+          select: { 
+            title: true,
+            company: { select: { name: true } }
+          } 
+        }
+      },
+      orderBy: { completedAt: 'desc' }
+    });
+
+    // Transform data for frontend
+    const results = interviews.map(interview => ({
+      id: interview.id,
+      jobTitle: interview.job.title,
+      companyName: interview.job.company?.name || 'Unknown Company',
+      date: interview.completedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      score: interview.overallScore || 0,
+      feedback: interview.feedback || 'No feedback available',
+      strengths: interview.evaluation?.strengths || [],
+      improvements: interview.evaluation?.improvements || [],
+      status: 'completed',
+      technicalScore: interview.technicalScore || 0,
+      communicationScore: interview.communicationScore || 0,
+      problemSolvingScore: interview.problemSolvingScore || 0,
+      softSkillsScore: interview.softSkillsScore || 0
+    }));
+
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get candidate interviews
 exports.getCandidateInterviews = async (req, res, next) => {
   try {

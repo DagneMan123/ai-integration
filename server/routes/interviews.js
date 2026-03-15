@@ -6,6 +6,7 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 router.use(authenticateToken);
 
 // Candidate routes
+router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);
 router.post('/start', authorizeRoles('candidate'), interviewController.startInterview);
 router.post('/:id/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.post('/:id/complete', authorizeRoles('candidate'), interviewController.completeInterview);

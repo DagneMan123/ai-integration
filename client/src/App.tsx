@@ -29,6 +29,8 @@ const CandidateInterviews = lazy(() => import('./pages/candidate/Interviews'));
 const InterviewSession = lazy(() => import('./pages/candidate/InterviewSession'));
 const InterviewReport = lazy(() => import('./pages/candidate/InterviewReport'));
 const CandidatePayments = lazy(() => import('./pages/candidate/Payments'));
+const InterviewInsights = lazy(() => import('./pages/candidate/InterviewInsights'));
+const HelpCenter = lazy(() => import('./pages/candidate/HelpCenter'));
 
 const EmployerDashboard = lazy(() => import('./pages/employer/Dashboard'));
 const EmployerProfile = lazy(() => import('./pages/employer/Profile'));
@@ -38,6 +40,9 @@ const EditJob = lazy(() => import('./pages/employer/EditJob'));
 const JobCandidates = lazy(() => import('./pages/employer/JobCandidates'));
 const EmployerAnalytics = lazy(() => import('./pages/employer/Analytics'));
 const EmployerSubscription = lazy(() => import('./pages/employer/Subscription'));
+const ApplicantTracking = lazy(() => import('./pages/employer/ApplicantTracking'));
+const InterviewCalendar = lazy(() => import('./pages/employer/InterviewCalendar'));
+const Inbox = lazy(() => import('./pages/employer/Inbox'));
 
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
@@ -160,6 +165,26 @@ const App: React.FC = () => {
               </PrivateRoute>
             } 
           />
+          <Route 
+            path="/candidate/results" 
+            element={
+              <PrivateRoute role="candidate">
+                <Suspense fallback={<Loading />}>
+                  <InterviewInsights />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/candidate/support" 
+            element={
+              <PrivateRoute role="candidate">
+                <Suspense fallback={<Loading />}>
+                  <HelpCenter />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
           
           {/* Employer Routes */}
           <Route 
@@ -238,6 +263,36 @@ const App: React.FC = () => {
               <PrivateRoute role="employer">
                 <Suspense fallback={<Loading />}>
                   <EmployerSubscription />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/employer/candidates" 
+            element={
+              <PrivateRoute role="employer">
+                <Suspense fallback={<Loading />}>
+                  <ApplicantTracking />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/employer/schedule" 
+            element={
+              <PrivateRoute role="employer">
+                <Suspense fallback={<Loading />}>
+                  <InterviewCalendar />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/employer/messages" 
+            element={
+              <PrivateRoute role="employer">
+                <Suspense fallback={<Loading />}>
+                  <Inbox />
                 </Suspense>
               </PrivateRoute>
             } 
