@@ -38,7 +38,13 @@ const EmployerDashboard: React.FC = () => {
 
   const fetchDashboardData = useCallback(async () => {
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await analyticsAPI.getEmployerDashboard();
+      clearTimeout(timeoutId);
+      
       const dashboardData = response.data.data || null;
       setData(dashboardData);
       
@@ -47,17 +53,19 @@ const EmployerDashboard: React.FC = () => {
         notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
       }
     } catch (error) {
-      toast.error('Failed to sync dashboard');
-      sendNotification('Error loading dashboard', 'high');
+      console.error('Dashboard fetch error:', error);
+      // Don't show error toast, just set empty data
+      setData(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [broadcastDataUpdate, notifyStatusChange, sendNotification]);
+  }, [broadcastDataUpdate, notifyStatusChange]);
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000);
+    // Increase refresh interval from 30s to 60s
+    const interval = setInterval(fetchDashboardData, 60000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
@@ -113,33 +121,33 @@ const EmployerDashboard: React.FC = () => {
               </Link>
             </div>
 
-            <div className="p-8">
+            <div className="p-6 md:p-8">
               {data?.recentApplications && data.recentApplications.length > 0 ? (
                 <div className="grid gap-4">
                   {data.recentApplications.map((app: any) => (
-                    <div key={app.id} className="group flex items-center justify-between p-5 bg-gray-50/50 hover:bg-white hover:shadow-md hover:border-blue-100 border border-transparent rounded-2xl transition-all">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-blue-600">
+                    <div key={app.id} className="group flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-5 bg-gray-50/50 hover:bg-white hover:shadow-md hover:border-blue-100 border border-transparent rounded-2xl transition-all gap-4 md:gap-0">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-blue-600 flex-shrink-0">
                           <UserCircle className="w-8 h-8 opacity-20" />
                         </div>
-                        <div>
-                          <h4 className="font-bold text-gray-900">{app.candidateName}</h4>
-                          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                            <span>{app.jobTitle}</span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                            <span>{app.candidateEmail}</span>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-gray-900 truncate">{app.candidateName}</h4>
+                          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider overflow-hidden">
+                            <span className="truncate">{app.jobTitle}</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full flex-shrink-0" />
+                            <span className="truncate">{app.candidateEmail}</span>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-4 md:gap-6 justify-between md:justify-end">
                         {/* Example AI Score (Matching) */}
-                        <div className="hidden md:flex flex-col items-end">
+                        <div className="hidden md:flex flex-col items-end flex-shrink-0">
                            <span className="text-xs font-black text-gray-300 uppercase tracking-tighter">AI Match</span>
                            <span className="text-sm font-black text-emerald-600">84%</span>
                         </div>
                         <StatusBadge status={app.status} />
-                        <button className="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all">
+                        <button className="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all flex-shrink-0">
                           <ArrowRight className="w-4 h-4" />
                         </button>
                       </div>

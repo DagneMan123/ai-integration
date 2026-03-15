@@ -21,6 +21,7 @@ const JobCandidates: React.FC = () => {
   const navigate = useNavigate();
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -49,14 +50,19 @@ const JobCandidates: React.FC = () => {
 
   if (loading) return <Loading />;
 
+  const filteredApplications = applications.filter(app =>
+    `${app.candidateId?.firstName} ${app.candidateId?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.candidateId?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* Header & Back Navigation */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
           <div className="space-y-2">
-            <button 
+            <button
               onClick={() => navigate('/employer/jobs')}
               className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors group"
             >
@@ -66,11 +72,11 @@ const JobCandidates: React.FC = () => {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Job Candidates</h1>
             <p className="text-gray-500 font-medium">Review and manage talent for this position</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="bg-white px-5 py-3 rounded-2xl border border-gray-100 shadow-sm text-center">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Applicants</p>
-              <p className="text-xl font-black text-blue-600">{applications.length}</p>
+              <p className="text-xl font-black text-blue-600">{filteredApplications.length}</p>
             </div>
           </div>
         </div>
@@ -79,8 +85,8 @@ const JobCandidates: React.FC = () => {
         <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-300" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search by name or email..."
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm font-medium"
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -93,11 +99,11 @@ const JobCandidates: React.FC = () => {
 
         {/* Candidates List */}
         <div className="grid gap-4">
-          {applications.length > 0 ? (
-            applications.map((app) => (
+          {filteredApplications.length > 0 ? (
+            filteredApplications.map((app) => (
               <div key={app._id} className="group bg-white rounded-[2rem] border border-gray-100 p-6 md:p-8 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                  
+
                   {/* Candidate Profile Info */}
                   <div className="flex items-center gap-5">
                     <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 border border-blue-100 shadow-inner">
@@ -120,7 +126,7 @@ const JobCandidates: React.FC = () => {
 
                   {/* AI Match & Status Section */}
                   <div className="flex flex-wrap items-center gap-6 lg:gap-12">
-                    
+
                     {/* Neural Matching Score (The Secret Sauce) */}
                     <div className="text-center bg-gray-50/50 p-3 rounded-2xl border border-gray-100 min-w-[100px]">
                       <div className="flex items-center justify-center gap-1.5 text-blue-600 mb-0.5">
@@ -143,14 +149,14 @@ const JobCandidates: React.FC = () => {
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2">
-                      <button 
+                      <button
                         onClick={() => handleUpdateStatus(app._id, 'shortlisted')}
                         className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
                         title="Shortlist Candidate"
                       >
                         <CheckCircle2 className="w-5 h-5" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleUpdateStatus(app._id, 'rejected')}
                         className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"
                         title="Reject Candidate"
@@ -177,7 +183,7 @@ const JobCandidates: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 /* --- UI Helpers --- */
 

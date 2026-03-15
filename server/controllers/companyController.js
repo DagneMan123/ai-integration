@@ -61,8 +61,14 @@ exports.getAllCompanies = async (req, res, next) => {
 // Get single company
 exports.getCompany = async (req, res, next) => {
   try {
+    const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return next(new AppError('Invalid company ID', 400));
+    }
+
     const company = await prisma.company.findUnique({
-      where: { id: req.params.id }
+      where: { id }
     });
 
     if (!company) {

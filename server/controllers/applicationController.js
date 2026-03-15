@@ -8,19 +8,25 @@ exports.createApplication = async (req, res, next) => {
   try {
     const { jobId, coverLetter } = req.body;
 
+    // Convert jobId to integer
+    const jobIdInt = parseInt(jobId, 10);
+    if (isNaN(jobIdInt)) {
+      return next(new AppError('Invalid job ID', 400));
+    }
+
     // Check if job exists
     const job = await prisma.job.findUnique({
-      where: { id: jobId }
+      where: { id: jobIdInt }
     });
 
-    if (!job || job.status !== 'active') {
+    if (!job || job.status !== 'ACTIVE') {
       return next(new AppError('Job not available', 404));
     }
 
     // Check if already applied
     const existingApplication = await prisma.application.findFirst({
       where: {
-        jobId,
+        jobId: jobIdInt,
         candidateId: req.user.id
       }
     });
@@ -37,11 +43,11 @@ exports.createApplication = async (req, res, next) => {
     // Create application
     const application = await prisma.application.create({
       data: {
-        jobId,
+        jobId: jobIdInt,
         candidateId: req.user.id,
         coverLetter,
-        resume: profile?.resume || null,
-        status: 'pending'
+        resumeUrl: profile?.resumeUrl || null,
+        status: 'PENDING'
       }
     });
 
@@ -56,7 +62,7 @@ exports.createApplication = async (req, res, next) => {
       `
     });
 
-    logger.info(`Application created: ${application.id} for job ${jobId}`);
+    logger.info(`Application created: ${application.id} for job ${jobIdInt}`);
 
     res.status(201).json({
       success: true,
@@ -97,8 +103,13 @@ exports.getCandidateApplications = async (req, res, next) => {
 // Get single application
 exports.getApplication = async (req, res, next) => {
   try {
+    const applicationId = parseInt(req.params.id, 10);
+    if (isNaN(applicationId)) {
+      return next(new AppError('Invalid application ID', 400));
+    }
+
     const application = await prisma.application.findUnique({
-      where: { id: req.params.id },
+      where: { id: applicationId },
       include: {
         job: true,
         candidate: {
@@ -113,8 +124,8 @@ exports.getApplication = async (req, res, next) => {
 
     // Check authorization
     const isOwner = application.candidateId === req.user.id;
-    const isEmployer = application.job.createdBy === req.user.id;
-    const isAdmin = req.user.role === 'admin';
+    const isEmployer = application.job.createdById === req.user.id;
+    const isAdmin = req.user.role === 'ADMIN';
 
     if (!isOwner && !isEmployer && !isAdmin) {
       return next(new AppError('Not authorized', 403));
@@ -132,8 +143,13 @@ exports.getApplication = async (req, res, next) => {
 // Withdraw application
 exports.withdrawApplication = async (req, res, next) => {
   try {
+    const applicationId = parseInt(req.params.id, 10);
+    if (isNaN(applicationId)) {
+      return next(new AppError('Invalid application ID', 400));
+    }
+
     const application = await prisma.application.findUnique({
-      where: { id: req.params.id }
+      where: { id: applicationId }
     });
 
     if (!application) {
@@ -144,13 +160,13 @@ exports.withdrawApplication = async (req, res, next) => {
       return next(new AppError('Not authorized', 403));
     }
 
-    if (['accepted', 'rejected'].includes(application.status)) {
+    if (['ACCEPTED', 'REJECTED'].includes(application.status)) {
       return next(new AppError('Cannot withdraw application at this stage', 400));
     }
 
     await prisma.application.update({
-      where: { id: req.params.id },
-      data: { status: 'withdrawn' }
+      where: { id: applicationId },
+      data: { status: 'WITHDRAWN' }
     });
 
     res.json({
@@ -220,9 +236,14 @@ exports.getJobApplications = async (req, res, next) => {
 // Update application status
 exports.updateApplicationStatus = async (req, res, next) => {
   try {
+    const applicationId = parseInt(req.params.id, 10);
+    if (isNaN(applicationId)) {
+      return next(new AppError('Invalid application ID', 400));
+    }
+
     const { status } = req.body;
     const application = await prisma.application.findUnique({
-      where: { id: req.params.id },
+      where: { id: applicationId },
       include: { job: true }
     });
 
@@ -231,12 +252,12 @@ exports.updateApplicationStatus = async (req, res, next) => {
     }
 
     // Check authorization
-    if (application.job.createdBy !== req.user.id && req.user.role !== 'admin') {
+    if (application.job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
       return next(new AppError('Not authorized', 403));
     }
 
     const updatedApplication = await prisma.application.update({
-      where: { id: req.params.id },
+      where: { id: applicationId },
       data: { status }
     });
 
@@ -269,8 +290,13 @@ exports.updateApplicationStatus = async (req, res, next) => {
 // Shortlist candidate
 exports.shortlistCandidate = async (req, res, next) => {
   try {
+    const applicationId = parseInt(req.params.id, 10);
+    if (isNaN(applicationId)) {
+      return next(new AppError('Invalid application ID', 400));
+    }
+
     const application = await prisma.application.findUnique({
-      where: { id: req.params.id },
+      where: { id: applicationId },
       include: { job: true }
     });
 
@@ -279,15 +305,14 @@ exports.shortlistCandidate = async (req, res, next) => {
     }
 
     // Check authorization
-    if (application.job.createdBy !== req.user.id && req.user.role !== 'admin') {
+    if (application.job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
       return next(new AppError('Not authorized', 403));
     }
 
     const updatedApplication = await prisma.application.update({
-      where: { id: req.params.id },
+      where: { id: applicationId },
       data: {
-        isShortlisted: true,
-        shortlistedAt: new Date()
+        status: 'SHORTLISTED'
       }
     });
 

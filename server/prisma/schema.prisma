@@ -86,6 +86,8 @@ model Job {
   applications Application[]
   interviews   Interview[]
 
+  @@index([createdById])
+  @@index([companyId])
   @@map("jobs")
 }
 
@@ -123,6 +125,9 @@ model Application {
   candidate User @relation(fields: [candidateId], references: [id])
 
   @@unique([jobId, candidateId])
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([appliedAt])
   @@map("applications")
 }
 
@@ -174,6 +179,10 @@ model Interview {
   job       Job  @relation(fields: [jobId], references: [id])
   candidate User @relation(fields: [candidateId], references: [id])
 
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([status])
+  @@index([createdAt])
   @@map("interviews")
 }
 
@@ -194,6 +203,9 @@ model Payment {
 
   user User @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
   @@map("payments")
 }
 
@@ -209,6 +221,8 @@ model ActivityLog {
 
   user User? @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("activity_logs")
 }
 

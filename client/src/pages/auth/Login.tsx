@@ -36,11 +36,14 @@ const Login: React.FC = () => {
       
       setAuth(user, token, refreshToken);
       toast.success(`Welcome back, ${user.firstName}!`);
-      navigate(`/${user.role}/dashboard`);
+      
+      // Redirect immediately without waiting for loading state
+      setTimeout(() => {
+        navigate(`/${user.role}/dashboard`, { replace: true });
+      }, 300);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Invalid email or password';
       toast.error(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
@@ -88,7 +91,7 @@ const Login: React.FC = () => {
             <div>
               <div className="flex justify-between items-center mb-1.5 ml-1">
                 <label className="text-sm font-semibold text-gray-700">Password</label>
-                <Link to="/forgot-password" size-sm className="text-xs font-bold text-blue-600 hover:text-blue-700">
+                <Link to="/forgot-password" className="text-xs font-bold text-blue-600 hover:text-blue-700">
                   Forgot?
                 </Link>
               </div>

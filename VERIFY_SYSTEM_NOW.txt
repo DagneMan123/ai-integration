@@ -1,0 +1,144 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    VERIFY YOUR SYSTEM IS WORKING                          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+STEP 1: Check Backend is Running
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Look for this message in server terminal:
+  ✓ "Server running on port 5000"
+  ✓ "Database connection established successfully via Prisma"
+
+If you see these, backend is working! ✅
+
+STEP 2: Check Frontend is Running
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Look for this message in client terminal:
+  ✓ "Compiled successfully!"
+  ✓ "You can now view simuai-client in the browser"
+
+If you see these, frontend is working! ✅
+
+STEP 3: Test in Browser
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open: http://localhost:3000
+2. You should see the SimuAI login page
+3. Click "Create an account"
+4. Fill in the registration form:
+   - First Name: Test
+   - Last Name: User
+   - Email: test@example.com
+   - Password: Test@123
+   - Role: Candidate
+5. Click "Create My Account"
+
+Expected Result:
+  ✓ Account created successfully
+  ✓ Redirected to login page
+  ✓ Can login with credentials
+
+STEP 4: Test Dashboard
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Login with: test@example.com / Test@123
+2. You should see the Candidate Dashboard
+3. Check if data loads:
+   ✓ Applications count
+   ✓ Interviews count
+   ✓ Available jobs list
+
+Expected Result:
+  ✓ Dashboard loads quickly
+  ✓ Data displays correctly
+  ✓ No console errors
+
+STEP 5: Test API Communication
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Browser Console (F12) and check:
+  ✓ No red errors
+  ✓ Network tab shows requests to http://localhost:5000/api
+  ✓ Responses have status 200 or 201
+
+Expected Result:
+  ✓ All API calls successful
+  ✓ Data flowing from backend to frontend
+  ✓ No CORS errors
+
+STEP 6: Test Job Creation (Employer)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Logout and register as Employer:
+   - Email: employer@test.com
+   - Password: Test@123
+   - Role: Employer
+   - Company: Test Company
+
+2. Go to "Create Job"
+3. Fill in job details and submit
+4. Check if job appears in job list
+
+Expected Result:
+  ✓ Job created successfully
+  ✓ Job appears in listings
+  ✓ Can edit/delete job
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Backend not running?
+   → Run: cd server && npm run dev
+   → Check PostgreSQL is running: net start postgresql-x64-16
+
+❌ Frontend not running?
+   → Run: cd client && npm start
+   → Clear cache: Ctrl+F5
+
+❌ API errors in console?
+   → Check server logs for errors
+   → Verify REACT_APP_API_URL in client/.env
+   → Restart both frontend and backend
+
+❌ Database connection error?
+   → Start PostgreSQL: net start postgresql-x64-16
+   → Check server/.env DATABASE_URL
+   → Run: cd server && npx prisma db push
+
+❌ Login fails?
+   → Check email is correct
+   → Verify password is Test@123
+   → Check server logs for auth errors
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SYSTEM CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☐ PostgreSQL running
+☐ Backend running on port 5000
+☐ Frontend running on port 3000
+☐ Can access http://localhost:3000
+☐ Can register new account
+☐ Can login with credentials
+☐ Dashboard loads with data
+☐ No console errors
+☐ API calls successful
+☐ Can create jobs (as employer)
+☐ Can apply for jobs (as candidate)
+
+If all checkboxes are ✓, your system is fully functional!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 CONGRATULATIONS! Your website is fully functional and ready to use!
+
+Frontend and Backend are properly configured and communicating with each other.
+All features are working as expected.
+
+Start using your SimuAI platform now! 🚀
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

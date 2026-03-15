@@ -20,6 +20,7 @@ import {
 const CandidateApplications: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchApplications();
@@ -49,18 +50,27 @@ const CandidateApplications: React.FC = () => {
 
   if (loading) return <Loading />;
 
+  const filteredApplications = applications.filter(app => {
+    const jobData = typeof app.job === 'object' ? app.job : null;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (jobData?.title?.toLowerCase().includes(searchLower)) ||
+      (jobData?.company?.name?.toLowerCase().includes(searchLower))
+    );
+  });
+
   return (
     <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">My Applications</h1>
             <p className="text-gray-500 font-medium mt-1">Track and manage your job applications status</p>
           </div>
-          <Link 
-            to="/jobs" 
+          <Link
+            to="/jobs"
             className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
           >
             <Briefcase className="w-5 h-5" />
@@ -80,9 +90,9 @@ const CandidateApplications: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search by job title or company..." 
+            <input
+              type="text"
+              placeholder="Search by job title or company..."
               className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all shadow-sm"
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -95,32 +105,32 @@ const CandidateApplications: React.FC = () => {
 
         {/* Applications List */}
         <div className="grid gap-4">
-          {applications.length > 0 ? (
-            applications.map((app) => {
+          {filteredApplications.length > 0 ? (
+            filteredApplications.map((app) => {
               const { color, icon, label } = getStatusDetails(app.status);
               const jobData = typeof app.job === 'object' ? app.job : null;
 
               return (
                 <div key={app._id} className="group bg-white rounded-[2rem] border border-gray-100 p-6 md:p-8 hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300 relative overflow-hidden">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    
+
                     <div className="flex items-center gap-5">
                       {/* Company Logo Placeholder */}
                       <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                         <Building2 className="w-8 h-8" />
                       </div>
-                      
+
                       <div>
                         <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-blue-600 transition-colors">
                           {jobData ? jobData.title : 'Position Title'}
                         </h3>
                         <div className="flex flex-wrap items-center gap-y-1 gap-x-4 mt-1 text-sm font-medium text-gray-500">
                           <span className="flex items-center gap-1.5">
-                            <Building2 className="w-4 h-4" /> 
+                            <Building2 className="w-4 h-4" />
                             {jobData?.company?.name || 'Company Name'}
                           </span>
                           <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4" /> 
+                            <Clock className="w-4 h-4" />
                             Applied {new Date(app.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           </span>
                         </div>
@@ -134,7 +144,7 @@ const CandidateApplications: React.FC = () => {
                           <span className="text-sm font-bold text-blue-700">Score: {app.interviewScore}%</span>
                         </div>
                       )}
-                      
+
                       <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-sm ${color}`}>
                         {icon}
                         {label}
@@ -165,7 +175,7 @@ const CandidateApplications: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 // Sub-component for Stats
 const StatCard = ({ label, value, color }: { label: string, value: number, color: string }) => {

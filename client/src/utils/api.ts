@@ -200,9 +200,9 @@ export const userAPI = {
 };
 
 export const analyticsAPI = {
-  getEmployerDashboard: () => request.get<DashboardData>('/analytics/employer-dashboard'),
-  getCandidateDashboard: () => request.get<DashboardData>('/analytics/candidate-dashboard'),
-  getAdminDashboard: () => request.get<DashboardData>('/analytics/admin-dashboard'),
+  getEmployerDashboard: () => request.get<DashboardData>('/analytics/employer/dashboard'),
+  getCandidateDashboard: () => request.get<DashboardData>('/analytics/candidate/dashboard'),
+  getAdminDashboard: () => request.get<DashboardData>('/analytics/admin/dashboard'),
 };
 
 export const applicationAPI = {

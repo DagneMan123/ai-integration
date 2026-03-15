@@ -47,6 +47,11 @@ const validateRegister = [
     .optional()
     .isIn(['candidate', 'employer'])
     .withMessage('Role must be either candidate or employer'),
+  body('companyName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Company name must be between 2 and 100 characters'),
   body('phone')
     .optional()
     .trim()

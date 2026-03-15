@@ -2,12 +2,13 @@ const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
-// Candidate dashboard analytics
+// Candidate dashboard analytics - OPTIMIZED
 exports.getCandidateDashboard = async (req, res, next) => {
   try {
     const candidateId = req.user.id;
 
-    const [applicationsCount, interviewsCount, completedInterviews] = await Promise.all([
+    // Use single optimized query instead of multiple
+    const [applicationsCount, interviewsCount, recentInterviews] = await Promise.all([
       prisma.application.count({
         where: { candidateId }
       }),
@@ -15,39 +16,31 @@ exports.getCandidateDashboard = async (req, res, next) => {
         where: { candidateId }
       }),
       prisma.interview.findMany({
-        where: {
-          candidateId,
-          status: 'COMPLETED'
-        },
+        where: { candidateId },
         select: {
-          overallScore: true
-        }
-      })
-    ]);
-
-    // Calculate average score
-    const avgScore = completedInterviews.length > 0
-      ? completedInterviews.reduce((sum, i) => sum + (i.overallScore || 0), 0) / completedInterviews.length
-      : 0;
-
-    // Get recent interviews
-    const recentInterviews = await prisma.interview.findMany({
-      where: { candidateId },
-      include: {
-        job: {
-          select: {
-            title: true,
-            company: {
-              select: {
-                name: true
+          id: true,
+          overallScore: true,
+          status: true,
+          createdAt: true,
+          job: {
+            select: {
+              title: true,
+              company: {
+                select: { name: true }
               }
             }
           }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 5
-    });
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      })
+    ]);
+
+    // Calculate average score from recent interviews
+    const completedInterviews = recentInterviews.filter(i => i.status === 'COMPLETED');
+    const avgScore = completedInterviews.length > 0
+      ? completedInterviews.reduce((sum, i) => sum + (i.overallScore || 0), 0) / completedInterviews.length
+      : 0;
 
     res.json({
       success: true,
@@ -57,8 +50,8 @@ exports.getCandidateDashboard = async (req, res, next) => {
         averageScore: Math.round(avgScore),
         recentInterviews: recentInterviews.map(interview => ({
           id: interview.id,
-          jobTitle: interview.job.title,
-          companyName: interview.job.company.name,
+          jobTitle: interview.job?.title || 'N/A',
+          companyName: interview.job?.company?.name || 'N/A',
           status: interview.status,
           score: interview.overallScore,
           date: interview.createdAt
@@ -110,12 +103,13 @@ exports.getCandidatePerformance = async (req, res, next) => {
   }
 };
 
-// Employer dashboard analytics
+// Employer dashboard analytics - OPTIMIZED
 exports.getEmployerDashboard = async (req, res, next) => {
   try {
     const employerId = req.user.id;
 
-    const [jobsCount, applicationsCount, interviewsCount] = await Promise.all([
+    // Combine counts and recent applications in parallel
+    const [jobsCount, applicationsCount, interviewsCount, recentApplications] = await Promise.all([
       prisma.job.count({
         where: { createdById: employerId }
       }),
@@ -132,33 +126,34 @@ exports.getEmployerDashboard = async (req, res, next) => {
             createdById: employerId
           }
         }
-      })
-    ]);
-
-    // Get recent applications
-    const recentApplications = await prisma.application.findMany({
-      where: {
-        job: {
-          createdById: employerId
-        }
-      },
-      include: {
-        candidate: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true
+      }),
+      prisma.application.findMany({
+        where: {
+          job: {
+            createdById: employerId
           }
         },
-        job: {
-          select: {
-            title: true
+        select: {
+          id: true,
+          status: true,
+          appliedAt: true,
+          candidate: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          job: {
+            select: {
+              title: true
+            }
           }
-        }
-      },
-      orderBy: { appliedAt: 'desc' },
-      take: 10
-    });
+        },
+        orderBy: { appliedAt: 'desc' },
+        take: 10
+      })
+    ]);
 
     res.json({
       success: true,
@@ -234,42 +229,42 @@ exports.getJobAnalytics = async (req, res, next) => {
   }
 };
 
-// Admin dashboard analytics
+// Admin dashboard analytics - OPTIMIZED
 exports.getAdminDashboard = async (req, res, next) => {
   try {
-    const [usersCount, jobsCount, applicationsCount, interviewsCount, paymentsCount] = await Promise.all([
+    // Fetch all counts and role breakdown in parallel
+    const [usersCount, jobsCount, applicationsCount, interviewsCount, paymentsCount, usersByRole, recentActivity] = await Promise.all([
       prisma.user.count(),
       prisma.job.count(),
       prisma.application.count(),
       prisma.interview.count(),
-      prisma.payment.count()
+      prisma.payment.count(),
+      prisma.user.groupBy({
+        by: ['role'],
+        _count: true
+      }),
+      prisma.activityLog.findMany({
+        select: {
+          id: true,
+          action: true,
+          description: true,
+          createdAt: true,
+          user: {
+            select: {
+              firstName: true,
+              lastName: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 20
+      })
     ]);
-
-    // Get user breakdown by role
-    const usersByRole = await prisma.user.groupBy({
-      by: ['role'],
-      _count: true
-    });
 
     const roleBreakdown = usersByRole.reduce((acc, item) => {
       acc[item.role.toLowerCase()] = item._count;
       return acc;
     }, {});
-
-    // Get recent activity
-    const recentActivity = await prisma.activityLog.findMany({
-      include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    });
 
     res.json({
       success: true,

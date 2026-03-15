@@ -4,7 +4,6 @@ import { AuthState, User } from '../types';
 
 interface ExtendedAuthState extends AuthState {
   _hasHydrated: boolean;
-  isInitialized: boolean;
   setHasHydrated: (state: boolean) => void;
   isAdmin: () => boolean;
   isEmployer: () => boolean;
@@ -18,7 +17,6 @@ export const useAuthStore = create<ExtendedAuthState>()(
       token: null,
       refreshToken: null,
       _hasHydrated: false,
-      isInitialized: false,
 
       setAuth: (user: User, token: string, refreshToken: string) => {
         set({ user, token, refreshToken });

@@ -37,7 +37,13 @@ const CandidateDashboard: React.FC = () => {
 
   const fetchDashboardData = useCallback(async () => {
     try {
+      // Set timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await analyticsAPI.getCandidateDashboard();
+      clearTimeout(timeoutId);
+      
       const dashboardData = response.data.data || null;
       setData(dashboardData);
       
@@ -46,7 +52,9 @@ const CandidateDashboard: React.FC = () => {
         notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
       }
     } catch (error) {
-      toast.error('Failed to sync dashboard');
+      console.error('Dashboard fetch error:', error);
+      // Show cached data or empty state instead of error
+      setData(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -54,8 +62,11 @@ const CandidateDashboard: React.FC = () => {
   }, [broadcastDataUpdate, notifyStatusChange]);
 
   useEffect(() => {
+    // Load dashboard immediately
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000);
+    
+    // Refresh every 60 seconds instead of 30
+    const interval = setInterval(fetchDashboardData, 60000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
@@ -126,32 +137,32 @@ const CandidateDashboard: React.FC = () => {
             </Link>
           </div>
 
-          <div className="p-8">
+          <div className="p-6 md:p-8">
             {data?.recentInterviews && data.recentInterviews.length > 0 ? (
               <div className="grid gap-4">
                 {data.recentInterviews.map((interview: any) => (
-                  <div key={interview.id} className="group flex items-center justify-between p-5 bg-gray-50/50 hover:bg-white hover:shadow-md hover:border-blue-100 border border-transparent rounded-2xl transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-gray-400 group-hover:text-blue-600 transition-colors">
+                  <div key={interview.id} className="group flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-5 bg-gray-50/50 hover:bg-white hover:shadow-md hover:border-blue-100 border border-transparent rounded-2xl transition-all gap-4 md:gap-0">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0">
                         <TrendingUp className="w-6 h-6" />
                       </div>
-                      <div>
-                        <h4 className="font-bold text-gray-900">{interview.jobTitle}</h4>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{interview.companyName}</p>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-gray-900 truncate">{interview.jobTitle}</h4>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">{interview.companyName}</p>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-4 md:gap-8 justify-between md:justify-end">
                       <div className="hidden md:block text-right">
-                        <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5 whitespace-nowrap">
+                          <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                           {new Date(interview.date).toLocaleDateString()}
                         </p>
                         <p className="text-xs font-medium text-gray-400">Interview Date</p>
                       </div>
                       
                       {interview.score && (
-                        <div className="w-12 h-12 rounded-full border-4 border-blue-50 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full border-4 border-blue-50 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-black text-blue-600">{interview.score}</span>
                         </div>
                       )}

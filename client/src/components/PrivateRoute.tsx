@@ -9,15 +9,15 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, role }) => {
-  const { user, token, isInitialized } = useAuthStore();
+  const { user, token, _hasHydrated } = useAuthStore();
   const location = useLocation();
 
-  
-  if (!isInitialized) {
+  // Wait for auth store to hydrate from localStorage
+  if (!_hasHydrated) {
     return <Loading fullScreen={true} message="Verifying security credentials..." />;
   }
 
-  
+  // Check if user is authenticated
   if (!token || !user) {
     return (
       <Navigate 
@@ -28,10 +28,8 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, role }) => {
     );
   }
 
-  // 3. Handle Role-based Authorization
-  // If the user's role doesn't match the required role, send them to their dashboard
+  // Handle Role-based Authorization
   if (role && user.role !== role) {
-    // Determine the safe fallback dashboard
     const fallbackPath = user.role === 'admin' 
       ? '/admin/dashboard' 
       : user.role === 'employer' 
@@ -43,7 +41,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, role }) => {
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // 4. Authorized access - Render the protected content
+  // Authorized access - Render the protected content
   return <>{children}</>;
 };
 

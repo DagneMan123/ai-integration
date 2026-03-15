@@ -26,7 +26,7 @@ const InterviewSession: React.FC = () => {
   const fetchInterview = useCallback(async () => {
     try {
       const response = await interviewAPI.getInterviewReport(id!);
-      const data = response.data.data.interview;
+      const data = (response.data.data as any).interview;
       setInterview(data);
       if (data.questions && data.currentQuestionIndex < data.questions.length) {
         setCurrentQuestion(data.questions[data.currentQuestionIndex]);

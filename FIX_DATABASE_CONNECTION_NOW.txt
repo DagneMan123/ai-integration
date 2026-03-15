@@ -1,0 +1,145 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  FIX DATABASE CONNECTION ERROR                            ║
+║                                                                            ║
+║  Error: Can't reach database server at `localhost:5432`                   ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM: PostgreSQL service is NOT running
+
+SOLUTION: Start PostgreSQL immediately
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 1: AUTOMATIC (RECOMMENDED)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Right-click: START_EVERYTHING.bat
+2. Select: "Run as Administrator"
+3. Wait for it to complete
+4. Server will start automatically
+
+This script will:
+✓ Start PostgreSQL service
+✓ Test database connection
+✓ Start your server
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 2: MANUAL (If script doesn't work)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: Open Command Prompt as Administrator
+   - Press: Windows Key + R
+   - Type: cmd
+   - Press: Ctrl + Shift + Enter (to run as admin)
+
+Step 2: Start PostgreSQL Service
+   Copy and paste ONE of these commands:
+
+   net start postgresql-x64-16
+
+   If that fails, try:
+   net start postgresql-x64-15
+   net start postgresql-x64-14
+   net start postgresql-x64-13
+
+Step 3: Verify PostgreSQL Started
+   You should see: "The PostgreSQL-x64-XX service is starting..."
+   Then: "The PostgreSQL-x64-XX service has been started successfully."
+
+Step 4: Start Your Server
+   In the SAME Command Prompt, run:
+   
+   cd server
+   npm run dev
+
+Step 5: Open Another Command Prompt
+   In a NEW Command Prompt (not as admin), run:
+   
+   cd client
+   npm start
+
+Step 6: Open Browser
+   Go to: http://localhost:3000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT IF IT STILL DOESN'T WORK?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ "The specified service does not exist"
+   → PostgreSQL might not be installed
+   → Check: C:\Program Files\PostgreSQL\
+   → If not there, install PostgreSQL from: https://www.postgresql.org/download/windows/
+
+❌ "Access Denied"
+   → You MUST run Command Prompt as Administrator
+   → Right-click cmd.exe → "Run as Administrator"
+
+❌ "Service is already running"
+   → That's good! PostgreSQL is already running
+   → Just run: cd server && npm run dev
+
+❌ "Connection refused"
+   → PostgreSQL service didn't start properly
+   → Try restarting your computer
+   → Then run the startup script again
+
+❌ "Database 'simuai_db' does not exist"
+   → Run these commands in Command Prompt:
+   
+   psql -U postgres
+   (enter password: MYlove8)
+   
+   CREATE DATABASE simuai_db;
+   \q
+   
+   Then try again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☐ PostgreSQL is installed
+☐ PostgreSQL service is running (net start postgresql-x64-16)
+☐ Database 'simuai_db' exists
+☐ server/.env has correct DATABASE_URL
+☐ Server can connect to database
+☐ Server is running on port 5000
+☐ Client is running on port 3000
+☐ Browser is open to http://localhost:3000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT DATABASE SETTINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Host:     localhost
+Port:     5432
+Database: simuai_db
+User:     postgres
+Password: MYlove8
+
+(These are in server/.env - change if needed)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEXT STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Run: START_EVERYTHING.bat (as Administrator)
+   OR
+   Manually start PostgreSQL and run: npm run dev
+
+2. Wait for server to show: "Server running on port 5000"
+
+3. In another terminal: cd client && npm start
+
+4. Open: http://localhost:3000
+
+5. Login with test credentials:
+   Email: test@example.com
+   Password: Test@123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

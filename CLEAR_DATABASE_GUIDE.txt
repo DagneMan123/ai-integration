@@ -1,0 +1,94 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    CLEAR DATABASE & START FRESH                           ║
+║                                                                            ║
+║  Problem: "Email already registered" - can't create new accounts          ║
+║  Solution: Reset the database to clear all existing data                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+WHAT THIS DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This will DELETE all data from your database:
+  ✗ All users (candidates, employers, admins)
+  ✗ All jobs
+  ✗ All applications
+  ✗ All interviews
+  ✗ All payments
+  ✗ All companies
+
+After reset, you can register brand new accounts.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HOW TO RESET DATABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 1: AUTOMATIC (EASIEST)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Double-click: RESET_DATABASE.bat
+2. Type: yes
+3. Wait for completion
+4. Done! Database is now empty
+
+OPTION 2: MANUAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open Command Prompt
+2. Navigate to project root:
+   cd C:\Users\Hena\Desktop\ai integration
+
+3. Run the reset script:
+   node reset-database.js
+
+4. Wait for: ✅ Database reset successfully!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AFTER RESET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Your server is still running (no need to restart)
+
+2. Go to: http://localhost:3000
+
+3. Click "Register"
+
+4. Create a new account with any email:
+   Email: yourname@test.com
+   Password: Test@123
+   Role: Candidate (or Employer)
+
+5. You should now be able to register successfully!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ "Cannot find module '@prisma/client'"
+   → Run: cd server && npm install
+   → Then try again
+
+❌ "Database connection failed"
+   → Make sure PostgreSQL is running
+   → Run: net start postgresql-x64-16
+   → Then try again
+
+❌ "Permission denied"
+   → Run Command Prompt as Administrator
+   → Then try again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Double-click: RESET_DATABASE.bat
+2. Type: yes
+3. Wait for: ✅ Database reset successfully!
+4. Go to: http://localhost:3000
+5. Register with new email
+6. Done!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

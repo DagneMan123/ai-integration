@@ -1,0 +1,149 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         SIMUAI - QUICK START GUIDE                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+🚀 START YOUR SYSTEM IN 3 STEPS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Start PostgreSQL
+  Command: net start postgresql-x64-16
+  Expected: "The PostgreSQL-x64-16 service has been started successfully"
+
+STEP 2: Start Backend (Open Terminal 1)
+  Command: cd server && npm run dev
+  Expected: "Server running on port 5000"
+            "Database connection established successfully via Prisma"
+
+STEP 3: Start Frontend (Open Terminal 2)
+  Command: cd client && npm start
+  Expected: "Compiled successfully!"
+            "You can now view simuai-client in the browser"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 OPEN IN BROWSER:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  http://localhost:3000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 REGISTER NEW ACCOUNT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. Click "Create an account"
+  2. Fill in details:
+     - First Name: Your Name
+     - Last Name: Your Last Name
+     - Email: yourname@test.com
+     - Password: Test@123
+     - Role: Candidate or Employer
+  3. Click "Create My Account"
+  4. Login with your credentials
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 WHAT YOU CAN DO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+As Candidate:
+  ✓ View available jobs
+  ✓ Apply for jobs
+  ✓ Take interviews
+  ✓ View interview reports
+  ✓ Manage profile
+  ✓ View applications status
+
+As Employer:
+  ✓ Create job postings
+  ✓ View applications
+  ✓ Accept/Reject candidates
+  ✓ View candidate profiles
+  ✓ Manage company profile
+  ✓ View analytics
+
+As Admin:
+  ✓ Manage all users
+  ✓ Verify companies
+  ✓ Approve jobs
+  ✓ View system logs
+  ✓ View analytics
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ QUICK COMMANDS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Start PostgreSQL:
+  net start postgresql-x64-16
+
+Stop PostgreSQL:
+  net stop postgresql-x64-16
+
+Reset Database:
+  Double-click: RESET_DATABASE.bat
+
+Test Integration:
+  node test-integration.js
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 IMPORTANT URLS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Frontend:  http://localhost:3000
+Backend:   http://localhost:5000
+API:       http://localhost:5000/api
+Database:  localhost:5432
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 DATABASE CREDENTIALS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Host:     localhost
+Port:     5432
+Database: simuai_db
+User:     postgres
+Password: MYlove8
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ TROUBLESHOOTING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Backend won't start?
+  → Check PostgreSQL is running
+  → Check port 5000 is available
+  → Check server/.env is configured
+
+Frontend won't start?
+  → Check port 3000 is available
+  → Clear node_modules: rm -r node_modules && npm install
+  → Clear cache: Ctrl+F5
+
+Can't login?
+  → Check email is correct
+  → Check password is Test@123
+  → Check browser console for errors
+
+API errors?
+  → Check backend is running
+  → Check REACT_APP_API_URL in client/.env
+  → Check server logs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SYSTEM STATUS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Frontend: Ready
+✓ Backend: Ready
+✓ Database: Ready
+✓ API: Ready
+✓ Authentication: Ready
+✓ All Features: Ready
+
+🎉 YOUR SYSTEM IS FULLY FUNCTIONAL!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
