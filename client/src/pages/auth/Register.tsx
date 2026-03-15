@@ -3,6 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
+import { 
+  User, 
+  Building2, 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  Loader2, 
+  UserCircle,
+  Briefcase,
+  ShieldCheck,
+  CheckCircle2
+} from 'lucide-react';
 
 interface RegisterFormData {
   role: 'candidate' | 'employer';
@@ -14,31 +27,25 @@ interface RegisterFormData {
 }
 
 const Register: React.FC = () => {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegisterFormData>({
     defaultValues: { role: 'candidate' }
   });
+  
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const role = watch('role');
+  const selectedRole = watch('role');
 
   const onSubmit = async (data: RegisterFormData) => {
     setLoading(true);
     try {
-      console.log('Sending registration data:', data);
       const response = await authAPI.register(data);
-      console.log('Registration response:', response.data);
-      
-      // Don't auto-login - require user to login manually
-      if (response.data.success) {
-        toast.success('Registration successful! Please login with your credentials.');
-        // Redirect to login page instead of dashboard
+      if (response.data.success || response.status === 201) {
+        toast.success('Account created! Please login to continue.');
         navigate('/login');
-      } else {
-        toast.error('Registration failed. Please try again.');
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Registration failed';
+      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -46,150 +53,174 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-12 bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-        <p className="text-gray-600 mb-8">Join SimuAI today</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gray-50/50">
+      <div className="w-full max-w-2xl">
+        {/* Branding */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl shadow-lg mb-4">
+            <ShieldCheck className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-extrabold text-gray-900">Create Account</h1>
+          <p className="text-gray-500 mt-2">Join SimuAI and start your journey</p>
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              I am a
-            </label>
-            <select 
-              {...register('role', { required: true })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
+        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-8 md:p-12 border border-gray-100">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            
+            {/* Role Selection Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setValue('role', 'candidate')}
+                className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                  selectedRole === 'candidate' 
+                  ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-50' 
+                  : 'border-gray-100 bg-white hover:border-gray-200'
+                }`}
+              >
+                <div className={`p-3 rounded-xl ${selectedRole === 'candidate' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                  <UserCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Candidate</p>
+                  <p className="text-xs text-gray-500">I am looking for a job</p>
+                </div>
+                {selectedRole === 'candidate' && <CheckCircle2 className="w-5 h-5 text-blue-600 ml-auto" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setValue('role', 'employer')}
+                className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                  selectedRole === 'employer' 
+                  ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-50' 
+                  : 'border-gray-100 bg-white hover:border-gray-200'
+                }`}
+              >
+                <div className={`p-3 rounded-xl ${selectedRole === 'employer' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                  <Briefcase className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Employer</p>
+                  <p className="text-xs text-gray-500">I am hiring talent</p>
+                </div>
+                {selectedRole === 'employer' && <CheckCircle2 className="w-5 h-5 text-blue-600 ml-auto" />}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* First Name */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-gray-700 ml-1">First Name</label>
+                <div className="relative group">
+                  <User className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    {...register('firstName', { required: 'Required' })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all"
+                    placeholder="John"
+                  />
+                </div>
+                {errors.firstName && <p className="text-xs text-red-500 ml-1 font-medium">{errors.firstName.message}</p>}
+              </div>
+
+              {/* Last Name */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Last Name</label>
+                <div className="relative group">
+                  <User className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    {...register('lastName', { required: 'Required' })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all"
+                    placeholder="Doe"
+                  />
+                </div>
+                {errors.lastName && <p className="text-xs text-red-500 ml-1 font-medium">{errors.lastName.message}</p>}
+              </div>
+            </div>
+
+            {selectedRole === 'employer' && (
+              <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                <label className="text-sm font-semibold text-gray-700 ml-1">Company Name</label>
+                <div className="relative group">
+                  <Building2 className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    {...register('companyName', { required: selectedRole === 'employer' ? 'Company name is required' : false })}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all"
+                    placeholder="Abyssinia Tech"
+                  />
+                </div>
+                {errors.companyName && <p className="text-xs text-red-500 ml-1 font-medium">{errors.companyName.message}</p>}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700 ml-1">Email Address</label>
+              <div className="relative group">
+                <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="email"
+                  {...register('email', { required: 'Email is required' })}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all"
+                  placeholder="john@example.com"
+                />
+              </div>
+              {errors.email && <p className="text-xs text-red-500 ml-1 font-medium">{errors.email.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
+              <div className="relative group">
+                <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  {...register('password', { 
+                    required: 'Password is required',
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                      message: 'Must include uppercase, lowercase & number'
+                    }
+                  })}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {errors.password ? (
+                <p className="text-xs text-red-500 ml-1 font-medium">{errors.password.message}</p>
+              ) : (
+                <p className="text-[10px] text-gray-400 ml-1 italic font-medium">Use 6+ characters with a mix of letters & numbers.</p>
+              )}
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 active:scale-[0.99] transition-all shadow-lg shadow-blue-100 disabled:opacity-70 flex items-center justify-center gap-2"
             >
-              <option value="candidate">Job Seeker / Candidate</option>
-              <option value="employer">Employer / Company</option>
-            </select>
-          </div>
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Creating Account...
+                </>
+              ) : 'Create My Account'}
+            </button>
+          </form>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                {...register('firstName', { required: 'First name is required' })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                placeholder="John"
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-danger">{errors.firstName.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                {...register('lastName', { required: 'Last name is required' })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                placeholder="Doe"
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-sm text-danger">{errors.lastName.message}</p>
-              )}
-            </div>
-          </div>
-
-          {role === 'employer' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company Name
-              </label>
-              <input
-                type="text"
-                {...register('companyName', { required: role === 'employer' ? 'Company name is required' : false })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                placeholder="Your Company"
-              />
-              {errors.companyName && (
-                <p className="mt-1 text-sm text-danger">{errors.companyName.message}</p>
-              )}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              {...register('email', { 
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Please provide a valid email address (e.g., user@example.com)'
-                },
-                minLength: {
-                  value: 5,
-                  message: 'Email must be at least 5 characters'
-                },
-                maxLength: {
-                  value: 254,
-                  message: 'Email must not exceed 254 characters'
-                }
-              })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-              placeholder="john@example.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              {...register('password', { 
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters'
-                },
-                maxLength: {
-                  value: 128,
-                  message: 'Password must not exceed 128 characters'
-                },
-                pattern: {
-                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                  message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-                }
-              })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-              placeholder="Create a password"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
-            )}
-            <p className="mt-1 text-xs text-gray-500">
-              At least 6 characters with uppercase, lowercase, and number (e.g., Password123)
+          <div className="mt-8 text-center border-t border-gray-50 pt-8">
+            <p className="text-gray-500 font-medium">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-bold decoration-2 hover:underline underline-offset-4">
+                Sign in
+              </Link>
             </p>
           </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-primary hover:text-primary-dark font-medium">
-            Sign in
-          </Link>
-        </p>
+        </div>
       </div>
     </div>
   );

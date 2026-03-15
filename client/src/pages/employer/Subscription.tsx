@@ -2,13 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { paymentAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
 import Loading from '../../components/Loading';
+import { 
+  Check, 
+  Zap, 
+  ShieldCheck, 
+  ArrowRight,
+  ChevronDown
+} from 'lucide-react';
 
 interface Plan {
   id: string;
   name: string;
   price: number;
   features: string[];
-  color: string;
+  color: 'blue' | 'indigo' | 'purple';
+  isPopular?: boolean;
+  description: string;
 }
 
 const EmployerSubscription: React.FC = () => {
@@ -19,37 +28,39 @@ const EmployerSubscription: React.FC = () => {
   const plans: Plan[] = [
     {
       id: 'basic',
-      name: 'Basic Plan',
+      name: 'Starter Plan',
       price: 999,
-      features: ['10 Job Postings', '100 AI Credits', 'Basic Analytics'],
+      description: 'Perfect for small startups and local businesses.',
+      features: ['10 Job Postings', '100 AI Interview Credits', 'Basic Candidate Analytics', 'Email Support'],
       color: 'blue'
     },
     {
       id: 'pro',
-      name: 'Pro Plan',
+      name: 'Professional',
       price: 2999,
-      features: ['Unlimited Job Postings', '500 AI Credits', 'Advanced Analytics'],
-      color: 'green'
+      description: 'Scale your hiring with unlimited power and AI.',
+      features: ['Unlimited Job Postings', '500 AI Interview Credits', 'Advanced Matching Analytics', 'Priority 24/7 Support', 'Custom Branding'],
+      color: 'indigo',
+      isPopular: true
     },
     {
       id: 'enterprise',
       name: 'Enterprise',
       price: 0,
-      features: ['Everything in Pro', 'Unlimited AI Credits', 'Dedicated Support'],
+      description: 'Custom solutions for large scale organizations.',
+      features: ['Everything in Pro', 'Unlimited AI Credits', 'Dedicated Account Manager', 'API Access', 'Custom AI Prompting'],
       color: 'purple'
     }
   ];
 
-  useEffect(() => {
-    fetchSubscription();
-  }, []);
+  useEffect(() => { fetchSubscription(); }, []);
 
   const fetchSubscription = async () => {
     try {
       const response = await paymentAPI.getSubscription();
       setSubscription(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch subscription', error);
+      console.error('Fetch error:', error);
     } finally {
       setLoadingSubscription(false);
     }
@@ -57,13 +68,12 @@ const EmployerSubscription: React.FC = () => {
 
   const handleSubscribe = async (plan: Plan) => {
     if (plan.id === 'enterprise') {
-      toast.success('Please contact our sales team for enterprise plans');
+      toast.success('Our sales team will contact you shortly!');
       return;
     }
 
     setLoading(true);
     try {
-      // Step 1: Initialize payment on backend
       const response = await paymentAPI.initializePayment({
         amount: plan.price,
         type: 'subscription',
@@ -71,40 +81,15 @@ const EmployerSubscription: React.FC = () => {
       });
 
       if (response.data.success && response.data.data.checkoutUrl) {
-        // Step 2: Store tx_ref in localStorage before redirecting
-        // This is needed because Chapa doesn't pass tx_ref back in return URL
         const txRef = response.data.data.txRef;
         if (txRef) {
           localStorage.setItem('pendingPaymentTxRef', txRef);
           localStorage.setItem('pendingPaymentTime', Date.now().toString());
         }
-        
-        // Step 3: Redirect to Chapa checkout
         window.location.href = response.data.data.checkoutUrl;
-      } else {
-        toast.error('Failed to initialize payment');
       }
     } catch (error: any) {
-      console.error('Payment error:', error);
-      toast.error(error.response?.data?.message || 'Failed to process payment');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancelSubscription = async () => {
-    if (!window.confirm('Are you sure you want to cancel your subscription?')) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await paymentAPI.cancelSubscription();
-      toast.success('Subscription cancelled successfully');
-      fetchSubscription();
-    } catch (error: any) {
-      console.error('Cancel error:', error);
-      toast.error(error.response?.data?.message || 'Failed to cancel subscription');
+      toast.error('Payment initialization failed');
     } finally {
       setLoading(false);
     }
@@ -113,126 +98,165 @@ const EmployerSubscription: React.FC = () => {
   if (loadingSubscription) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Subscription & Credits</h1>
-          <p className="text-gray-600">Choose the perfect plan for your business</p>
+    <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Header & Credit Balance */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Subscription & Plans</h1>
+            <p className="text-gray-500 font-medium mt-2">Empower your HR team with AI-driven recruitment.</p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-6">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                   <Zap className="w-5 h-5 fill-current" />
+                </div>
+                <div>
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Available Credits</p>
+                   <p className="text-xl font-black text-gray-900">{subscription?.credits || 0} AI Units</p>
+                </div>
+             </div>
+             <button className="text-xs font-bold text-blue-600 hover:underline">Top up</button>
+          </div>
         </div>
 
-        {/* Current Subscription Status */}
-        {subscription && subscription.plan && subscription.plan !== 'free' && (
-          <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Current Plan</h3>
-                <p className="text-gray-600 mt-1">
-                  You are currently on the <span className="font-semibold capitalize">{subscription.plan}</span> plan
-                </p>
-                {subscription.endDate && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Renews on {new Date(subscription.endDate).toLocaleDateString()}
-                  </p>
-                )}
+        {/* Current Active Plan Banner */}
+        {subscription?.plan && subscription.plan !== 'free' && (
+          <div className="mb-12 bg-indigo-600 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-100">
+            <ShieldCheck className="absolute -right-6 -top-6 w-48 h-48 opacity-10" />
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+              <div className="text-center md:text-left">
+                <span className="px-4 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest">Active Subscription</span>
+                <h2 className="text-3xl font-black mt-2 capitalize">{subscription.plan} Member</h2>
+                <p className="text-indigo-100 mt-1 font-medium italic text-sm">Next billing date: {new Date(subscription.endDate).toLocaleDateString()}</p>
               </div>
-              <button
-                onClick={handleCancelSubscription}
-                disabled={loading}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
-              >
-                Cancel Subscription
+              <button className="px-8 py-3 bg-white text-indigo-600 rounded-2xl font-black hover:bg-indigo-50 transition-all shadow-lg active:scale-95">
+                Manage Billing
               </button>
             </div>
           </div>
         )}
 
-        {/* Plans Grid */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan) => {
-            const colorClasses = {
-              blue: 'border-blue-500 bg-blue-50',
-              green: 'border-green-500 bg-green-50',
-              purple: 'border-purple-500 bg-purple-50'
-            };
-
-            const buttonClasses = {
-              blue: 'bg-blue-600 hover:bg-blue-700',
-              green: 'bg-green-600 hover:bg-green-700',
-              purple: 'bg-purple-600 hover:bg-purple-700'
-            };
-
-            const isCurrentPlan = subscription?.plan === plan.id;
-
-            return (
-              <div
-                key={plan.id}
-                className={`rounded-lg shadow-md p-6 border-t-4 ${colorClasses[plan.color as keyof typeof colorClasses]} transition transform hover:scale-105`}
-              >
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                
-                {plan.price > 0 ? (
-                  <p className="text-3xl font-bold text-gray-900 mb-4">
-                    ETB {plan.price.toLocaleString()}
-                    <span className="text-sm text-gray-600">/month</span>
-                  </p>
-                ) : (
-                  <p className="text-3xl font-bold text-gray-900 mb-4">Custom Pricing</p>
-                )}
-
-                <ul className="space-y-2 text-gray-700 mb-6">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <span className="text-green-600">✓</span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handleSubscribe(plan)}
-                  disabled={loading || isCurrentPlan}
-                  className={`w-full py-2 rounded-lg text-white font-semibold transition ${
-                    isCurrentPlan
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : `${buttonClasses[plan.color as keyof typeof buttonClasses]} disabled:opacity-50`
-                  }`}
-                >
-                  {isCurrentPlan ? 'Current Plan' : plan.id === 'enterprise' ? 'Contact Sales' : 'Subscribe Now'}
-                </button>
-              </div>
-            );
-          })}
+        {/* Pricing Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          {plans.map((plan) => (
+            <PlanCard 
+              key={plan.id} 
+              plan={plan} 
+              isCurrent={subscription?.plan === plan.id}
+              loading={loading}
+              onSubscribe={() => handleSubscribe(plan)}
+            />
+          ))}
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-12 bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-black text-gray-900">Common Questions</h2>
+            <p className="text-gray-500 font-medium mt-2">Everything you need to know about SimuAI billing.</p>
+          </div>
           
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Can I change my plan anytime?</h3>
-              <p className="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.</p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
-              <p className="text-gray-600">We accept all major payment methods through Chapa, including bank transfers, mobile money, and card payments.</p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Is there a free trial?</h3>
-              <p className="text-gray-600">Yes, you can start with our free plan and upgrade whenever you're ready.</p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">What happens if I cancel?</h3>
-              <p className="text-gray-600">Your subscription will be cancelled at the end of the current billing period. You'll retain access until then.</p>
-            </div>
+          <FAQItem 
+            question="Can I upgrade or downgrade anytime?" 
+            answer="Yes, your subscription is flexible. When you upgrade, you'll get immediate access to new features. Downgrades take effect at the end of your billing cycle."
+          />
+          <FAQItem 
+            question="What are AI Interview Credits?" 
+            answer="Each credit allows SimuAI to generate, proctor, and evaluate one candidate interview session using our advanced neural models."
+          />
+          <div className="pt-10 flex flex-col items-center gap-4">
+             <div className="flex items-center gap-4 grayscale opacity-50">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Secure Payments via</span>
+                <img src="/chapa-logo.png" alt="Chapa" className="h-4" />
+                <img src="/telebirr-logo.png" alt="Telebirr" className="h-5" />
+             </div>
+             <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
+               <ShieldCheck className="w-3 h-3" /> Encrypted, secure transaction processing.
+             </p>
           </div>
         </div>
+
       </div>
     </div>
   );
 };
+
+/* --- Sub-Components --- */
+
+const PlanCard = ({ plan, isCurrent, loading, onSubscribe }: any) => {
+  const isIndigo = plan.color === 'indigo';
+
+  return (
+    <div className={`relative bg-white rounded-[2.5rem] border p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/50 flex flex-col ${
+      plan.isPopular ? 'border-indigo-600 shadow-xl shadow-indigo-100 ring-4 ring-indigo-50' : 'border-gray-100'
+    }`}>
+      {plan.isPopular && (
+        <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+          Most Popular
+        </span>
+      )}
+
+      <div className="mb-8">
+        <h3 className="text-xl font-black text-gray-900 mb-2">{plan.name}</h3>
+        <p className="text-xs text-gray-400 font-medium leading-relaxed">{plan.description}</p>
+      </div>
+
+      <div className="mb-8">
+        {plan.price > 0 ? (
+          <div className="flex items-end gap-1">
+            <span className="text-sm font-bold text-gray-400 mb-2">ETB</span>
+            <span className="text-4xl font-black text-gray-900">{plan.price.toLocaleString()}</span>
+            <span className="text-sm font-bold text-gray-400 mb-2">/mo</span>
+          </div>
+        ) : (
+          <span className="text-3xl font-black text-gray-900">Custom</span>
+        )}
+      </div>
+
+      <div className="space-y-4 mb-10 flex-1">
+        {plan.features.map((f: string, i: number) => (
+          <div key={i} className="flex items-start gap-3">
+            <div className={`mt-1 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${isIndigo ? 'bg-indigo-600 text-white' : 'bg-blue-100 text-blue-600'}`}>
+              <Check className="w-2.5 h-2.5 stroke-[4px]" />
+            </div>
+            <span className="text-sm font-semibold text-gray-600">{f}</span>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onSubscribe}
+        disabled={loading || isCurrent}
+        className={`w-full py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 active:scale-95 ${
+          isCurrent ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 
+          isIndigo ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700' : 
+          'bg-gray-900 text-white hover:bg-black'
+        }`}
+      >
+        {isCurrent ? 'Current Plan' : (
+          <>
+            {plan.id === 'enterprise' ? 'Contact Sales' : 'Upgrade Plan'}
+            <ArrowRight className="w-4 h-4" />
+          </>
+        )}
+      </button>
+    </div>
+  );
+};
+
+const FAQItem = ({ question, answer }: { question: string, answer: string }) => (
+  <div className="bg-white rounded-2xl border border-gray-100 p-6 group cursor-pointer hover:border-blue-200 transition-colors">
+    <div className="flex items-center justify-between">
+      <h4 className="font-bold text-gray-900">{question}</h4>
+      <ChevronDown className="w-4 h-4 text-gray-400 transition-transform group-hover:rotate-180" />
+    </div>
+    <p className="mt-3 text-sm text-gray-500 font-medium leading-relaxed hidden group-hover:block animate-in fade-in slide-in-from-top-2">
+      {answer}
+    </p>
+  </div>
+);
 
 export default EmployerSubscription;

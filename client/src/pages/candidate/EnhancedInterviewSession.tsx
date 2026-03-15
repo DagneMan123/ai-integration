@@ -5,7 +5,15 @@ import Loading from '../../components/Loading';
 import AntiCheatMonitor from '../../components/AntiCheatMonitor';
 import WebcamVerification from '../../components/WebcamVerification';
 import toast from 'react-hot-toast';
-import { FiClock, FiAlertCircle, FiMic, FiVideo, FiType } from 'react-icons/fi';
+import { 
+  Clock, 
+  AlertTriangle, 
+  ShieldCheck, 
+  ChevronRight, 
+  Info,
+  Maximize2,
+  Cpu
+} from 'lucide-react';
 
 const EnhancedInterviewSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,65 +28,50 @@ const EnhancedInterviewSession: React.FC = () => {
   const [showVerification, setShowVerification] = useState(true);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
 
-  useEffect(() => {
-    fetchInterview();
-  }, [id]);
+  useEffect(() => { fetchInterview(); }, [id]);
+
+  const fetchInterview = async () => {
+    try {
+      const response = await interviewAPI.getInterviewReport(id!);
+      const data = (response.data as any).data.interview;
+      setInterview(data);
+      
+      const nextIndex = data.responses?.length || 0;
+      if (nextIndex < data.questions.length) {
+        setCurrentQuestion(data.questions[nextIndex]);
+        setTimeLeft(data.timePerQuestion || 600); // Default 10 mins if not set
+        setQuestionStartTime(Date.now());
+      } else {
+        navigate(`/candidate/interview/${id}/report`);
+      }
+    } catch (error) {
+      toast.error('Session error');
+      navigate('/candidate/interviews');
+    } finally { setLoading(false); }
+  };
 
   useEffect(() => {
     if (timeLeft > 0 && isVerified) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && isVerified && interview) {
-      // Auto-submit when time runs out
+    } else if (timeLeft === 0 && isVerified) {
       handleAutoSubmit();
     }
   }, [timeLeft, isVerified]);
 
-  const fetchInterview = async () => {
-    try {
-      const response = await interviewAPI.getInterviewReport(id!);
-      const data = response.data.data.interview;
-      setInterview(data);
-      
-      if (data.questions && data.responses) {
-        const nextIndex = data.responses.length;
-        if (nextIndex < data.questions.length) {
-          setCurrentQuestion(data.questions[nextIndex]);
-          setTimeLeft(3600); // 60 minutes default
-          setQuestionStartTime(Date.now());
-        } else {
-          // All questions answered
-          navigate(`/candidate/interview/${id}/report`);
-        }
-      } else if (data.questions) {
-        setCurrentQuestion(data.questions[0]);
-        setTimeLeft(3600);
-        setQuestionStartTime(Date.now());
-      }
-    } catch (error) {
-      toast.error('Failed to load interview');
-      navigate('/candidate/interviews');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleVerified = () => {
     setIsVerified(true);
     setShowVerification(false);
-    toast.success('You can now start the interview');
+    toast.success('Identity Verified. Session Started.');
   };
 
   const handleAutoSubmit = async () => {
-    if (!answer.trim()) {
-      toast.error('Time is up! Submitting empty answer.');
-    }
     await handleSubmitAnswer();
   };
 
   const handleSubmitAnswer = async () => {
     if (!answer.trim() && timeLeft > 0) {
-      toast.error('Please provide an answer');
+      toast.error('Please provide a response');
       return;
     }
 
@@ -90,39 +83,23 @@ const EnhancedInterviewSession: React.FC = () => {
       const response = await interviewAPI.submitAnswer(id!, {
         questionIndex: currentIndex,
         answer,
-        timeTaken,
-        audioTranscript: null, // For text mode
-        audioDuration: null
+        timeTaken
       });
 
-      const { nextQuestion, isLastQuestion, integrityWarning } = response.data.data;
-
-      if (integrityWarning) {
-        toast.error(`Integrity Warning: ${integrityWarning}`);
-      }
+      const { nextQuestion, isLastQuestion } = (response.data as any).data;
 
       if (isLastQuestion) {
-        // Complete interview
         await interviewAPI.completeInterview(id!);
-        toast.success('Interview completed!');
         navigate(`/candidate/interview/${id}/report`);
       } else {
-        // Move to next question
         setAnswer('');
         setCurrentQuestion(nextQuestion);
         setQuestionStartTime(Date.now());
-        toast.success('Answer submitted successfully');
+        setTimeLeft(interview.timePerQuestion || 600);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to submit answer');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleViolation = (type: string) => {
-    // Handle violations - could show warnings or take action
-    console.log('Violation detected:', type);
+      toast.error('Submission failed');
+    } finally { setSubmitting(false); }
   };
 
   const formatTime = (seconds: number) => {
@@ -131,166 +108,184 @@ const EnhancedInterviewSession: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getInterviewModeIcon = () => {
-    switch (interview?.interviewMode) {
-      case 'audio':
-        return <FiMic className="text-primary" />;
-      case 'video':
-        return <FiVideo className="text-primary" />;
-      default:
-        return <FiType className="text-primary" />;
-    }
-  };
-
   if (loading) return <Loading />;
 
-  // Show verification screen first
+  // 1. Verification Step UI
   if (showVerification && !isVerified) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Identity Verification Required</h1>
-            <p className="text-gray-600">
-              Before starting the interview, we need to verify your identity using your webcam.
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6">
+        <div className="max-w-4xl w-full grid md:grid-cols-2 gap-8 items-center">
+          <div className="text-white space-y-6">
+            <div className="inline-flex p-3 bg-blue-500/20 rounded-2xl border border-blue-500/30">
+              <ShieldCheck className="w-8 h-8 text-blue-400" />
+            </div>
+            <h1 className="text-4xl font-black tracking-tight">Identity Check</h1>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              To ensure a fair assessment, we use AI-powered identity verification. Please position yourself clearly in front of the camera.
             </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-slate-300 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+                <span className="text-sm font-medium">Biometric monitoring active</span>
+              </div>
+              <ul className="space-y-3 text-sm text-slate-400 ml-2">
+                <li className="flex items-center gap-2 italic font-mono"><ChevronRight className="w-4 h-4 text-blue-500" /> No tab switching allowed</li>
+                <li className="flex items-center gap-2 italic font-mono"><ChevronRight className="w-4 h-4 text-blue-500" /> Session is recorded</li>
+              </ul>
+            </div>
           </div>
           
-          <WebcamVerification
-            interviewId={id!}
-            onVerified={handleVerified}
-            autoCapture={true}
-            captureInterval={300000} // 5 minutes
-          />
-
-          <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <FiAlertCircle className="text-yellow-600 mt-1 flex-shrink-0" />
-              <div className="text-sm text-yellow-800">
-                <p className="font-medium mb-2">Interview Guidelines:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Ensure good lighting and clear visibility of your face</li>
-                  <li>Do not switch tabs or leave the interview window</li>
-                  <li>Copy-paste is disabled for integrity purposes</li>
-                  <li>Your session is being monitored for fairness</li>
-                  <li>Periodic identity verification will occur during the interview</li>
-                </ul>
-              </div>
-            </div>
+          <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl">
+            <WebcamVerification
+              interviewId={id!}
+              onVerified={handleVerified}
+              autoCapture={true}
+              captureInterval={300000}
+            />
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <AntiCheatMonitor interviewId={id!} onViolation={handleViolation} />
+  // 2. Active Session UI
+  const progress = ((interview?.responses?.length || 0) / interview?.questions?.length) * 100;
 
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                {getInterviewModeIcon()}
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {interview?.interviewMode === 'audio' ? 'Audio Interview' : 
-                   interview?.interviewMode === 'video' ? 'Video Interview' : 'Text Interview'}
-                </h1>
-              </div>
-              <p className="text-gray-600">
-                Question {(interview?.responses?.length || 0) + 1} of {interview?.questions?.length}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Strictness: <span className="font-medium capitalize">{interview?.strictnessLevel || 'moderate'}</span>
-              </p>
+  return (
+    <div className="min-h-screen bg-[#fcfcfd] flex flex-col">
+      <AntiCheatMonitor interviewId={id!} onViolation={(v) => console.log(v)} />
+
+      {/* Top Navigation / Progress */}
+      <nav className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-600 p-2 rounded-lg shadow-blue-200 shadow-lg">
+              <Cpu className="w-5 h-5 text-white" />
             </div>
-            <div className="flex items-center gap-2 text-lg font-semibold">
-              <FiClock className={timeLeft < 300 ? 'text-red-600' : 'text-primary'} />
-              <span className={timeLeft < 300 ? 'text-red-600' : 'text-gray-900'}>
-                {formatTime(timeLeft)}
-              </span>
+            <div>
+              <h2 className="text-sm font-black text-gray-900 uppercase tracking-wider">SimuAI Assessment</h2>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${progress}%` }} />
+                </div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Step {(interview?.responses?.length || 0) + 1}/{interview?.questions?.length}</span>
+              </div>
             </div>
           </div>
+
+          <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border-2 transition-all shadow-sm ${timeLeft < 60 ? 'bg-red-50 border-red-100 animate-pulse' : 'bg-white border-gray-100'}`}>
+            <Clock className={`w-5 h-5 ${timeLeft < 60 ? 'text-red-600' : 'text-blue-600'}`} />
+            <span className={`text-xl font-black tabular-nums ${timeLeft < 60 ? 'text-red-600' : 'text-gray-900'}`}>
+              {formatTime(timeLeft)}
+            </span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span className="text-xs font-bold text-emerald-700 uppercase tracking-tighter">Secure Link Active</span>
+          </div>
         </div>
+      </nav>
 
-        {/* Question */}
-        {currentQuestion && (
-          <div className="bg-white rounded-lg shadow-md p-8 mb-6">
-            <div className="mb-4">
-              <span className="inline-block px-3 py-1 bg-primary-light text-primary rounded-full text-sm font-medium mb-4">
-                {currentQuestion.type || 'Technical'}
+      <main className="flex-1 max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-8 p-6 lg:p-10">
+        
+        {/* Left Side: Question Area */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 md:p-12 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-full bg-blue-600" />
+            
+            <div className="flex items-center gap-2 mb-6">
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-black uppercase tracking-widest">
+                {currentQuestion?.type || 'CORE COMPETENCY'}
               </span>
-              {currentQuestion.difficulty && (
-                <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium mb-4 ml-2">
-                  {currentQuestion.difficulty}
-                </span>
-              )}
-              {currentQuestion.reason && (
-                <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium mb-4 ml-2">
-                  Follow-up Question
-                </span>
-              )}
+              <span className="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-xs font-black uppercase tracking-widest">
+                {currentQuestion?.difficulty || 'General'}
+              </span>
             </div>
-            
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              {currentQuestion.question}
-            </h2>
-            
-            {currentQuestion.reason && (
-              <p className="text-sm text-gray-600 mb-6 italic">
-                {currentQuestion.reason}
-              </p>
-            )}
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Answer
-              </label>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-8">
+              {currentQuestion?.question}
+            </h1>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <label className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <Maximize2 className="w-4 h-4" /> Your Response
+                </label>
+                <span className="text-[10px] font-mono text-gray-400">{answer.length} Characters</span>
+              </div>
               <textarea
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 rows={12}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                placeholder="Type your answer here... Be specific and provide examples where possible."
+                className="w-full p-6 text-lg border-2 border-gray-50 rounded-[1.5rem] bg-gray-50/30 focus:bg-white focus:border-blue-500 outline-none transition-all resize-none shadow-inner leading-relaxed"
+                placeholder="Compose your answer here..."
                 disabled={submitting}
               />
-              <p className="text-sm text-gray-500 mt-2">
-                {answer.length} characters
-              </p>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="mt-8 flex justify-end">
               <button
                 onClick={handleSubmitAnswer}
                 disabled={submitting || !answer.trim()}
-                className="flex-1 bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex items-center gap-3 bg-blue-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 active:scale-95"
               >
-                {submitting ? 'Submitting...' : 
-                 (interview?.responses?.length || 0) + 1 >= interview?.questions?.length ? 
-                 'Submit & Complete Interview' : 'Submit & Continue'}
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'SUBMIT RESPONSE'}
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Guidelines */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
-          <FiAlertCircle className="text-yellow-600 mt-1 flex-shrink-0" />
-          <div className="text-sm text-yellow-800">
-            <p className="font-medium mb-1">Active Monitoring:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Tab switches and window changes are being tracked</li>
-              <li>Copy-paste attempts will be flagged</li>
-              <li>AI-generated content detection is active</li>
-              <li>Answer all questions honestly and in your own words</li>
+        {/* Right Side: Instructions & Guidelines */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
+            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-600" /> Interview Tips
+            </h3>
+            <div className="space-y-4">
+              <TipItem text="Be specific: Use the STAR method (Situation, Task, Action, Result)." />
+              <TipItem text="Focus on your unique role and contribution in projects." />
+              <TipItem text="The AI evaluates clarity, technical accuracy, and structure." />
+            </div>
+          </div>
+
+          <div className="bg-amber-50 rounded-[2rem] border border-amber-100 p-6">
+            <h3 className="text-sm font-black text-amber-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" /> Integrity Notice
+            </h3>
+            <ul className="space-y-3">
+              <IntegrityItem text="Tab switches are logged" />
+              <IntegrityItem text="No copy-pasting allowed" />
+              <IntegrityItem text="Face must remain visible" />
             </ul>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
+
+/* Helper Components */
+const TipItem = ({ text }: { text: string }) => (
+  <div className="flex gap-3 text-sm text-gray-600 font-medium leading-relaxed">
+    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+    {text}
+  </div>
+);
+
+const IntegrityItem = ({ text }: { text: string }) => (
+  <li className="flex items-center gap-3 text-xs font-bold text-amber-800/70 uppercase italic">
+    <div className="w-1 h-1 bg-amber-400 rounded-full" />
+    {text}
+  </li>
+);
+
+const Loader2 = ({ className }: { className?: string }) => (
+  <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+  </svg>
+);
 
 export default EnhancedInterviewSession;

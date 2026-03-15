@@ -1,154 +1,159 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { paymentAPI } from '../utils/api';
-import toast from 'react-hot-toast';
-import Loading from '../components/Loading';
+import { 
+  CheckCircle2, 
+  XCircle, 
+  ArrowRight, 
+  ShieldCheck, 
+  Loader2,
+  RefreshCcw
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
-  const [message, setMessage] = useState('Verifying payment & generating AI response...');
-  const [retryCount, setRetryCount] = useState(0);
+  const [message, setMessage] = useState('Securing your transaction...');
+  const [countdown, setCountdown] = useState(5);
+  const [txDetails, setTxDetails] = useState<any>(null);
 
   useEffect(() => {
     const verifyPayment = async () => {
+      let txRef = searchParams.get('tx_ref') || localStorage.getItem('pendingPaymentTxRef');
+
+      if (!txRef) {
+        setStatus('error');
+        setMessage('Transaction reference missing. Please contact SimuAI support.');
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Try to get tx_ref from URL first (if Chapa passes it)
-        let txRef = searchParams.get('tx_ref');
-        
-        // If not in URL, get from localStorage (fallback)
-        if (!txRef) {
-          txRef = localStorage.getItem('pendingPaymentTxRef');
-        }
+        const response = await paymentAPI.verifyPayment(txRef);
 
-        const chapaStatus = searchParams.get('status');
+        if (response.data.success) {
+          setTxDetails(response.data.data); // የክፍያ ዝርዝሩን እዚህ እንይዛለን
+          setStatus('success');
+          setMessage('Your subscription is now active!');
+          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
-        if (!txRef) {
-          setStatus('error');
-          setMessage('No transaction reference found. Please contact support.');
-          setLoading(false);
-          return;
-        }
+          localStorage.removeItem('pendingPaymentTxRef');
+          localStorage.removeItem('pendingPaymentTime');
 
-        // Call backend to verify payment (server-side verification)
-        try {
-          const response = await paymentAPI.verifyPayment(txRef);
-
-          if (response.data.success) {
-            setStatus('success');
-            setMessage('Payment verified! Redirecting...');
-            toast.success('Payment verified successfully!');
-            
-            // Clear localStorage
-            localStorage.removeItem('pendingPaymentTxRef');
-            localStorage.removeItem('pendingPaymentTime');
-
-            // Redirect to appropriate page after 2 seconds
-            setTimeout(() => {
-              navigate('/employer/subscription');
-            }, 2000);
-          } else {
-            const errorMsg = response.data.message || 'Payment verification failed';
-            
-            // Check if it's a duplicate payment error
-            if (errorMsg.includes('already completed')) {
-              setStatus('success');
-              setMessage('Payment already processed. Redirecting...');
-              toast.success('Payment already completed!');
-              localStorage.removeItem('pendingPaymentTxRef');
-              localStorage.removeItem('pendingPaymentTime');
-              
-              setTimeout(() => {
+          // Countdown to redirect
+          const timer = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(timer);
                 navigate('/employer/subscription');
-              }, 2000);
-            } else {
-              setStatus('error');
-              setMessage(errorMsg);
-              toast.error(errorMsg);
-            }
-          }
-        } catch (error: any) {
-          const errorMsg = error.response?.data?.message || error.message;
-          
-          // Handle session expired - retry with fresh token
-          if (errorMsg.includes('Token expired') || errorMsg.includes('expired') || error.response?.status === 401) {
-            if (retryCount < 2) {
-              setMessage('Session expired, retrying...');
-              setRetryCount(retryCount + 1);
-              
-              // Wait 1 second and retry
-              setTimeout(() => {
-                verifyPayment();
-              }, 1000);
-              return;
-            } else {
-              setStatus('error');
-              setMessage('Session expired. Please login again and check your payment status.');
-              toast.error('Session expired. Please login again.');
-            }
-          } else {
-            setStatus('error');
-            setMessage(errorMsg || 'Payment verification failed');
-            toast.error('Payment verification failed');
-          }
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => clearInterval(timer);
+        } else {
+          setStatus('error');
+          setMessage(response.data.message || 'Verification failed');
         }
       } catch (error: any) {
-        console.error('Payment verification error:', error);
         setStatus('error');
-        setMessage('An unexpected error occurred. Please contact support.');
-        toast.error('Payment verification failed');
+        setMessage(error.response?.data?.message || 'Server connection lost');
       } finally {
         setLoading(false);
       }
     };
 
     verifyPayment();
-  }, [searchParams, navigate, retryCount]);
+  }, [searchParams, navigate]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <Loading />
-          <p className="mt-4 text-lg text-gray-700">{message}</p>
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
+        <div className="relative mb-8">
+           <div className="absolute inset-0 bg-blue-100 rounded-full blur-2xl animate-pulse"></div>
+           <Loader2 className="w-16 h-16 text-blue-600 animate-spin relative z-10" />
         </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Verifying Payment</h2>
+        <p className="text-gray-500 font-medium animate-pulse">{message}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full">
+        
+        {/* Success Card */}
         {status === 'success' ? (
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 p-8 md:p-10 text-center animate-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-emerald-50/50">
+              <CheckCircle2 className="w-12 h-12 text-emerald-500" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
-            <p className="text-sm text-gray-500">Redirecting you...</p>
+            
+            <h2 className="text-3xl font-black text-gray-900 mb-2">Payment Confirmed!</h2>
+            <p className="text-gray-500 font-medium mb-8">{message}</p>
+
+            {/* Transaction Details (Professional Touch) */}
+            <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-left space-y-3">
+               <div className="flex justify-between text-sm">
+                  <span className="text-gray-400 font-bold uppercase tracking-tight">Amount Paid</span>
+                  <span className="text-gray-900 font-black">{txDetails?.amount || '...'} ETB</span>
+               </div>
+               <div className="flex justify-between text-sm border-t border-gray-100 pt-3">
+                  <span className="text-gray-400 font-bold uppercase tracking-tight">Ref Number</span>
+                  <span className="text-gray-900 font-mono text-xs">{txDetails?.txRef?.slice(0, 15)}...</span>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => navigate('/employer/subscription')}
+                className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2 group"
+              >
+                Go to Dashboard
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                Redirecting in <span className="text-blue-600">{countdown}s</span>
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+          /* Error Card */
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-rose-900/5 border border-gray-100 p-8 text-center animate-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-rose-50/50">
+              <XCircle className="w-12 h-12 text-rose-500" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Failed</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
-            <button
-              onClick={() => navigate('/employer/subscription')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
-            >
-              Back to Subscription
-            </button>
+            <h2 className="text-2xl font-black text-gray-900 mb-2">Payment Incomplete</h2>
+            <p className="text-gray-500 font-medium mb-8 leading-relaxed">{message}</p>
+            
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+              >
+                <RefreshCcw className="w-5 h-5" />
+                Try Verify Again
+              </button>
+              <button
+                onClick={() => navigate('/employer/subscription')}
+                className="w-full bg-white border border-gray-200 text-gray-500 py-4 rounded-2xl font-bold hover:bg-gray-50 transition-all"
+              >
+                Back to Subscription
+              </button>
+            </div>
           </div>
         )}
+
+        {/* Support Section */}
+        <div className="mt-10 flex items-center justify-center gap-2 text-sm font-bold text-gray-400">
+           <ShieldCheck className="w-4 h-4 text-emerald-500" />
+           <p className="uppercase tracking-tighter">Verified Secure Transaction</p>
+        </div>
       </div>
     </div>
   );

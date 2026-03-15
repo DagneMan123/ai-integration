@@ -7,19 +7,17 @@ import {
   Wallet, 
   Building2, 
   Briefcase, 
-  PlusCircle, 
   BarChart3, 
   ShieldCheck, 
   Users, 
   Factory, 
-  Globe, 
   ShieldAlert,
   Settings,
-  ClipboardList, // New
-  Calendar,      // New
-  MessageSquare, // New
-  HelpCircle,    // New
-  Star           // New
+  ClipboardList,
+  Calendar,
+  MessageSquare,
+  HelpCircle,
+  Star
 } from 'lucide-react';
 
 export interface MenuItem {

@@ -4,6 +4,17 @@ import { userAPI } from '../../utils/api';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import Loading from '../../components/Loading';
+import { 
+  User, 
+  Phone, 
+  Briefcase, 
+  GraduationCap, 
+  Code, 
+  Settings, 
+  Camera,
+  Save,
+  Info
+} from 'lucide-react';
 
 interface ProfileFormData {
   firstName: string;
@@ -18,93 +29,50 @@ interface ProfileFormData {
 
 const CandidateProfile: React.FC = () => {
   const { user, updateUser } = useAuthStore();
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileFormData>();
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProfileFormData>();
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [editingEmail, setEditingEmail] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'account'>('personal');
+
+  // ፕሮፋይሉ ምን ያህል እንደተሞላ ለመቁጠር (UX)
+  const watchedFields = watch();
+  const calculateCompletion = () => {
+    const fields = ['firstName', 'lastName', 'phone', 'skills', 'experience', 'education', 'bio'];
+    const filled = fields.filter(f => !!(watchedFields as any)[f]).length;
+    return Math.round((filled / fields.length) * 100);
+  };
 
   const fetchProfile = useCallback(async () => {
     try {
       const response = await userAPI.getProfile();
-      const profile = response.data.data;
-      setValue('firstName', profile.user.firstName || '');
-      setValue('lastName', profile.user.lastName || '');
-      setValue('phone', profile.user.phone || '');
-      setValue('skills', profile.user.skills || '');
-      setValue('experience', profile.user.experience || '');
-      setValue('education', profile.user.education || '');
-      setValue('bio', profile.user.bio || '');
+      const u = response.data.data;
+      setValue('firstName', u.firstName || '');
+      setValue('lastName', u.lastName || '');
+      setValue('phone', u.phone || '');
+      setValue('skills', u.skills || '');
+      setValue('experience', u.experience || '');
+      setValue('education', u.education || '');
+      setValue('bio', u.bio || '');
     } catch (error) {
-      console.error('Failed to fetch profile', error);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
     }
   }, [setValue]);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
   const onSubmit = async (data: ProfileFormData) => {
     setSaving(true);
-    setSuccessMessage('');
     try {
       await userAPI.updateProfile(data);
       updateUser(data);
-      setSuccessMessage('Profile updated successfully!');
       toast.success('Profile updated successfully!');
       setHasChanges(false);
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 
-                          error.response?.data?.message || 
-                          'Failed to update profile';
-      toast.error(errorMessage);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEmailChange = async () => {
-    setEmailError('');
-    
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!newEmail || !emailRegex.test(newEmail)) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-
-    // Check if email is same as current
-    if (newEmail === user?.email) {
-      setEmailError('New email must be different from current email');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await userAPI.updateProfile({ email: newEmail });
-      updateUser({ email: newEmail });
-      setSuccessMessage('Email updated successfully!');
-      toast.success('Email updated successfully!');
-      setEditingEmail(false);
-      setNewEmail('');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 
-                          error.response?.data?.message || 
-                          'Failed to update email';
-      setEmailError(errorMessage);
-      toast.error(errorMessage);
+      toast.error('Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -113,265 +81,190 @@ const CandidateProfile: React.FC = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Profile</h1>
-          <p className="text-gray-600">Manage your professional information and career details</p>
-        </div>
-
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg shadow-sm">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <p className="text-green-800 font-semibold">{successMessage}</p>
+    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
+      <div className="max-w-5xl mx-auto">
+        
+        {/* Header with Progress */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Profile Settings</h1>
+            <p className="text-gray-500 font-medium">Keep your professional information up to date</p>
+          </div>
+          <div className="w-full md:w-64 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
+              <span>Profile Completion</span>
+              <span className="text-blue-600">{calculateCompletion()}%</span>
+            </div>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${calculateCompletion()}%` }} />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Name Fields */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  {...register('firstName', { 
-                    required: 'First name is required',
-                    onChange: () => setHasChanges(true)
-                  })}
-                  className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    errors.firstName 
-                      ? 'border-red-300 focus:ring-red-500 focus:border-transparent' 
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
-                  }`}
-                  placeholder="Your first name"
-                />
-                {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    {errors.firstName.message}
-                  </p>
-                )}
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Sidebar Tabs */}
+          <div className="lg:col-span-3 space-y-2">
+            <TabButton active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} icon={<User className="w-4 h-4" />} label="Personal Info" />
+            <TabButton active={activeTab === 'professional'} onClick={() => setActiveTab('professional')} icon={<Briefcase className="w-4 h-4" />} label="Professional" />
+            <TabButton active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<Settings className="w-4 h-4" />} label="Account & Email" />
+          </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  {...register('lastName', { 
-                    required: 'Last name is required',
-                    onChange: () => setHasChanges(true)
-                  })}
-                  className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    errors.lastName 
-                      ? 'border-red-300 focus:ring-red-500 focus:border-transparent' 
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
-                  }`}
-                  placeholder="Your last name"
-                />
-                {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    {errors.lastName.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-              {!editingEmail ? (
-                <div className="flex gap-3">
-                  <input
-                    type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingEmail(true);
-                      setNewEmail(user?.email || '');
-                      setEmailError('');
-                    }}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-                  >
-                    Change
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => {
-                      setNewEmail(e.target.value);
-                      setEmailError('');
-                    }}
-                    placeholder="Enter new email address"
-                    className={`w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      emailError 
-                        ? 'border-red-300 focus:ring-red-500 focus:border-transparent' 
-                        : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
-                    }`}
-                  />
-                  {emailError && (
-                    <p className="text-sm text-red-600 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                      {emailError}
-                    </p>
-                  )}
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={handleEmailChange}
-                      disabled={saving}
-                      className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50"
-                    >
-                      {saving ? 'Updating...' : 'Confirm'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingEmail(false);
-                        setNewEmail('');
-                        setEmailError('');
-                      }}
-                      disabled={saving}
-                      className="flex-1 px-4 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-medium disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
+          {/* Main Form Area */}
+          <div className="lg:col-span-9">
+            <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 md:p-10">
+              
+              {activeTab === 'personal' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex items-center gap-6 mb-4">
+                    <div className="relative group">
+                      <div className="w-24 h-24 bg-blue-50 rounded-3xl flex items-center justify-center text-blue-600 border-2 border-dashed border-blue-200 group-hover:bg-blue-100 transition-colors">
+                        <User className="w-10 h-10" />
+                      </div>
+                      <button type="button" className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg border border-gray-100 text-gray-500 hover:text-blue-600">
+                        <Camera className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">Profile Photo</h3>
+                      <p className="text-xs text-gray-400 font-medium">PNG, JPG up to 5MB</p>
+                    </div>
                   </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <InputField label="First Name" error={errors.firstName?.message}>
+                      <input {...register('firstName', { required: 'Required', onChange: () => setHasChanges(true) })} className="form-input-pro" placeholder="John" />
+                    </InputField>
+                    <InputField label="Last Name" error={errors.lastName?.message}>
+                      <input {...register('lastName', { required: 'Required', onChange: () => setHasChanges(true) })} className="form-input-pro" placeholder="Doe" />
+                    </InputField>
+                  </div>
+
+                  <InputField label="Phone Number">
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-3.5 w-4 h-4 text-gray-400" />
+                      <input {...register('phone', { onChange: () => setHasChanges(true) })} className="form-input-pro pl-12" placeholder="+251 9..." />
+                    </div>
+                  </InputField>
+
+                  <InputField label="About / Bio">
+                    <textarea {...register('bio', { onChange: () => setHasChanges(true) })} rows={4} className="form-input-pro resize-none" placeholder="Tell us about yourself..." />
+                  </InputField>
                 </div>
               )}
-              <p className="mt-1 text-xs text-gray-500">Click "Change" to update your email address</p>
-            </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
-              <input
-                type="tel"
-                {...register('phone', {
-                  onChange: () => setHasChanges(true)
-                })}
-                placeholder="+1 (555) 000-0000"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              />
-            </div>
+              {activeTab === 'professional' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <InputField label="Core Skills" subLabel="Separate with commas">
+                    <div className="relative">
+                      <Code className="absolute left-4 top-3.5 w-4 h-4 text-gray-400" />
+                      <input {...register('skills', { onChange: () => setHasChanges(true) })} className="form-input-pro pl-12" placeholder="React, Node.js, Python..." />
+                    </div>
+                  </InputField>
 
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Professional Bio</label>
-              <textarea
-                {...register('bio', {
-                  onChange: () => setHasChanges(true)
-                })}
-                rows={3}
-                placeholder="Write a brief professional bio about yourself..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
-              />
-              <p className="mt-1 text-xs text-gray-500">This will be visible to employers</p>
-            </div>
+                  <InputField label="Work Experience">
+                    <div className="relative">
+                      <Briefcase className="absolute left-4 top-4 w-4 h-4 text-gray-400" />
+                      <textarea {...register('experience', { onChange: () => setHasChanges(true) })} rows={5} className="form-input-pro pl-12 resize-none" placeholder="Detail your past roles..." />
+                    </div>
+                  </InputField>
 
-            {/* Skills */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Skills</label>
-              <input
-                type="text"
-                {...register('skills', {
-                  onChange: () => setHasChanges(true)
-                })}
-                placeholder="JavaScript, React, Node.js, TypeScript (comma separated)"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-              />
-              <p className="mt-1 text-xs text-gray-500">Separate skills with commas</p>
-            </div>
+                  <InputField label="Education">
+                    <div className="relative">
+                      <GraduationCap className="absolute left-4 top-4 w-4 h-4 text-gray-400" />
+                      <textarea {...register('education', { onChange: () => setHasChanges(true) })} rows={3} className="form-input-pro pl-12 resize-none" placeholder="Degrees and certifications..." />
+                    </div>
+                  </InputField>
+                </div>
+              )}
 
-            {/* Experience */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Work Experience</label>
-              <textarea
-                {...register('experience', {
-                  onChange: () => setHasChanges(true)
-                })}
-                rows={4}
-                placeholder="Describe your work experience, roles, and achievements..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
-              />
-            </div>
+              {activeTab === 'account' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                   <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-50 flex gap-4">
+                      <Info className="w-5 h-5 text-blue-500 mt-1" />
+                      <p className="text-sm text-blue-900 font-medium leading-relaxed">
+                        To update your secure login email, click the "Request Change" button. A verification link will be sent to the new address.
+                      </p>
+                   </div>
+                   <div className="flex gap-4 items-end">
+                      <div className="flex-1">
+                        <InputField label="Current Login Email">
+                          <input value={user?.email || ''} disabled className="form-input-pro bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed" />
+                        </InputField>
+                      </div>
+                      <button type="button" className="px-6 py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all">Request Change</button>
+                   </div>
+                </div>
+              )}
 
-            {/* Education */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Education</label>
-              <textarea
-                {...register('education', {
-                  onChange: () => setHasChanges(true)
-                })}
-                rows={3}
-                placeholder="Your educational background, degrees, certifications..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex gap-3 pt-6">
-              <button
-                type="submit"
-                disabled={saving || !hasChanges}
-                className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                  saving || !hasChanges
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl active:scale-95'
-                }`}
-              >
-                {saving ? (
-                  <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Saving Changes...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Save Changes
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Info Text */}
-            {!hasChanges && (
-              <p className="text-center text-sm text-gray-500 pt-2">Make changes to enable the save button</p>
-            )}
-          </form>
+              {/* Bottom Actions */}
+              <div className="mt-12 pt-8 border-t border-gray-50 flex items-center justify-between">
+                <p className="text-xs font-bold text-gray-400 uppercase italic">
+                  {hasChanges ? "● You have unsaved changes" : "✓ Everything is up to date"}
+                </p>
+                <button
+                  type="submit"
+                  disabled={saving || !hasChanges}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 active:scale-95"
+                >
+                  {saving ? "Saving..." : <><Save className="w-5 h-5" /> Save Changes</>}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        .form-input-pro {
+          width: 100%;
+          padding: 0.875rem 1rem;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.875rem;
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: #1a202c;
+          transition: all 0.2s;
+          outline: none;
+        }
+        .form-input-pro:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
+          background-color: #fff;
+        }
+        .form-input-pro::placeholder {
+          color: #a0aec0;
+          font-weight: 400;
+        }
+      `}</style>
     </div>
   );
 };
+
+/* --- Helper Components --- */
+
+const TabButton = ({ active, onClick, icon, label }: any) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl font-bold transition-all ${
+      active ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+    }`}
+  >
+    {icon}
+    <span className="text-sm">{label}</span>
+  </button>
+);
+
+const InputField = ({ label, subLabel, error, children }: any) => (
+  <div className="space-y-1.5 w-full">
+    <div className="flex justify-between items-end ml-1">
+      <label className="text-sm font-bold text-gray-700">{label}</label>
+      {subLabel && <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{subLabel}</span>}
+    </div>
+    {children}
+    {error && <p className="text-xs font-bold text-red-500 ml-1">{error}</p>}
+  </div>
+);
 
 export default CandidateProfile;

@@ -1,75 +1,109 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
-import { ApiResponse, AuthResponse, User, Job, Application, Interview, Payment, DashboardData } from '../types';
+import { 
+  ApiResponse, 
+  AuthResponse,
+  User, 
+  Job, 
+  Application, 
+  Interview, 
+  Payment, 
+  DashboardData,
+  Company
+} from '../types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+/**
+ * 1. Axios Instance Configuration
+ */
 const api: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 seconds timeout
 });
 
-// Request interceptor
+// ለRefresh Token ጥያቄዎች የሚሆን Queue (Thread-safety)
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
+
+/**
+ * 2. Request Interceptor: መለያ (Token) መላኪያ
+ */
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
-    if (token) {
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor
+/**
+ * 3. Response Interceptor: የቶከን እድሳትና ስህተት አያያዝ
+ */
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle token expiration
+    // 401 Unauthorized - Token Expired
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
-        
-        // Don't try to refresh if we don't have a refresh token
-        if (!refreshToken) {
-          return Promise.reject(error);
-        }
-        
-        const response = await axios.post(`${API_URL}/auth/refresh-token`, {
-          refreshToken,
-        });
+        if (!refreshToken) throw new Error("No refresh token available");
 
-        const { token, refreshToken: newRefreshToken } = response.data;
-        useAuthStore.getState().setAuth(
-          useAuthStore.getState().user!,
-          token,
-          newRefreshToken
-        );
+        const res = await axios.post(`${API_URL}/auth/refresh-token`, { refreshToken });
+        const { token, refreshToken: newRefreshToken } = res.data.data;
 
+        useAuthStore.getState().setAuth(useAuthStore.getState().user!, token, newRefreshToken);
+        
+        processQueue(null, token);
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (refreshError) {
+        processQueue(refreshError, null);
         useAuthStore.getState().logout();
-        window.location.href = '/login';
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expired=true';
+        }
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
-    // Don't show toast for auth endpoints - let the component handle it
+    // ስህተቶችን ለተጠቃሚው ማሳያ (Toast)
     const isAuthEndpoint = originalRequest.url?.includes('/auth/');
-    const is403Error = error.response?.status === 403;
-    
-    if (!isAuthEndpoint && !is403Error) {
-      const message = error.response?.data?.error || error.response?.data?.message || 'An error occurred';
+    if (!isAuthEndpoint && error.response?.status !== 401) {
+      const message = error.response?.data?.message || 'Something went wrong. Please try again.';
       toast.error(message);
     }
 
@@ -77,211 +111,110 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
-
-// API methods
-export const authAPI = {
-  register: (data: any): Promise<AxiosResponse<AuthResponse>> => 
-    api.post('/auth/register', data),
-  login: (data: { email: string; password: string }): Promise<AxiosResponse<AuthResponse>> => 
-    api.post('/auth/login', data),
-  logout: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/auth/logout'),
-  forgotPassword: (data: { email: string }): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/auth/forgot-password', data),
-  resetPassword: (token: string, data: { password: string }): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/auth/reset-password/${token}`, data),
-  verifyEmail: (token: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/auth/verify-email/${token}`),
-  resendVerification: (data: { email: string }): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/auth/resend-verification', data),
+/**
+ * 4. Helper API Wrapper (ለተደጋጋሚ ኮድ መቀነሻ)
+ */
+const request = {
+  get: <T>(url: string, config?: AxiosRequestConfig) => api.get<ApiResponse<T>>(url, config),
+  post: <T>(url: string, data?: any, config?: AxiosRequestConfig) => api.post<ApiResponse<T>>(url, data, config),
+  put: <T>(url: string, data?: any, config?: AxiosRequestConfig) => api.put<ApiResponse<T>>(url, data, config),
+  patch: <T>(url: string, data?: any, config?: AxiosRequestConfig) => api.patch<ApiResponse<T>>(url, data, config),
+  delete: <T>(url: string, config?: AxiosRequestConfig) => api.delete<ApiResponse<T>>(url, config),
 };
 
-export const userAPI = {
-  getProfile: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/users/profile'),
-  updateProfile: (data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.put('/users/profile', data),
-  updatePassword: (data: { currentPassword: string; newPassword: string }): Promise<AxiosResponse<ApiResponse>> => 
-    api.put('/users/password', data),
-  uploadAvatar: (formData: FormData): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/users/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }),
-  deleteAccount: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.delete('/users/account'),
+/**
+ * 5. Domain Specific Services
+ */
+
+export const authAPI = {
+  login: (data: object) => api.post<AuthResponse>('/auth/login', data),
+  register: (data: object) => api.post<AuthResponse>('/auth/register', data),
+  forgotPassword: (emailOrData: string | object) => {
+    const data = typeof emailOrData === 'string' ? { email: emailOrData } : emailOrData;
+    return request.post('/auth/forgot-password', data);
+  },
+  resetPassword: (token: string, data: object) => request.post(`/auth/reset-password/${token}`, data),
+  verifyEmail: (token: string) => request.post(`/auth/verify-email/${token}`),
 };
 
 export const jobAPI = {
-  getAllJobs: (params?: any): Promise<AxiosResponse<ApiResponse<Job[]>>> => 
-    api.get('/jobs', { params }),
-  getJob: (id: string): Promise<AxiosResponse<ApiResponse<Job>>> => 
-    api.get(`/jobs/${id}`),
-  createJob: (data: any): Promise<AxiosResponse<ApiResponse<Job>>> => 
-    api.post('/jobs', data),
-  updateJob: (id: string, data: any): Promise<AxiosResponse<ApiResponse<Job>>> => 
-    api.put(`/jobs/${id}`, data),
-  deleteJob: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.delete(`/jobs/${id}`),
-  getEmployerJobs: (): Promise<AxiosResponse<ApiResponse<Job[]>>> => 
-    api.get('/jobs/employer/my-jobs'),
-  updateJobStatus: (id: string, status: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/jobs/${id}/status`, { status }),
-};
-
-export const applicationAPI = {
-  createApplication: (data: any): Promise<AxiosResponse<ApiResponse<Application>>> => 
-    api.post('/applications', data),
-  getCandidateApplications: (): Promise<AxiosResponse<ApiResponse<Application[]>>> => 
-    api.get('/applications/my-applications'),
-  getApplication: (id: string): Promise<AxiosResponse<ApiResponse<Application>>> => 
-    api.get(`/applications/${id}`),
-  withdrawApplication: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.delete(`/applications/${id}`),
-  getJobApplications: (jobId: string, params?: any): Promise<AxiosResponse<ApiResponse<Application[]>>> => 
-    api.get(`/applications/job/${jobId}`, { params }),
-  updateApplicationStatus: (id: string, status: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/applications/${id}/status`, { status }),
-  shortlistCandidate: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/applications/${id}/shortlist`),
+  getAll: (params: object) => request.get<Job[]>('/jobs', { params }),
+  getAllJobs: (params: object) => request.get<Job[]>('/jobs', { params }), // Alias
+  getOne: (id: string) => request.get<Job>(`/jobs/${id}`),
+  getJob: (id: string) => request.get<Job>(`/jobs/${id}`), // Alias
+  create: (data: object) => request.post<Job>('/jobs', data),
+  createJob: (data: object) => request.post<Job>('/jobs', data), // Alias
+  update: (id: string, data: object) => request.put<Job>(`/jobs/${id}`, data),
+  updateJob: (id: string, data: object) => request.put<Job>(`/jobs/${id}`, data), // Alias
+  updateJobStatus: (id: string, status: string) => request.patch(`/jobs/${id}/status`, { status }), // Alias
+  delete: (id: string) => request.delete(`/jobs/${id}`),
+  deleteJob: (id: string) => request.delete(`/jobs/${id}`), // Alias
+  getEmployerJobs: () => request.get<Job[]>('/jobs/employer/my-jobs'),
 };
 
 export const interviewAPI = {
-  startInterview: (data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/interviews/start', data),
-  submitAnswer: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/interviews/${id}/submit-answer`, data),
-  completeInterview: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/interviews/${id}/complete`),
-  getCandidateInterviews: (): Promise<AxiosResponse<ApiResponse<Interview[]>>> => 
-    api.get('/interviews/my-interviews'),
-  getInterviewReport: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.get(`/interviews/${id}/report`),
-  getJobInterviews: (jobId: string): Promise<AxiosResponse<ApiResponse<Interview[]>>> => 
-    api.get(`/interviews/job/${jobId}/interviews`),
-  evaluateInterview: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/interviews/${id}/evaluate`, data),
-  // Anti-cheat endpoints
-  recordAntiCheatEvent: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/interviews/${id}/anti-cheat-event`, data),
-  recordIdentitySnapshot: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/interviews/${id}/identity-snapshot`, data),
-  getIntegrityReport: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.get(`/interviews/${id}/integrity-report`),
+  start: (data: object) => request.post<Interview>('/interviews/start', data),
+  submitAnswer: (id: string, data: object) => request.post(`/interviews/${id}/submit-answer`, data),
+  complete: (id: string) => request.post(`/interviews/${id}/complete`),
+  completeInterview: (id: string) => request.post(`/interviews/${id}/complete`), // Alias
+  getReport: (id: string) => request.get(`/interviews/${id}/report`),
+  getInterviewReport: (id: string) => request.get(`/interviews/${id}/report`), // Alias
+  getCandidateInterviews: () => request.get<Interview[]>('/interviews/candidate/my-interviews'),
+  logViolation: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data),
+  recordAntiCheatEvent: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data), // Alias
+  recordIdentitySnapshot: (id: string, data: object) => request.post(`/interviews/${id}/identity-snapshot`, data),
 };
 
 export const paymentAPI = {
-  initializePayment: (data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/payments/initialize', data),
-  verifyPayment: (txRef: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.get(`/payments/verify/${txRef}`),
-  getPaymentHistory: (): Promise<AxiosResponse<ApiResponse<Payment[]>>> => 
-    api.get('/payments/history'),
-  getSubscription: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/payments/subscription'),
-  cancelSubscription: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/payments/subscription/cancel'),
-};
-
-export const analyticsAPI = {
-  getCandidateDashboard: (): Promise<AxiosResponse<ApiResponse<DashboardData>>> => 
-    api.get('/analytics/candidate/dashboard'),
-  getCandidatePerformance: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/analytics/candidate/performance'),
-  getEmployerDashboard: (): Promise<AxiosResponse<ApiResponse<DashboardData>>> => 
-    api.get('/analytics/employer/dashboard'),
-  getJobAnalytics: (jobId: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.get(`/analytics/employer/job/${jobId}`),
-  getAdminDashboard: (): Promise<AxiosResponse<ApiResponse<DashboardData>>> => 
-    api.get('/analytics/admin/dashboard'),
-  getRevenueAnalytics: (params?: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/analytics/admin/revenue', { params }),
-  getUserAnalytics: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/analytics/admin/users'),
-};
-
-export const adminAPI = {
-  getAllUsers: (params?: any): Promise<AxiosResponse<ApiResponse<User[]>>> => 
-    api.get('/admin/users', { params }),
-  getUser: (id: string): Promise<AxiosResponse<ApiResponse<User>>> => 
-    api.get(`/admin/users/${id}`),
-  updateUserStatus: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/admin/users/${id}/status`, data),
-  updateUserRole: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/admin/users/${id}/role`, data),
-  deleteUser: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.delete(`/admin/users/${id}`),
-  getPendingCompanies: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/admin/companies/pending'),
-  verifyCompany: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/admin/companies/${id}/verify`),
-  rejectCompany: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/admin/companies/${id}/reject`, data),
-  getPendingJobs: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/admin/jobs/pending'),
-  approveJob: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/admin/jobs/${id}/approve`),
-  rejectJob: (id: string, data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.patch(`/admin/jobs/${id}/reject`, data),
-  getActivityLogs: (params?: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/admin/logs', { params }),
-  getSuspiciousActivity: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/admin/logs/suspicious'),
-  getAllPayments: (params?: any): Promise<AxiosResponse<ApiResponse<Payment[]>>> => 
-    api.get('/payments/all', { params }),
-  refundPayment: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.post(`/payments/${id}/refund`),
+  initialize: (data: { amount: number; type: string; description?: string }) => request.post<any>('/payments/initialize', data),
+  initializePayment: (data: { amount: number; type: string; description?: string }) => request.post<any>('/payments/initialize', data), // Alias
+  verify: (txRef: string) => request.get<any>(`/payments/verify/${txRef}`),
+  verifyPayment: (txRef: string) => request.get<any>(`/payments/verify/${txRef}`), // Alias
+  getHistory: () => request.get<Payment[]>('/payments/history'),
+  getPaymentHistory: () => request.get<Payment[]>('/payments/history'), // Alias
+  getSubscription: () => request.get<any>('/payments/subscription'), // Alias
 };
 
 export const companyAPI = {
-  getAllCompanies: (params?: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/companies', { params }),
-  getCompany: (id: string): Promise<AxiosResponse<ApiResponse>> => 
-    api.get(`/companies/${id}`),
-  getMyCompany: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/companies/my/profile'),
-  updateCompany: (data: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.put('/companies/my/profile', data),
-  uploadLogo: (formData: FormData): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/companies/my/logo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+  getProfile: () => request.get<Company>('/companies/profile'),
+  getMyCompany: () => request.get<Company>('/companies/profile'), // Alias
+  updateProfile: (data: object) => request.put<Company>('/companies/profile', data),
+  updateCompany: (data: object) => request.put<Company>('/companies/profile', data), // Alias
+  uploadLogo: (file: FormData) => request.post<Company>('/companies/upload-logo', file),
+  getAll: (params?: object) => request.get<Company[]>('/companies', { params: params || {} }),
 };
 
-export const aiAPI = {
-  // Check AI service status
-  checkStatus: (): Promise<AxiosResponse<ApiResponse>> => 
-    api.get('/ai/status'),
-  
-  // Generate interview questions
-  generateQuestions: (jobDetails: any, questionCount?: number): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/generate-questions', { jobDetails, questionCount }),
-  
-  // Evaluate interview responses
-  evaluateResponses: (questions: any[], responses: any[], jobDetails: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/evaluate-responses', { questions, responses, jobDetails }),
-  
-  // Generate personalized feedback
-  generateFeedback: (evaluation: any, candidateProfile: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/generate-feedback', { evaluation, candidateProfile }),
-  
-  // Analyze resume
-  analyzeResume: (resumeText: string, jobRequirements: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/analyze-resume', { resumeText, jobRequirements }),
-  
-  // Generate job recommendations
-  generateJobRecommendations: (candidateProfile: any, availableJobs: any[]): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/job-recommendations', { candidateProfile, availableJobs }),
-  
-  // Generate cover letter
-  generateCoverLetter: (candidateProfile: any, jobDetails: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/generate-cover-letter', { candidateProfile, jobDetails }),
-  
-  // Analyze interview performance
-  analyzePerformance: (interviewData: any): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/analyze-performance', { interviewData }),
-  
-  // Generate skill development plan
-  generateSkillPlan: (candidateProfile: any, targetSkills: string[]): Promise<AxiosResponse<ApiResponse>> => 
-    api.post('/ai/skill-development-plan', { candidateProfile, targetSkills }),
+export const adminAPI = {
+  getUsers: (params?: object) => request.get<User[]>('/admin/users', { params: params || {} }),
+  getAllUsers: (params?: object) => request.get<User[]>('/admin/users', { params: params || {} }), // Alias
+  verifyCompany: (id: string) => request.patch(`/admin/companies/${id}/verify`),
+  approveJob: (id: string) => request.patch(`/admin/jobs/${id}/approve`),
+  getLogs: () => request.get('/admin/logs'),
 };
+
+export const userAPI = {
+  getProfile: () => request.get<User>('/users/profile'),
+  updateProfile: (data: object) => request.put<User>('/users/profile', data),
+  changePassword: (data: object) => request.post('/users/change-password', data),
+  uploadAvatar: (file: FormData) => request.post<User>('/users/upload-avatar', file),
+};
+
+export const analyticsAPI = {
+  getEmployerDashboard: () => request.get<DashboardData>('/analytics/employer-dashboard'),
+  getCandidateDashboard: () => request.get<DashboardData>('/analytics/candidate-dashboard'),
+  getAdminDashboard: () => request.get<DashboardData>('/analytics/admin-dashboard'),
+};
+
+export const applicationAPI = {
+  getAll: (params: object) => request.get<Application[]>('/applications', { params }),
+  getOne: (id: string) => request.get<Application>(`/applications/${id}`),
+  create: (data: object) => request.post<Application>('/applications', data),
+  createApplication: (data: object) => request.post<Application>('/applications', data), // Alias
+  update: (id: string, data: object) => request.put<Application>(`/applications/${id}`, data),
+  updateStatus: (id: string, status: string) => request.patch(`/applications/${id}/status`, { status }), // Alias
+  delete: (id: string) => request.delete(`/applications/${id}`),
+  getCandidateApplications: () => request.get<Application[]>('/applications/candidate/my-applications'),
+  getJobApplications: (jobId: string) => request.get<Application[]>(`/applications/job/${jobId}`), // Alias
+};
+
+export default api;

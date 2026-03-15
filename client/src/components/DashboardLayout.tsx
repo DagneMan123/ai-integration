@@ -7,9 +7,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Bell, 
-  User as UserIcon, 
-  Settings, 
-  Building2, 
   Search,
   CircleUser
 } from 'lucide-react';
@@ -39,16 +36,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
   };
 
   const isActive = (path: string) => location.pathname === path;
-
-  // Professional Role Accents
-  const getRoleTheme = () => {
-    switch (role) {
-      case 'admin': return 'border-rose-500 text-rose-500';
-      case 'employer': return 'border-blue-500 text-blue-500';
-      case 'candidate': return 'border-emerald-500 text-emerald-500';
-      default: return 'border-indigo-500 text-indigo-500';
-    }
-  };
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">

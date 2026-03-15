@@ -7,26 +7,30 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
+import { 
+  Briefcase, 
+  Calendar, 
+  Trophy, 
+  RefreshCw, 
+  Search, 
+  ArrowRight, 
+  UserCircle,
+  Clock,
+  TrendingUp
+} from 'lucide-react';
 
 const CandidateDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Initialize dashboard communication
-  const { broadcastDataUpdate, notifyStatusChange, sendNotification } = useDashboardCommunication({
+  const { broadcastDataUpdate, notifyStatusChange } = useDashboardCommunication({
     role: 'candidate',
-    onDataUpdate: (event) => {
-      console.log('[Candidate] Received data update from:', event.source);
-    },
-    onNotification: (event) => {
-      console.log('[Candidate] Notification:', event.payload.message);
-      toast.success(event.payload.message);
-    },
+    onDataUpdate: (event) => console.log('[Candidate] Data updated'),
+    onNotification: (event) => toast.success(event.payload.message),
     onActionRequired: (event) => {
-      console.log('[Candidate] Action required:', event.payload);
       if (event.payload.action === 'interview-scheduled') {
-        toast.success(`Interview scheduled: ${event.payload.data.jobTitle}`);
+        toast.success(`New Interview: ${event.payload.data.jobTitle}`);
       }
     },
   });
@@ -37,207 +41,209 @@ const CandidateDashboard: React.FC = () => {
       const dashboardData = response.data.data || null;
       setData(dashboardData);
       
-      // Broadcast data update to other dashboards
       if (dashboardData) {
         broadcastDataUpdate(dashboardData);
         notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
       }
     } catch (error) {
-      console.error('Failed to fetch dashboard data', error);
-      toast.error('Failed to load dashboard data');
-      setData(null);
-      sendNotification('Failed to load candidate dashboard data', 'high');
+      toast.error('Failed to sync dashboard');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [broadcastDataUpdate, notifyStatusChange, sendNotification]);
+  }, [broadcastDataUpdate, notifyStatusChange]);
 
   useEffect(() => {
     fetchDashboardData();
-    // Refresh data every 30 seconds
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchDashboardData();
-  };
 
   if (loading) return <Loading />;
 
   return (
     <DashboardLayout menuItems={candidateMenu} role="candidate">
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex justify-between items-center">
+      <div className="max-w-6xl mx-auto space-y-10 pb-10">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">Welcome Back!</h1>
-            <p className="text-gray-600 mt-2">Track your job applications and interview progress</p>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Welcome back! 👋</h1>
+            <p className="text-gray-500 font-medium mt-1">Here's what's happening with your job search today.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
             <button
-              onClick={handleRefresh}
+              onClick={() => { setRefreshing(true); fetchDashboardData(); }}
               disabled={refreshing}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 flex items-center gap-2"
+              className="p-2.5 text-gray-500 hover:text-blue-600 bg-white border border-gray-100 rounded-xl shadow-sm transition-all active:scale-95"
             >
-              <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
+              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
             <Link
               to="/jobs"
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-medium flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              Browse Jobs
+              <Search className="w-5 h-5" />
+              Explore Jobs
             </Link>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Applications Card */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 border border-blue-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-blue-600 text-sm font-semibold uppercase tracking-wide">Applications</p>
-                <h3 className="text-4xl font-bold text-gray-900 mt-2">{data?.applications || 0}</h3>
-                <p className="text-blue-700 text-sm mt-2">Total job applications submitted</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center text-2xl">
-                📝
-              </div>
-            </div>
-          </div>
-
-          {/* Interviews Card */}
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg p-6 border border-green-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-green-600 text-sm font-semibold uppercase tracking-wide">Interviews</p>
-                <h3 className="text-4xl font-bold text-gray-900 mt-2">{data?.interviews || 0}</h3>
-                <p className="text-green-700 text-sm mt-2">Scheduled and completed interviews</p>
-              </div>
-              <div className="w-12 h-12 bg-green-200 rounded-lg flex items-center justify-center text-2xl">
-                🎤
-              </div>
-            </div>
-          </div>
-
-          {/* Average Score Card */}
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-lg p-6 border border-purple-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-purple-600 text-sm font-semibold uppercase tracking-wide">Avg Score</p>
-                <h3 className="text-4xl font-bold text-gray-900 mt-2">{data?.averageScore?.toFixed(1) || 'N/A'}</h3>
-                <p className="text-purple-700 text-sm mt-2">Your average interview score</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-200 rounded-lg flex items-center justify-center text-2xl">
-                🏆
-              </div>
-            </div>
-          </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCard 
+            title="Applications" 
+            value={data?.applications || 0} 
+            subtitle="Active job pursuits"
+            icon={<Briefcase className="w-6 h-6 text-blue-600" />}
+            color="blue"
+          />
+          <StatCard 
+            title="Interviews" 
+            value={data?.interviews || 0} 
+            subtitle="Scheduled meetings"
+            icon={<Calendar className="w-6 h-6 text-emerald-600" />}
+            color="emerald"
+          />
+          <StatCard 
+            title="Avg Score" 
+            value={data?.averageScore ? `${data.averageScore.toFixed(1)}%` : 'N/A'} 
+            subtitle="Performance metric"
+            icon={<Trophy className="w-6 h-6 text-purple-600" />}
+            color="purple"
+          />
         </div>
 
-        {/* Recent Interviews Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-          <div className="flex justify-between items-center mb-6">
+        {/* Main Content: Recent Interviews */}
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-8 border-b border-gray-50 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Recent Interviews</h2>
-              <p className="text-gray-600 text-sm mt-1">Your latest interview activity</p>
+              <h2 className="text-xl font-bold text-gray-900">Recent Interviews</h2>
+              <p className="text-sm text-gray-500 font-medium">Keep track of your latest assessments</p>
             </div>
-            <Link to="/candidate/interviews" className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
-              View All
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+            <Link to="/candidate/interviews" className="text-sm font-bold text-blue-600 hover:underline underline-offset-4">
+              View Schedule
             </Link>
           </div>
 
-          {data?.recentInterviews && data.recentInterviews.length > 0 ? (
-            <div className="space-y-3">
-              {data.recentInterviews.map((interview: any) => (
-                <div
-                  key={interview.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition border border-gray-200"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">{interview.jobTitle}</h4>
-                    <p className="text-sm text-gray-600">{interview.companyName} • {new Date(interview.date).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {interview.score && (
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-gray-900">{interview.score}</p>
-                        <p className="text-xs text-gray-600">Score</p>
+          <div className="p-8">
+            {data?.recentInterviews && data.recentInterviews.length > 0 ? (
+              <div className="grid gap-4">
+                {data.recentInterviews.map((interview: any) => (
+                  <div key={interview.id} className="group flex items-center justify-between p-5 bg-gray-50/50 hover:bg-white hover:shadow-md hover:border-blue-100 border border-transparent rounded-2xl transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-gray-400 group-hover:text-blue-600 transition-colors">
+                        <TrendingUp className="w-6 h-6" />
                       </div>
-                    )}
-                    <span
-                      className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                        interview.status === 'COMPLETED'
-                          ? 'bg-green-100 text-green-800'
-                          : interview.status === 'IN_PROGRESS'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {interview.status}
-                    </span>
+                      <div>
+                        <h4 className="font-bold text-gray-900">{interview.jobTitle}</h4>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{interview.companyName}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-8">
+                      <div className="hidden md:block text-right">
+                        <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-gray-400" />
+                          {new Date(interview.date).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs font-medium text-gray-400">Interview Date</p>
+                      </div>
+                      
+                      {interview.score && (
+                        <div className="w-12 h-12 rounded-full border-4 border-blue-50 flex items-center justify-center">
+                          <span className="text-sm font-black text-blue-600">{interview.score}</span>
+                        </div>
+                      )}
+
+                      <StatusBadge status={interview.status} />
+                    </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-10 h-10 text-gray-200" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-gray-500 font-medium">No interviews yet</p>
-              <p className="text-gray-400 text-sm">Apply to jobs to get started with interviews</p>
-            </div>
-          )}
+                <p className="text-gray-500 font-bold">No upcoming interviews</p>
+                <p className="text-gray-400 text-sm">Your schedule is currently clear.</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions Grid */}
         <div className="grid md:grid-cols-2 gap-6">
-          <Link
-            to="/candidate/profile"
-            className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition border border-gray-200 group"
-          >
-            <div className="text-5xl mb-4 group-hover:scale-110 transition">👤</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Update Profile</h3>
-            <p className="text-gray-600">Keep your profile up to date with latest skills and experience</p>
-            <div className="mt-4 text-blue-600 font-semibold flex items-center gap-1">
-              Edit Profile
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </Link>
-
-          <Link
-            to="/candidate/applications"
-            className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition border border-gray-200 group"
-          >
-            <div className="text-5xl mb-4 group-hover:scale-110 transition">💼</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">My Applications</h3>
-            <p className="text-gray-600">Track all your job applications and their status</p>
-            <div className="mt-4 text-blue-600 font-semibold flex items-center gap-1">
-              View Applications
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </Link>
+          <ActionCard 
+            title="Complete Your Profile"
+            desc="Improve your visibility to employers by 40%."
+            link="/candidate/profile"
+            icon={<UserCircle className="w-8 h-8 text-blue-600" />}
+            btnText="Edit Profile"
+          />
+          <ActionCard 
+            title="Application Status"
+            desc="Check where you stand in your applied roles."
+            link="/candidate/applications"
+            icon={<Briefcase className="w-8 h-8 text-orange-600" />}
+            btnText="View Tracking"
+          />
         </div>
       </div>
     </DashboardLayout>
   );
 };
+
+/* --- Sub-Components --- */
+
+const StatCard = ({ title, value, subtitle, icon, color }: any) => {
+  const colors: any = {
+    blue: "bg-blue-50 border-blue-100",
+    emerald: "bg-emerald-50 border-emerald-100",
+    purple: "bg-purple-50 border-purple-100"
+  };
+  return (
+    <div className={`p-6 rounded-[2rem] border shadow-sm ${colors[color]}`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400">{title}</p>
+          <h3 className="text-4xl font-black text-gray-900 mt-2">{value}</h3>
+          <p className="text-sm font-medium text-gray-500 mt-1">{subtitle}</p>
+        </div>
+        <div className="p-3 bg-white rounded-2xl shadow-sm italic">
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const styles: any = {
+    COMPLETED: "bg-emerald-100 text-emerald-700",
+    IN_PROGRESS: "bg-blue-100 text-blue-700",
+    SCHEDULED: "bg-amber-100 text-amber-700",
+  };
+  return (
+    <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-tight ${styles[status] || "bg-gray-100"}`}>
+      {status.replace('_', ' ')}
+    </span>
+  );
+};
+
+const ActionCard = ({ title, desc, link, icon, btnText }: any) => (
+  <Link to={link} className="group p-8 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300">
+    <div className="mb-6 transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+      {icon}
+    </div>
+    <h3 className="text-xl font-black text-gray-900 mb-2">{title}</h3>
+    <p className="text-gray-500 font-medium mb-6 leading-relaxed">{desc}</p>
+    <div className="flex items-center gap-2 text-blue-600 font-black text-sm uppercase tracking-wider">
+      {btnText}
+      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-2" />
+    </div>
+  </Link>
+);
 
 export default CandidateDashboard;

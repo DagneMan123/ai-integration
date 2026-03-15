@@ -6,12 +6,14 @@ interface AntiCheatMonitorProps {
   interviewId: string;
   maxViolations?: number; // Maximum allowed violations before termination
   onViolationLimitExceeded?: () => void; // Callback when user exceeds limit
+  onViolation?: (violation: any) => void; // Callback for each violation
 }
 
 const AntiCheatMonitor: React.FC<AntiCheatMonitorProps> = ({ 
   interviewId, 
   maxViolations = 3, 
-  onViolationLimitExceeded 
+  onViolationLimitExceeded,
+  onViolation
 }) => {
   const [violations, setViolations] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -48,11 +50,12 @@ const AntiCheatMonitor: React.FC<AntiCheatMonitorProps> = ({
         });
       }
       
+      onViolation?.({ type, message, count: newCount });
       return newCount;
     });
 
     logEvent(type, { violationCount: violations + 1 });
-  }, [maxViolations, onViolationLimitExceeded, logEvent, violations]);
+  }, [maxViolations, onViolationLimitExceeded, onViolation, logEvent, violations]);
 
   useEffect(() => {
     // 3. Browser Fingerprinting

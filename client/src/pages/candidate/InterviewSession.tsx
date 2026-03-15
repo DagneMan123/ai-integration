@@ -3,7 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { interviewAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
 import toast from 'react-hot-toast';
-import { FiClock, FiAlertCircle } from 'react-icons/fi';
+import { 
+  Clock, 
+  ShieldCheck, 
+  AlertCircle, 
+  ChevronRight, 
+  Cpu, 
+  Maximize2,
+  Info
+} from 'lucide-react';
 
 const InterviewSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +33,7 @@ const InterviewSession: React.FC = () => {
         setTimeLeft(data.timeLimit * 60);
       }
     } catch (error) {
-      toast.error('Failed to load interview');
+      toast.error('Session loading failed');
       navigate('/candidate/interviews');
     } finally {
       setLoading(false);
@@ -45,7 +53,7 @@ const InterviewSession: React.FC = () => {
 
   const handleSubmitAnswer = async () => {
     if (!answer.trim()) {
-      toast.error('Please provide an answer');
+      toast.error('Answer cannot be empty');
       return;
     }
 
@@ -64,9 +72,10 @@ const InterviewSession: React.FC = () => {
       } else {
         setAnswer('');
         await fetchInterview();
+        window.scrollTo(0, 0);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to submit answer');
+      toast.error(error.response?.data?.error || 'Submission failed');
     } finally {
       setSubmitting(false);
     }
@@ -80,80 +89,123 @@ const InterviewSession: React.FC = () => {
 
   if (loading) return <Loading />;
 
+  const progress = ((interview?.currentQuestionIndex + 1) / interview?.questions?.length) * 100;
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Interview Session</h1>
-              <p className="text-gray-600">
-                Question {interview?.currentQuestionIndex + 1} of {interview?.questions?.length}
-              </p>
+    <div className="min-h-screen bg-[#fcfcfd] flex flex-col">
+      {/* Top Professional Header */}
+      <nav className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-600 p-2 rounded-lg">
+              <Cpu className="w-5 h-5 text-white" />
             </div>
-            <div className="flex items-center gap-2 text-lg font-semibold">
-              <FiClock className={timeLeft < 300 ? 'text-red-600' : 'text-primary'} />
-              <span className={timeLeft < 300 ? 'text-red-600' : 'text-gray-900'}>
-                {formatTime(timeLeft)}
-              </span>
+            <div>
+              <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">SimuAI Assessment</h2>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-600 transition-all duration-500" 
+                    style={{ width: `${progress}%` }} 
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-gray-400">Step {interview?.currentQuestionIndex + 1}/{interview?.questions?.length}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Question */}
-        {currentQuestion && (
-          <div className="bg-white rounded-lg shadow-md p-8 mb-6">
-            <div className="mb-4">
-              <span className="inline-block px-3 py-1 bg-primary-light text-primary rounded-full text-sm font-medium mb-4">
-                {currentQuestion.type}
+          <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border-2 transition-all ${timeLeft < 300 ? 'bg-red-50 border-red-100 animate-pulse' : 'bg-white border-gray-100'}`}>
+            <Clock className={`w-5 h-5 ${timeLeft < 300 ? 'text-red-600' : 'text-blue-600'}`} />
+            <span className={`text-xl font-black tabular-nums ${timeLeft < 300 ? 'text-red-600' : 'text-gray-900'}`}>
+              {formatTime(timeLeft)}
+            </span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span className="text-xs font-bold text-emerald-700 uppercase">AI Proctoring Active</span>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Workspace */}
+      <main className="flex-1 max-w-5xl mx-auto w-full grid lg:grid-cols-12 gap-8 p-6 lg:p-10">
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm p-8 md:p-12 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-full bg-blue-600" />
+            
+            <div className="flex items-center gap-2 mb-6">
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                {currentQuestion?.type || 'TECHNICAL'}
               </span>
-              <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium mb-4 ml-2">
-                {currentQuestion.difficulty}
+              <span className="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                {currentQuestion?.difficulty || 'GENERAL'}
               </span>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              {currentQuestion.text}
-            </h2>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Answer
-              </label>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-8">
+              {currentQuestion?.text}
+            </h1>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <label className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <Maximize2 className="w-4 h-4" /> Your Response
+                </label>
+                <span className="text-[10px] font-mono text-gray-400">{answer.length} Characters</span>
+              </div>
               <textarea
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
-                rows={10}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Type your answer here..."
+                rows={12}
+                className="w-full p-6 text-lg border-2 border-gray-50 rounded-[1.5rem] bg-gray-50/30 focus:bg-white focus:border-blue-500 outline-none transition-all resize-none shadow-inner leading-relaxed"
+                placeholder="Compose your answer here..."
+                disabled={submitting}
               />
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="mt-8 flex justify-end">
               <button
                 onClick={handleSubmitAnswer}
                 disabled={submitting || !answer.trim()}
-                className="flex-1 bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex items-center gap-3 bg-blue-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 active:scale-95"
               >
-                {submitting ? 'Submitting...' : interview?.currentQuestionIndex + 1 >= interview?.questions?.length ? 'Submit & Complete' : 'Submit & Next'}
+                {submitting ? 'PROCESSING...' : 'SUBMIT RESPONSE'}
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Warning */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
-          <FiAlertCircle className="text-yellow-600 mt-1 flex-shrink-0" />
-          <div className="text-sm text-yellow-800">
-            <p className="font-medium mb-1">Important Notes:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Do not switch tabs or leave this page</li>
-              <li>Your session is being monitored</li>
-              <li>Answer all questions to the best of your ability</li>
+        {/* Sidebar Guidelines */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
+            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-600" /> Guidelines
+            </h3>
+            <ul className="space-y-4">
+              <li className="flex gap-3 text-sm text-gray-600 font-medium">
+                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                Provide specific examples from your past projects.
+              </li>
+              <li className="flex gap-3 text-sm text-gray-600 font-medium">
+                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                Focus on clarity and technical depth.
+              </li>
             </ul>
           </div>
+
+          <div className="bg-amber-50 rounded-[2rem] border border-amber-100 p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+              <h3 className="text-xs font-black text-amber-900 uppercase tracking-widest">Integrity Notice</h3>
+            </div>
+            <p className="text-[11px] text-amber-800 font-bold leading-relaxed uppercase italic">
+              AI Monitoring is active. Tab switching and copy-pasting are strictly logged.
+            </p>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
