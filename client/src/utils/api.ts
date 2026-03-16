@@ -26,6 +26,9 @@ const api: AxiosInstance = axios.create({
   timeout: 30000, // 30 seconds timeout
 });
 
+// Remove Content-Type header for FormData requests
+api.defaults.headers.common['Content-Type'] = 'application/json';
+
 // ለRefresh Token ጥያቄዎች የሚሆን Queue (Thread-safety)
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -47,6 +50,12 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Don't set Content-Type for FormData - let browser handle it
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)
@@ -196,7 +205,7 @@ export const userAPI = {
   getProfile: () => request.get<User>('/users/profile'),
   updateProfile: (data: object) => request.put<User>('/users/profile', data),
   changePassword: (data: object) => request.post('/users/change-password', data),
-  uploadAvatar: (file: FormData) => request.post<User>('/users/upload-avatar', file),
+  uploadAvatar: (file: FormData) => request.post<User>('/users/avatar', file),
 };
 
 export const analyticsAPI = {

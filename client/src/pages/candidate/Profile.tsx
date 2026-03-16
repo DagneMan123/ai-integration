@@ -35,6 +35,8 @@ const CandidateProfile: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'account'>('personal');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // ፕሮፋይሉ ምን ያህል እንደተሞላ ለመቁጠር (UX)
   const watchedFields = watch();
@@ -78,6 +80,54 @@ const CandidateProfile: React.FC = () => {
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', file.name, file.type, file.size);
+
+    // Validate file type
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+      toast.error('Only PNG and JPG files are allowed');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      console.log('FormData created, sending to server...');
+      const response = await userAPI.uploadAvatar(formData) as any;
+      console.log('Upload response:', response);
+      
+      toast.success('Profile photo updated successfully!');
+      
+      // Update the user in auth store with new avatar
+      const avatarUrl = response.data?.data?.avatarUrl;
+      if (avatarUrl) {
+        updateUser({ ...user, profilePicture: avatarUrl });
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   if (loading) return <Loading />;
 
   return (
@@ -118,16 +168,32 @@ const CandidateProfile: React.FC = () => {
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="flex items-center gap-6 mb-4">
                     <div className="relative group">
-                      <div className="w-24 h-24 bg-blue-50 rounded-3xl flex items-center justify-center text-blue-600 border-2 border-dashed border-blue-200 group-hover:bg-blue-100 transition-colors">
-                        <User className="w-10 h-10" />
+                      <div className="w-24 h-24 bg-blue-50 rounded-3xl flex items-center justify-center text-blue-600 border-2 border-dashed border-blue-200 group-hover:bg-blue-100 transition-colors overflow-hidden">
+                        {user?.profilePicture ? (
+                          <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-10 h-10" />
+                        )}
                       </div>
-                      <button type="button" className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg border border-gray-100 text-gray-500 hover:text-blue-600">
+                      <button 
+                        type="button" 
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg border border-gray-100 text-gray-500 hover:text-blue-600 disabled:opacity-50 transition-all"
+                      >
                         <Camera className="w-4 h-4" />
                       </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900">Profile Photo</h3>
-                      <p className="text-xs text-gray-400 font-medium">PNG, JPG up to 5MB</p>
+                      <p className="text-xs text-gray-400 font-medium">{uploadingPhoto ? 'Uploading...' : 'PNG, JPG up to 5MB'}</p>
                     </div>
                   </div>
 

@@ -45,7 +45,7 @@ export interface User extends BaseEntity {
   firstName: string;
   lastName: string;
   phone?: string;
-  avatar?: string;
+  profilePicture?: string;
   isEmailVerified: boolean;
   isActive: boolean;
   skills?: string;
