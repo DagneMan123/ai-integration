@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useSidebar } from '../context/SidebarContext';
+import { useSessionMonitoring } from '../hooks/useSessionMonitoring';
 import { 
   LayoutDashboard, 
   LogOut, 
@@ -8,7 +10,10 @@ import {
   ChevronRight, 
   Bell, 
   Search,
-  CircleUser
+  CircleUser,
+  Settings,
+  Activity,
+  MessageSquare
 } from 'lucide-react';
 
 interface MenuItem {
@@ -29,6 +34,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const {
+    sessionMonitoringOpen,
+    setSessionMonitoringOpen,
+    globalSettingsOpen,
+    setGlobalSettingsOpen,
+    supportTicketsOpen,
+    setSupportTicketsOpen,
+    settingsOpen,
+    setSettingsOpen,
+  } = useSidebar();
+  useSessionMonitoring();
 
   const handleLogout = () => {
     logout();
@@ -155,6 +171,44 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
             </button>
+
+            {/* Admin Buttons - Only show for admin role */}
+            {role === 'admin' && (
+              <>
+                <button
+                  onClick={() => setSessionMonitoringOpen(true)}
+                  className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0 hover:text-blue-700"
+                  title="Session Monitoring"
+                >
+                  <Activity size={20} />
+                </button>
+                <button
+                  onClick={() => setGlobalSettingsOpen(true)}
+                  className="p-2 text-purple-500 hover:bg-purple-50 rounded-full transition-colors flex-shrink-0 hover:text-purple-700"
+                  title="Global Settings"
+                >
+                  <Settings size={20} />
+                </button>
+                <button
+                  onClick={() => setSupportTicketsOpen(true)}
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0 hover:text-red-700"
+                  title="Support Tickets"
+                >
+                  <MessageSquare size={20} />
+                </button>
+              </>
+            )}
+
+            {/* Settings Button - For non-admin users */}
+            {role !== 'admin' && (
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0"
+                title="Settings"
+              >
+                <Settings size={20} />
+              </button>
+            )}
             
             {/* User Profile Section */}
             <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-6 border-l border-slate-200 flex-shrink-0">

@@ -7,6 +7,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
+import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
 import { 
   Briefcase, 
   Calendar, 
@@ -23,6 +24,9 @@ const CandidateDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Session monitoring
+  useSessionMonitoring();
 
   const { broadcastDataUpdate, notifyStatusChange } = useDashboardCommunication({
     role: 'candidate',

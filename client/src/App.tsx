@@ -2,7 +2,9 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
+import { SidebarProvider } from './context/SidebarContext';
 import Loading from './components/Loading';
+import GlobalSidebars from './components/GlobalSidebars';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -57,10 +59,12 @@ const App: React.FC = () => {
   const { user } = useAuthStore();
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <Toaster position="top-right" />
+    <SidebarProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <Toaster position="top-right" />
+          <GlobalSidebars />
         
         <Routes>
           {/* Public Routes */}
@@ -375,6 +379,7 @@ const App: React.FC = () => {
         </Routes>
       </div>
     </Router>
+    </SidebarProvider>
   );
 };
 
