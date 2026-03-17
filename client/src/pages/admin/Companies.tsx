@@ -11,38 +11,66 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-// Mock Data for Verification Requests
-const MOCK_COMPANIES = [
+interface Company {
+  id: string;
+  name: string;
+  sector: string;
+  email: string;
+  status: 'pending' | 'verified' | 'rejected';
+  dateRequested: string;
+  documentUrl?: string;
+}
+
+const MOCK_COMPANIES: Company[] = [
   {
     id: '1',
-    name: 'TechFlow Solutions',
-    sector: 'Software Development',
-    email: 'hr@techflow.io',
+    name: 'TechCorp Solutions',
+    sector: 'Technology',
+    email: 'verify@techcorp.com',
     status: 'pending',
-    dateRequested: '2023-10-24',
-    documentUrl: '#'
+    dateRequested: '2024-03-15',
+    documentUrl: 'License_Doc.pdf'
   },
   {
     id: '2',
-    name: 'Global Finance Corp',
-    sector: 'Banking & Finance',
-    email: 'admin@gfc.com',
+    name: 'Global Finance Inc',
+    sector: 'Finance',
+    email: 'admin@globalfinance.com',
     status: 'verified',
-    dateRequested: '2023-10-20',
-    documentUrl: '#'
+    dateRequested: '2024-03-10',
+    documentUrl: 'License_Doc.pdf'
   },
   {
     id: '3',
-    name: 'Apex Marketing',
-    sector: 'Digital Advertising',
-    email: 'verify@apex.com',
+    name: 'Healthcare Plus',
+    sector: 'Healthcare',
+    email: 'compliance@healthcareplus.com',
+    status: 'pending',
+    dateRequested: '2024-03-18',
+    documentUrl: 'License_Doc.pdf'
+  },
+  {
+    id: '4',
+    name: 'Retail Masters',
+    sector: 'Retail',
+    email: 'legal@retailmasters.com',
     status: 'rejected',
-    dateRequested: '2023-10-18',
-    documentUrl: '#'
+    dateRequested: '2024-03-05',
+    documentUrl: 'License_Doc.pdf'
+  },
+  {
+    id: '5',
+    name: 'Education First',
+    sector: 'Education',
+    email: 'admin@educationfirst.com',
+    status: 'verified',
+    dateRequested: '2024-03-12',
+    documentUrl: 'License_Doc.pdf'
   }
 ];
 
 const AdminCompanies: React.FC = () => {
+  const [companies] = useState<Company[]>(MOCK_COMPANIES);
   const [searchTerm, setSearchTerm] = useState('');
 
   const getStatusStyle = (status: string) => {
@@ -90,7 +118,9 @@ const AdminCompanies: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Requests</p>
-            <h4 className="text-2xl font-black text-slate-900">12</h4>
+            <h4 className="text-2xl font-black text-slate-900">
+              {companies.filter((c: any) => c.status === 'pending').length}
+            </h4>
           </div>
         </div>
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -99,7 +129,9 @@ const AdminCompanies: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Verified Partners</p>
-            <h4 className="text-2xl font-black text-slate-900">842</h4>
+            <h4 className="text-2xl font-black text-slate-900">
+              {companies.filter((c: any) => c.status === 'verified').length}
+            </h4>
           </div>
         </div>
         <div className="bg-slate-900 p-6 rounded-3xl text-white shadow-lg flex items-center gap-4">
@@ -108,7 +140,7 @@ const AdminCompanies: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Accounts</p>
-            <h4 className="text-2xl font-black">864</h4>
+            <h4 className="text-2xl font-black">{companies.length}</h4>
           </div>
         </div>
       </div>
@@ -124,67 +156,75 @@ const AdminCompanies: React.FC = () => {
           <table className="w-full text-left">
             <thead className="bg-slate-50/50">
               <tr>
-                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Organization</th>
-                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Industry/Sector</th>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Company</th>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sector</th>
                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Documents</th>
                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
-              {MOCK_COMPANIES.map((company) => (
-                <tr key={company.id} className="group hover:bg-slate-50/50 transition-colors">
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-indigo-600 font-bold">
-                        {company.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{company.name}</p>
-                        <p className="text-xs text-slate-500 font-medium">{company.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">
-                      {company.sector}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${getStatusStyle(company.status)}`}>
-                      {company.status === 'verified' && <CheckCircle2 size={12} />}
-                      {company.status === 'rejected' && <XCircle size={12} />}
-                      {company.status}
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <button className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
-                      <FileText size={16} />
-                      License_Doc.pdf
-                    </button>
-                  </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {company.status === 'pending' && (
-                        <>
-                          <button className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors" title="Approve">
-                            <CheckCircle2 size={18} />
+              <tbody className="divide-y divide-slate-50">
+                {companies.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-8 py-8 text-center text-slate-500">
+                      No companies found
+                    </td>
+                  </tr>
+                ) : (
+                  companies.map((company: any) => (
+                    <tr key={company.id} className="group hover:bg-slate-50/50 transition-colors">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-indigo-600 font-bold">
+                            {company.name ? company.name.charAt(0) : '?'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{company.name || 'N/A'}</p>
+                            <p className="text-xs text-slate-500 font-medium">{company.email || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">
+                          {company.sector || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${getStatusStyle(company.status)}`}>
+                          {company.status === 'verified' && <CheckCircle2 size={12} />}
+                          {company.status === 'rejected' && <XCircle size={12} />}
+                          {company.status || 'pending'}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <button className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+                          <FileText size={16} />
+                          License_Doc.pdf
+                        </button>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {company.status === 'pending' && (
+                            <>
+                              <button className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors" title="Approve">
+                                <CheckCircle2 size={18} />
+                              </button>
+                              <button className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors" title="Reject">
+                                <XCircle size={18} />
+                              </button>
+                            </>
+                          )}
+                          <button className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 transition-colors">
+                            <MoreVertical size={18} />
                           </button>
-                          <button className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors" title="Reject">
-                            <XCircle size={18} />
-                          </button>
-                        </>
-                      )}
-                      <button className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 transition-colors">
-                        <MoreVertical size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         
         {/* Footer info */}
         <div className="p-6 bg-slate-50/30 border-t border-slate-50">

@@ -1,27 +1,77 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Clock, 
-  User, 
   Activity, 
   Download, 
   Filter, 
   Search, 
   AlertCircle, 
-  CheckCircle2, 
-  Trash2 
+  CheckCircle2
 } from 'lucide-react';
 
-// የናሙና መረጃ (Mock Data)
-const LOGS_DATA = [
-  { id: 1, user: "Abebe Kebede", action: "Deleted a job post", target: "Senior React Dev", time: "2 mins ago", type: "danger", icon: <Trash2 className="w-4 h-4" /> },
-  { id: 2, user: "Admin Sarah", action: "Approved a new employer", target: "Tech Ethio PLC", time: "1 hour ago", type: "success", icon: <CheckCircle2 className="w-4 h-4" /> },
-  { id: 3, user: "System", action: "Failed login attempt", target: "IP: 192.168.1.1", time: "3 hours ago", type: "warning", icon: <AlertCircle className="w-4 h-4" /> },
-  { id: 4, user: "Mulugeta T.", action: "Updated profile", target: "Account Settings", time: "Yesterday", type: "info", icon: <User className="w-4 h-4" /> },
+interface Log {
+  id: number;
+  user: string;
+  action: string;
+  target: string;
+  time: string;
+  type: 'danger' | 'success' | 'warning' | 'info';
+  icon: React.ReactNode;
+}
+
+const MOCK_LOGS: Log[] = [
+  {
+    id: 1,
+    user: 'John Admin',
+    action: 'Created Job',
+    target: 'Senior Developer Position',
+    time: '2 hours ago',
+    type: 'success',
+    icon: <CheckCircle2 size={16} />
+  },
+  {
+    id: 2,
+    user: 'Sarah Manager',
+    action: 'Updated Company',
+    target: 'Tech Solutions Inc',
+    time: '4 hours ago',
+    type: 'success',
+    icon: <CheckCircle2 size={16} />
+  },
+  {
+    id: 3,
+    user: 'Mike Support',
+    action: 'Deleted User',
+    target: 'Inactive Account',
+    time: '6 hours ago',
+    type: 'danger',
+    icon: <AlertCircle size={16} />
+  },
+  {
+    id: 4,
+    user: 'Emma Admin',
+    action: 'Modified Payment',
+    target: 'Invoice #2024-001',
+    time: '8 hours ago',
+    type: 'warning',
+    icon: <AlertCircle size={16} />
+  },
+  {
+    id: 5,
+    user: 'David Support',
+    action: 'Approved Interview',
+    target: 'Candidate #5432',
+    time: '10 hours ago',
+    type: 'success',
+    icon: <CheckCircle2 size={16} />
+  }
 ];
 
 const AdminLogs: React.FC = () => {
+  const [logs] = useState<Log[]>(MOCK_LOGS);
+  
   return (
-    <div className="min-h-screen bg-gray-50 p-6 font-sans">
+    <div className="space-y-6 font-sans">
       <div className="max-w-7xl mx-auto">
         
         {/* Header Section */}
@@ -73,54 +123,62 @@ const AdminLogs: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {LOGS_DATA.map((log) => (
-                  <tr key={log.id} className="hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs">
-                          {log.user.charAt(0)}
-                        </div>
-                        <span className="font-medium text-gray-900">{log.user}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      <div className="flex items-center gap-2">
-                         <span className={`p-1.5 rounded-md ${
-                           log.type === 'danger' ? 'bg-red-50 text-red-600' :
-                           log.type === 'success' ? 'bg-green-50 text-green-600' :
-                           log.type === 'warning' ? 'bg-yellow-50 text-yellow-600' :
-                           'bg-blue-50 text-blue-600'
-                         }`}>
-                           {log.icon}
-                         </span>
-                         {log.action}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 italic">
-                      {log.target}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-400">
-                      {log.time}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                         log.type === 'danger' ? 'bg-red-100 text-red-800' :
-                         log.type === 'success' ? 'bg-green-100 text-green-800' :
-                         log.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                         'bg-blue-100 text-blue-800'
-                       }`}>
-                         {log.type.toUpperCase()}
-                       </span>
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      No logs found
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  logs.map((log) => (
+                    <tr key={log.id} className="hover:bg-blue-50/30 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs">
+                            {log.user.charAt(0)}
+                          </div>
+                          <span className="font-medium text-gray-900">{log.user}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        <div className="flex items-center gap-2">
+                           <span className={`p-1.5 rounded-md ${
+                             log.type === 'danger' ? 'bg-red-50 text-red-600' :
+                             log.type === 'success' ? 'bg-green-50 text-green-600' :
+                             log.type === 'warning' ? 'bg-yellow-50 text-yellow-600' :
+                             'bg-blue-50 text-blue-600'
+                           }`}>
+                             {log.icon}
+                           </span>
+                           {log.action}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500 italic">
+                        {log.target}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-400">
+                        {log.time}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                           log.type === 'danger' ? 'bg-red-100 text-red-800' :
+                           log.type === 'success' ? 'bg-green-100 text-green-800' :
+                           log.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                           'bg-blue-100 text-blue-800'
+                         }`}>
+                           {log.type.toUpperCase()}
+                         </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
           
           {/* Pagination Placeholder */}
           <div className="px-6 py-4 border-t border-gray-50 bg-gray-50/50 flex justify-between items-center text-sm text-gray-500">
-            <span>Showing 4 of 120 logs</span>
+            <span>Showing {logs.length} logs</span>
             <div className="flex gap-2">
               <button className="px-3 py-1 border rounded bg-white disabled:opacity-50">Prev</button>
               <button className="px-3 py-1 border rounded bg-white">Next</button>

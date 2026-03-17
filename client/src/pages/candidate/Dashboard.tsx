@@ -5,7 +5,6 @@ import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
-import toast from 'react-hot-toast';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
 import { 
@@ -28,16 +27,8 @@ const CandidateDashboard: React.FC = () => {
   // Session monitoring
   useSessionMonitoring();
 
-  const { broadcastDataUpdate, notifyStatusChange } = useDashboardCommunication({
-    role: 'candidate',
-    onDataUpdate: (event) => console.log('[Candidate] Data updated'),
-    onNotification: (event) => toast.success(event.payload.message),
-    onActionRequired: (event) => {
-      if (event.payload.action === 'interview-scheduled') {
-        toast.success(`New Interview: ${event.payload.data.jobTitle}`);
-      }
-    },
-  });
+  // Dashboard communication
+  useDashboardCommunication('candidate');
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -50,11 +41,6 @@ const CandidateDashboard: React.FC = () => {
       
       const dashboardData = response.data.data || null;
       setData(dashboardData);
-      
-      if (dashboardData) {
-        broadcastDataUpdate(dashboardData);
-        notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
-      }
     } catch (error) {
       console.error('Dashboard fetch error:', error);
       // Show cached data or empty state instead of error
@@ -63,7 +49,7 @@ const CandidateDashboard: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [broadcastDataUpdate, notifyStatusChange]);
+  }, []);
 
   useEffect(() => {
     // Load dashboard immediately

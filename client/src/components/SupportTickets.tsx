@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, MessageSquare, AlertCircle, CheckCircle2, Clock, ChevronRight } from 'lucide-react';
 
 interface SupportTicketsProps {
@@ -17,47 +17,68 @@ interface Ticket {
   assignee?: string;
 }
 
+const MOCK_TICKETS: Ticket[] = [
+  {
+    id: 'TKT-001',
+    title: 'Login page not loading',
+    description: 'Users unable to access login page on mobile devices',
+    status: 'open',
+    priority: 'high',
+    createdAt: '2 hours ago',
+    updatedAt: '1 hour ago',
+    assignee: 'John Support'
+  },
+  {
+    id: 'TKT-002',
+    title: 'Payment processing error',
+    description: 'Payment gateway returning timeout errors',
+    status: 'in-progress',
+    priority: 'critical',
+    createdAt: '4 hours ago',
+    updatedAt: '30 minutes ago',
+    assignee: 'Sarah Tech'
+  },
+  {
+    id: 'TKT-003',
+    title: 'Profile picture upload issue',
+    description: 'Unable to upload profile pictures larger than 2MB',
+    status: 'resolved',
+    priority: 'medium',
+    createdAt: '1 day ago',
+    updatedAt: '2 hours ago',
+    assignee: 'Mike Dev'
+  },
+  {
+    id: 'TKT-004',
+    title: 'Email notifications not sending',
+    description: 'Users not receiving email notifications for new messages',
+    status: 'open',
+    priority: 'high',
+    createdAt: '6 hours ago',
+    updatedAt: '5 hours ago'
+  },
+  {
+    id: 'TKT-005',
+    title: 'Dashboard performance slow',
+    description: 'Admin dashboard taking 10+ seconds to load',
+    status: 'in-progress',
+    priority: 'medium',
+    createdAt: '8 hours ago',
+    updatedAt: '2 hours ago',
+    assignee: 'Emma Performance'
+  }
+];
+
 const SupportTickets: React.FC<SupportTicketsProps> = ({ isOpen, onClose }) => {
-  const [tickets, setTickets] = useState<Ticket[]>([
-    {
-      id: 'TKT-001',
-      title: 'Login page not loading',
-      description: 'Users unable to access login page on mobile',
-      status: 'in-progress',
-      priority: 'high',
-      createdAt: '2 hours ago',
-      updatedAt: '30 mins ago',
-      assignee: 'John Dev'
-    },
-    {
-      id: 'TKT-002',
-      title: 'Payment processing error',
-      description: 'Chapa payment integration failing intermittently',
-      status: 'open',
-      priority: 'critical',
-      createdAt: '1 hour ago',
-      updatedAt: '1 hour ago'
-    },
-    {
-      id: 'TKT-003',
-      title: 'Dashboard performance slow',
-      description: 'Dashboard takes 10+ seconds to load',
-      status: 'open',
-      priority: 'medium',
-      createdAt: '3 hours ago',
-      updatedAt: '3 hours ago'
-    },
-    {
-      id: 'TKT-004',
-      title: 'Email verification not working',
-      description: 'Users not receiving verification emails',
-      status: 'resolved',
-      priority: 'high',
-      createdAt: '1 day ago',
-      updatedAt: '2 hours ago',
-      assignee: 'Sarah QA'
+  const [tickets] = useState<Ticket[]>(MOCK_TICKETS);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Simulate loading with mock data
+      setLoading(false);
     }
-  ]);
+  }, [isOpen]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -87,8 +108,11 @@ const SupportTickets: React.FC<SupportTicketsProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const openTickets = tickets.filter(t => t.status === 'open').length;
-  const inProgressTickets = tickets.filter(t => t.status === 'in-progress').length;
+  // Calculate ticket statistics
+  const ticketStats = {
+    open: tickets.filter(t => t.status === 'open').length,
+    inProgress: tickets.filter(t => t.status === 'in-progress').length
+  };
 
   return (
     <>
@@ -125,11 +149,11 @@ const SupportTickets: React.FC<SupportTicketsProps> = ({ isOpen, onClose }) => {
           {/* Summary Stats */}
           <div className="grid grid-cols-2 gap-3 mb-6">
             <div className="bg-red-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-red-600">{openTickets}</p>
+              <p className="text-2xl font-bold text-red-600">{tickets.filter(t => t.status === 'open').length}</p>
               <p className="text-xs text-red-600 font-medium">Open</p>
             </div>
             <div className="bg-yellow-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-yellow-600">{inProgressTickets}</p>
+              <p className="text-2xl font-bold text-yellow-600">{tickets.filter(t => t.status === 'in-progress').length}</p>
               <p className="text-xs text-yellow-600 font-medium">In Progress</p>
             </div>
           </div>
@@ -139,38 +163,48 @@ const SupportTickets: React.FC<SupportTicketsProps> = ({ isOpen, onClose }) => {
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
               Recent Tickets
             </h3>
-            {tickets.map((ticket) => (
-              <button
-                key={ticket.id}
-                className="w-full text-left border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(ticket.status)}
-                    <span className="font-bold text-slate-900 text-sm">{ticket.id}</span>
+            {loading ? (
+              <div className="text-center py-4 text-slate-500">
+                <p>Loading tickets...</p>
+              </div>
+            ) : tickets.length === 0 ? (
+              <div className="text-center py-4 text-slate-500">
+                <p>No tickets found</p>
+              </div>
+            ) : (
+              tickets.map((ticket) => (
+                <button
+                  key={ticket.id}
+                  className="w-full text-left border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(ticket.status)}
+                      <span className="font-bold text-slate-900 text-sm">{ticket.id}</span>
+                    </div>
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${getPriorityColor(ticket.priority)}`}>
+                      {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
+                    </span>
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${getPriorityColor(ticket.priority)}`}>
-                    {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
-                  </span>
-                </div>
 
-                <p className="font-semibold text-slate-900 mb-1 text-sm">{ticket.title}</p>
-                <p className="text-xs text-slate-600 mb-3 line-clamp-2">{ticket.description}</p>
+                  <p className="font-semibold text-slate-900 mb-1 text-sm">{ticket.title}</p>
+                  <p className="text-xs text-slate-600 mb-3 line-clamp-2">{ticket.description}</p>
 
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>{ticket.createdAt}</span>
-                  <ChevronRight size={14} className="text-slate-400" />
-                </div>
-
-                {ticket.assignee && (
-                  <div className="mt-2 pt-2 border-t border-slate-100">
-                    <p className="text-xs text-slate-600">
-                      <span className="font-medium">Assigned to:</span> {ticket.assignee}
-                    </p>
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>{ticket.createdAt}</span>
+                    <ChevronRight size={14} className="text-slate-400" />
                   </div>
-                )}
-              </button>
-            ))}
+
+                  {ticket.assignee && (
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <p className="text-xs text-slate-600">
+                        <span className="font-medium">Assigned to:</span> {ticket.assignee}
+                      </p>
+                    </div>
+                  )}
+                </button>
+              ))
+            )}
           </div>
 
           {/* Create New Ticket Button */}

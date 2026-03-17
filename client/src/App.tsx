@@ -26,6 +26,10 @@ import Navbar from './components/Navbar';
 // Lazy load dashboard pages for better performance
 const CandidateDashboard = lazy(() => import('./pages/candidate/Dashboard'));
 const CandidateProfile = lazy(() => import('./pages/candidate/Profile'));
+const CandidateSettings = lazy(() => import('./pages/candidate/Settings'));
+const CandidateSecurity = lazy(() => import('./pages/candidate/Security'));
+const CandidateNotifications = lazy(() => import('./pages/candidate/Notifications'));
+const CandidateActivity = lazy(() => import('./pages/candidate/Activity'));
 const CandidateApplications = lazy(() => import('./pages/candidate/Applications'));
 const CandidateInterviews = lazy(() => import('./pages/candidate/Interviews'));
 const InterviewSession = lazy(() => import('./pages/candidate/InterviewSession'));
@@ -36,6 +40,10 @@ const HelpCenter = lazy(() => import('./pages/candidate/HelpCenter'));
 
 const EmployerDashboard = lazy(() => import('./pages/employer/Dashboard'));
 const EmployerProfile = lazy(() => import('./pages/employer/Profile'));
+const EmployerSettings = lazy(() => import('./pages/employer/Settings'));
+const EmployerSecurity = lazy(() => import('./pages/employer/Security'));
+const EmployerNotifications = lazy(() => import('./pages/employer/Notifications'));
+const EmployerActivity = lazy(() => import('./pages/employer/Activity'));
 const EmployerJobs = lazy(() => import('./pages/employer/Jobs'));
 const CreateJob = lazy(() => import('./pages/employer/CreateJob'));
 const EditJob = lazy(() => import('./pages/employer/EditJob'));
@@ -53,6 +61,10 @@ const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
 const AdminPayments = lazy(() => import('./pages/admin/Payments'));
 const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
 const AdminLogs = lazy(() => import('./pages/admin/Logs'));
+const AdminSettings = lazy(() => import('./pages/admin/Settings'));
+const AdminSecurity = lazy(() => import('./pages/admin/Security'));
+const AdminNotifications = lazy(() => import('./pages/admin/Notifications'));
+const AdminActivity = lazy(() => import('./pages/admin/Activity'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 const App: React.FC = () => {
@@ -115,6 +127,46 @@ const App: React.FC = () => {
               <PrivateRoute role="candidate">
                 <Suspense fallback={<Loading />}>
                   <CandidateProfile />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/candidate/settings" 
+            element={
+              <PrivateRoute role="candidate">
+                <Suspense fallback={<Loading />}>
+                  <CandidateSettings />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/candidate/security" 
+            element={
+              <PrivateRoute role="candidate">
+                <Suspense fallback={<Loading />}>
+                  <CandidateSecurity />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/candidate/notifications" 
+            element={
+              <PrivateRoute role="candidate">
+                <Suspense fallback={<Loading />}>
+                  <CandidateNotifications />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/candidate/activity" 
+            element={
+              <PrivateRoute role="candidate">
+                <Suspense fallback={<Loading />}>
+                  <CandidateActivity />
                 </Suspense>
               </PrivateRoute>
             } 
@@ -207,6 +259,46 @@ const App: React.FC = () => {
               <PrivateRoute role="employer">
                 <Suspense fallback={<Loading />}>
                   <EmployerProfile />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/employer/settings" 
+            element={
+              <PrivateRoute role="employer">
+                <Suspense fallback={<Loading />}>
+                  <EmployerSettings />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/employer/security" 
+            element={
+              <PrivateRoute role="employer">
+                <Suspense fallback={<Loading />}>
+                  <EmployerSecurity />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/employer/notifications" 
+            element={
+              <PrivateRoute role="employer">
+                <Suspense fallback={<Loading />}>
+                  <EmployerNotifications />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/employer/activity" 
+            element={
+              <PrivateRoute role="employer">
+                <Suspense fallback={<Loading />}>
+                  <EmployerActivity />
                 </Suspense>
               </PrivateRoute>
             } 
@@ -309,6 +401,46 @@ const App: React.FC = () => {
               <PrivateRoute role="admin">
                 <Suspense fallback={<Loading />}>
                   <AdminDashboard />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/settings" 
+            element={
+              <PrivateRoute role="admin">
+                <Suspense fallback={<Loading />}>
+                  <AdminSettings />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/security" 
+            element={
+              <PrivateRoute role="admin">
+                <Suspense fallback={<Loading />}>
+                  <AdminSecurity />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/notifications" 
+            element={
+              <PrivateRoute role="admin">
+                <Suspense fallback={<Loading />}>
+                  <AdminNotifications />
+                </Suspense>
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/admin/activity" 
+            element={
+              <PrivateRoute role="admin">
+                <Suspense fallback={<Loading />}>
+                  <AdminActivity />
                 </Suspense>
               </PrivateRoute>
             } 

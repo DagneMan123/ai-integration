@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { analyticsAPI } from '../../utils/api';
 import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { adminMenu } from '../../config/menuConfig';
-import toast from 'react-hot-toast';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
+import DashboardNotifications from '../../components/DashboardNotifications';
+import DashboardInfoPanel from '../../components/DashboardInfoPanel';
+import CrossDashboardSync from '../../components/CrossDashboardSync';
 import { 
   Users, 
   Briefcase, 
@@ -31,10 +34,8 @@ const AdminDashboard: React.FC = () => {
   // Session monitoring
   useSessionMonitoring();
 
-  const { broadcastDataUpdate, notifyStatusChange, sendNotification } = useDashboardCommunication({
-    role: 'admin',
-    enableAutoToasts: false // Admin handles custom toasts
-  });
+  // Dashboard communication
+  const { messages, stats, sendMessage, markAsRead, broadcastAlert, updateStats } = useDashboardCommunication('admin');
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -43,17 +44,24 @@ const AdminDashboard: React.FC = () => {
       setData(dashboardData);
       
       if (dashboardData) {
-        broadcastDataUpdate(dashboardData);
-        notifyStatusChange('system-sync-complete', { timestamp: new Date().toISOString() });
+        // Update shared stats across dashboards
+        updateStats({
+          totalUsers: dashboardData.totalUsers || 0,
+          activeJobs: dashboardData.totalJobs || 0,
+          completedInterviews: dashboardData.totalInterviews || 0
+        });
+        
+        // Notify other dashboards of system update
+        sendMessage('all', 'data-update', 'System Update', 'Admin dashboard data refreshed', { timestamp: new Date() });
       }
     } catch (error) {
       toast.error('System synchronization failed');
-      sendNotification('Critical: Admin dashboard data fetch failed', 'high');
+      broadcastAlert('System Error', 'Failed to sync admin dashboard', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [broadcastDataUpdate, notifyStatusChange, sendNotification]);
+  }, [updateStats, sendMessage, broadcastAlert]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -71,6 +79,14 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <DashboardLayout menuItems={adminMenu} role="admin">
+      {/* Notification Panel */}
+      <div className="absolute top-24 right-8 z-40">
+        <DashboardNotifications messages={messages} role="admin" onMarkAsRead={markAsRead} />
+      </div>
+
+      {/* Cross-Dashboard Sync Monitor */}
+      <CrossDashboardSync role="admin" />
+
       <div className="space-y-10 animate-in fade-in duration-700">
         
         {/* Top Header Section */}
@@ -79,14 +95,16 @@ const AdminDashboard: React.FC = () => {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Command Center</h1>
             <p className="text-slate-500 font-medium mt-1">Real-time platform oversight and infrastructure monitoring</p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="group flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 disabled:opacity-50"
-          >
-            <RefreshCw size={18} className={refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-            Sync Platform Data
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="group flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 disabled:opacity-50"
+            >
+              <RefreshCw size={18} className={refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
+              Sync Platform Data
+            </button>
+          </div>
         </div>
 
         {/* High-Level Metrics Grid */}

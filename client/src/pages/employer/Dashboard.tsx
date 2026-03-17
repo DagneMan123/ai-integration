@@ -5,7 +5,6 @@ import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { employerMenu } from '../../config/menuConfig';
-import toast from 'react-hot-toast';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
 import { 
@@ -31,14 +30,8 @@ const EmployerDashboard: React.FC = () => {
   // Session monitoring
   useSessionMonitoring();
 
-  const { broadcastDataUpdate, notifyStatusChange, sendNotification } = useDashboardCommunication({
-    role: 'employer',
-    onActionRequired: (event) => {
-      if (event.payload.action === 'job-approved' || event.payload.action === 'job-rejected') {
-        toast.success(`Job Update: ${event.payload.data.jobTitle} is now ${event.payload.action.split('-')[1]}`);
-      }
-    },
-  });
+  // Dashboard communication
+  useDashboardCommunication('employer');
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -51,11 +44,6 @@ const EmployerDashboard: React.FC = () => {
       
       const dashboardData = response.data.data || null;
       setData(dashboardData);
-      
-      if (dashboardData) {
-        broadcastDataUpdate(dashboardData);
-        notifyStatusChange('data-refreshed', { timestamp: new Date().toISOString() });
-      }
     } catch (error) {
       console.error('Dashboard fetch error:', error);
       // Don't show error toast, just set empty data
@@ -64,7 +52,7 @@ const EmployerDashboard: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [broadcastDataUpdate, notifyStatusChange]);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();

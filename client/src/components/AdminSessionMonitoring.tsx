@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Activity, Clock, Users, AlertCircle } from 'lucide-react';
+import { X, Activity, Clock, AlertCircle } from 'lucide-react';
 
 interface AdminSessionMonitoringProps {
   isOpen: boolean;
@@ -16,36 +16,64 @@ interface SessionInfo {
   sessionDuration: string;
 }
 
+const MOCK_SESSIONS: SessionInfo[] = [
+  {
+    userId: 'USR-001',
+    userName: 'John Candidate',
+    loginTime: '09:30 AM',
+    lastActivity: '2 minutes ago',
+    status: 'active',
+    currentPage: '/interviews',
+    sessionDuration: '2h 15m'
+  },
+  {
+    userId: 'USR-002',
+    userName: 'Sarah Employer',
+    loginTime: '08:45 AM',
+    lastActivity: '5 minutes ago',
+    status: 'active',
+    currentPage: '/jobs',
+    sessionDuration: '3h 30m'
+  },
+  {
+    userId: 'USR-003',
+    userName: 'Mike Admin',
+    loginTime: '07:00 AM',
+    lastActivity: '15 minutes ago',
+    status: 'idle',
+    currentPage: '/dashboard',
+    sessionDuration: '5h 45m'
+  },
+  {
+    userId: 'USR-004',
+    userName: 'Emma Support',
+    loginTime: '10:00 AM',
+    lastActivity: '1 minute ago',
+    status: 'active',
+    currentPage: '/support-tickets',
+    sessionDuration: '1h 20m'
+  },
+  {
+    userId: 'USR-005',
+    userName: 'David Candidate',
+    loginTime: 'Yesterday 3:00 PM',
+    lastActivity: '2 hours ago',
+    status: 'offline',
+    currentPage: '/profile',
+    sessionDuration: '45m'
+  }
+];
+
 const AdminSessionMonitoring: React.FC<AdminSessionMonitoringProps> = ({ isOpen, onClose }) => {
-  const [sessions, setSessions] = useState<SessionInfo[]>([
-    {
-      userId: '1',
-      userName: 'John Candidate',
-      loginTime: '10:30 AM',
-      lastActivity: '2 mins ago',
-      status: 'active',
-      currentPage: '/candidate/dashboard',
-      sessionDuration: '45 mins'
-    },
-    {
-      userId: '2',
-      userName: 'Sarah Employer',
-      loginTime: '09:15 AM',
-      lastActivity: '5 mins ago',
-      status: 'idle',
-      currentPage: '/employer/jobs',
-      sessionDuration: '2 hrs 15 mins'
-    },
-    {
-      userId: '3',
-      userName: 'Mike Admin',
-      loginTime: '08:00 AM',
-      lastActivity: 'Just now',
-      status: 'active',
-      currentPage: '/admin/dashboard',
-      sessionDuration: '3 hrs 30 mins'
+  const [sessions] = useState<SessionInfo[]>(MOCK_SESSIONS);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Simulate loading with mock data
+      setLoading(false);
     }
-  ]);
+  }, [isOpen]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -95,15 +123,15 @@ const AdminSessionMonitoring: React.FC<AdminSessionMonitoringProps> = ({ isOpen,
           {/* Summary Stats */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-blue-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-blue-600">3</p>
+              <p className="text-2xl font-bold text-blue-600">{sessions.filter(s => s.status === 'active').length}</p>
               <p className="text-xs text-blue-600 font-medium">Active</p>
             </div>
             <div className="bg-yellow-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-yellow-600">1</p>
+              <p className="text-2xl font-bold text-yellow-600">{sessions.filter(s => s.status === 'idle').length}</p>
               <p className="text-xs text-yellow-600 font-medium">Idle</p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-gray-600">0</p>
+              <p className="text-2xl font-bold text-gray-600">{sessions.filter(s => s.status === 'offline').length}</p>
               <p className="text-xs text-gray-600 font-medium">Offline</p>
             </div>
           </div>
@@ -113,38 +141,48 @@ const AdminSessionMonitoring: React.FC<AdminSessionMonitoringProps> = ({ isOpen,
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
               Active Sessions
             </h3>
-            {sessions.map((session) => (
-              <div key={session.userId} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-semibold text-slate-900">{session.userName}</p>
-                    <p className="text-xs text-slate-500">{session.userId}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(session.status)}`}>
-                    {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} className="text-slate-400" />
-                    <span>Login: {session.loginTime}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Activity size={14} className="text-slate-400" />
-                    <span>Last: {session.lastActivity}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <AlertCircle size={14} className="text-slate-400" />
-                    <span>Page: {session.currentPage}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} className="text-slate-400" />
-                    <span>Duration: {session.sessionDuration}</span>
-                  </div>
-                </div>
+            {loading ? (
+              <div className="text-center py-4 text-slate-500">
+                <p>Loading sessions...</p>
               </div>
-            ))}
+            ) : sessions.length === 0 ? (
+              <div className="text-center py-4 text-slate-500">
+                <p>No active sessions</p>
+              </div>
+            ) : (
+              sessions.map((session) => (
+                <div key={session.userId} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{session.userName}</p>
+                      <p className="text-xs text-slate-500">{session.userId}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(session.status)}`}>
+                      {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <Clock size={14} className="text-slate-400" />
+                      <span>Login: {session.loginTime}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Activity size={14} className="text-slate-400" />
+                      <span>Last: {session.lastActivity}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <AlertCircle size={14} className="text-slate-400" />
+                      <span>Page: {session.currentPage}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock size={14} className="text-slate-400" />
+                      <span>Duration: {session.sessionDuration}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

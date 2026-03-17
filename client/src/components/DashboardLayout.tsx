@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useSidebar } from '../context/SidebarContext';
 import { useSessionMonitoring } from '../hooks/useSessionMonitoring';
+import AccountMenu from './AccountMenu';
 import { 
   LayoutDashboard, 
   LogOut, 
@@ -10,7 +11,6 @@ import {
   ChevronRight, 
   Bell, 
   Search,
-  CircleUser,
   Settings,
   Activity,
   MessageSquare
@@ -35,13 +35,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const {
-    sessionMonitoringOpen,
     setSessionMonitoringOpen,
-    globalSettingsOpen,
     setGlobalSettingsOpen,
-    supportTicketsOpen,
     setSupportTicketsOpen,
-    settingsOpen,
     setSettingsOpen,
   } = useSidebar();
   useSessionMonitoring();
@@ -212,13 +208,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
             
             {/* User Profile Section */}
             <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-6 border-l border-slate-200 flex-shrink-0">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-900 truncate">{user?.firstName}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Verified Account</p>
-              </div>
-              <div className="cursor-pointer hover:ring-4 hover:ring-indigo-50 transition-all rounded-full">
-                <CircleUser size={32} className="text-slate-300" />
-              </div>
+              <AccountMenu 
+                userName={user?.firstName || 'User'} 
+                userRole={role}
+              />
             </div>
           </div>
         </header>

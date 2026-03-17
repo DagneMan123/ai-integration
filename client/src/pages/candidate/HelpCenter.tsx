@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HelpCircle, Search, ChevronDown, Mail, MessageSquare } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
@@ -10,63 +10,70 @@ interface FAQItem {
   category: string;
 }
 
+const MOCK_FAQS: FAQItem[] = [
+  {
+    id: 'faq-1',
+    question: 'How do I create an account?',
+    answer: 'To create an account, click on the "Register" button on the homepage. Fill in your email, password, and select your role (Candidate, Employer, or Admin). Verify your email and you\'re ready to go!',
+    category: 'account'
+  },
+  {
+    id: 'faq-2',
+    question: 'How do I apply for a job?',
+    answer: 'Browse available jobs on the Jobs page, click on a job posting, and click the "Apply" button. You can track your applications in the Applications section of your dashboard.',
+    category: 'jobs'
+  },
+  {
+    id: 'faq-3',
+    question: 'What is an AI interview?',
+    answer: 'An AI interview is an automated interview conducted by our AI system. It evaluates your responses to predefined questions and provides feedback on your performance.',
+    category: 'interviews'
+  },
+  {
+    id: 'faq-4',
+    question: 'How do I schedule an interview?',
+    answer: 'Once you\'ve applied for a job, the employer may invite you to an interview. You can accept or reschedule the interview from your Interviews page.',
+    category: 'interviews'
+  },
+  {
+    id: 'faq-5',
+    question: 'How do I update my profile?',
+    answer: 'Go to your Profile page, click "Edit Profile", update your information, and click "Save Changes". Make sure to keep your profile up-to-date for better job matches.',
+    category: 'account'
+  },
+  {
+    id: 'faq-6',
+    question: 'How do I post a job?',
+    answer: 'As an employer, go to the Jobs section and click "Create New Job". Fill in the job details, requirements, and salary information, then publish.',
+    category: 'jobs'
+  },
+  {
+    id: 'faq-7',
+    question: 'What payment methods do you accept?',
+    answer: 'We accept credit cards, debit cards, and digital payment methods through our secure payment gateway.',
+    category: 'payments'
+  },
+  {
+    id: 'faq-8',
+    question: 'How do I contact support?',
+    answer: 'You can reach our support team via email at support@simuai.com or use the live chat feature available on the platform.',
+    category: 'support'
+  }
+];
+
 const HelpCenter: React.FC = () => {
+  const [faqs] = useState<FAQItem[]>(MOCK_FAQS);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const faqs: FAQItem[] = [
-    {
-      id: '1',
-      category: 'interviews',
-      question: 'How do I prepare for an AI interview?',
-      answer: 'AI interviews assess your technical skills, communication, and problem-solving abilities. Practice speaking clearly, maintain eye contact with the camera, and answer questions thoroughly. Review common interview questions and prepare examples from your experience.'
-    },
-    {
-      id: '2',
-      category: 'interviews',
-      question: 'What should I do if my camera or microphone fails?',
-      answer: 'Test your equipment before the interview starts. If issues occur during the interview, try restarting your browser or device. If problems persist, contact support immediately with your interview ID.'
-    },
-    {
-      id: '3',
-      category: 'applications',
-      question: 'How do I apply for a job?',
-      answer: 'Browse available jobs, click on a position that interests you, review the details, and click "Apply". You can add a cover letter to strengthen your application.'
-    },
-    {
-      id: '4',
-      category: 'applications',
-      question: 'Can I withdraw my application?',
-      answer: 'Yes, you can withdraw your application from the Applications page. Click on the application and select "Withdraw". This action cannot be undone.'
-    },
-    {
-      id: '5',
-      category: 'profile',
-      question: 'How do I update my profile?',
-      answer: 'Go to Profile Settings and update your information. You can add a profile picture, update your skills, experience, and education. Changes are saved automatically.'
-    },
-    {
-      id: '6',
-      category: 'profile',
-      question: 'How do I add my resume?',
-      answer: 'In your profile, there is a Resume section where you can upload your PDF or Word document. Make sure your resume is up-to-date and clearly formatted.'
-    },
-    {
-      id: '7',
-      category: 'billing',
-      question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards and digital payment methods through our secure payment gateway. All transactions are encrypted and secure.'
-    },
-    {
-      id: '8',
-      category: 'billing',
-      question: 'Can I get a refund?',
-      answer: 'Refund policies vary by service. Contact our support team with your transaction ID for refund inquiries.'
-    }
-  ];
+  useEffect(() => {
+    // Mock data is already loaded
+    setLoading(false);
+  }, []);
 
-  const categories = ['all', 'interviews', 'applications', 'profile', 'billing'];
+  const categories = ['all', ...new Set(faqs.map(faq => faq.category))];
 
   const filteredFAQs = faqs.filter(faq => {
     const matchesSearch = faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,7 +84,7 @@ const HelpCenter: React.FC = () => {
 
   return (
     <DashboardLayout menuItems={candidateMenu} role="candidate">
-      <div className="space-y-6">
+      <div className="space-y-6 font-sans">
         {/* Header */}
         <div className="flex items-center gap-3">
           <HelpCircle className="text-blue-600" size={32} />
@@ -134,7 +141,12 @@ const HelpCenter: React.FC = () => {
 
           {/* FAQ List */}
           <div className="lg:col-span-3 space-y-3">
-            {filteredFAQs.length === 0 ? (
+            {loading ? (
+              <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                <HelpCircle size={48} className="mx-auto mb-4 opacity-50" />
+                <p>Loading FAQs...</p>
+              </div>
+            ) : filteredFAQs.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
                 <HelpCircle size={48} className="mx-auto mb-4 opacity-50" />
                 <p>No articles found. Try a different search.</p>
