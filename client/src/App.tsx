@@ -78,439 +78,439 @@ const App: React.FC = () => {
           <Toaster position="top-right" />
           <GlobalSidebars />
         
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/jobs" element={<Jobs />} />
-          <Route path="/jobs/:id" element={<JobDetails />} />
-          
-          {/* Auth Routes */}
-          <Route 
-            path="/login" 
-            element={user ? <Navigate to={`/${user.role}/dashboard`} /> : <Login />} 
-          />
-          <Route 
-            path="/register" 
-            element={user ? <Navigate to={`/${user.role}/dashboard`} /> : <Register />} 
-          />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/verify-email/:token" element={<VerifyEmail />} />
-          
-          {/* Payment Routes */}
-          <Route 
-            path="/payment/success" 
-            element={
-              <PrivateRoute>
-                <Suspense fallback={<Loading />}>
-                  <PaymentSuccess />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          
-          {/* Candidate Routes */}
-          <Route 
-            path="/candidate/dashboard" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateDashboard />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/profile" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateProfile />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/settings" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateSettings />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/security" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateSecurity />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/notifications" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateNotifications />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/activity" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateActivity />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/applications" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateApplications />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/interviews" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidateInterviews />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/interview/:id" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <InterviewSession />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/interview/:id/report" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <InterviewReport />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/payments" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <CandidatePayments />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/results" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <InterviewInsights />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/candidate/support" 
-            element={
-              <PrivateRoute role="candidate">
-                <Suspense fallback={<Loading />}>
-                  <HelpCenter />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          
-          {/* Employer Routes */}
-          <Route 
-            path="/employer/dashboard" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerDashboard />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/profile" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerProfile />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/settings" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerSettings />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/security" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerSecurity />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/notifications" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerNotifications />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/activity" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerActivity />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/jobs" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerJobs />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/jobs/create" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <CreateJob />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/jobs/:id/edit" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EditJob />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/jobs/:id/candidates" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <JobCandidates />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/analytics" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerAnalytics />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/subscription" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <EmployerSubscription />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/candidates" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <ApplicantTracking />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/schedule" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <InterviewCalendar />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/employer/messages" 
-            element={
-              <PrivateRoute role="employer">
-                <Suspense fallback={<Loading />}>
-                  <Inbox />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          
-          {/* Admin Routes */}
-          <Route 
-            path="/admin/dashboard" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminDashboard />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/settings" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminSettings />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/security" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminSecurity />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/notifications" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminNotifications />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/activity" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminActivity />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/users" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminUsers />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/companies" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminCompanies />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/jobs" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminJobs />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/payments" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminPayments />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/analytics" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminAnalytics />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/admin/logs" 
-            element={
-              <PrivateRoute role="admin">
-                <Suspense fallback={<Loading />}>
-                  <AdminLogs />
-                </Suspense>
-              </PrivateRoute>
-            } 
-          />
-          
-          {/* 404 - Redirect to home */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
-    </Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/:id" element={<JobDetails />} />
+            
+            {/* Auth Routes */}
+            <Route 
+              path="/login" 
+              element={user ? <Navigate to={`/${user.role}/dashboard`} /> : <Login />} 
+            />
+            <Route 
+              path="/register" 
+              element={user ? <Navigate to={`/${user.role}/dashboard`} /> : <Register />} 
+            />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            
+            {/* Payment Routes */}
+            <Route 
+              path="/payment/success" 
+              element={
+                <PrivateRoute>
+                  <Suspense fallback={<Loading />}>
+                    <PaymentSuccess />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            
+            {/* Candidate Routes */}
+            <Route 
+              path="/candidate/dashboard" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateDashboard />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/profile" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateProfile />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/settings" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateSettings />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/security" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateSecurity />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/notifications" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateNotifications />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/activity" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateActivity />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/applications" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateApplications />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/interviews" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateInterviews />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/interview/:id" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewSession />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/interview/:id/report" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewReport />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/payments" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidatePayments />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/results" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewInsights />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/support" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <HelpCenter />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            
+            {/* Employer Routes */}
+            <Route 
+              path="/employer/dashboard" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerDashboard />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/profile" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerProfile />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/settings" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerSettings />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/security" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerSecurity />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/notifications" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerNotifications />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/activity" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerActivity />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/jobs" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerJobs />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/jobs/create" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <CreateJob />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/jobs/:id/edit" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EditJob />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/jobs/:id/candidates" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <JobCandidates />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/analytics" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerAnalytics />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/subscription" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerSubscription />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/candidates" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <ApplicantTracking />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/schedule" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewCalendar />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/employer/messages" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <Inbox />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            
+            {/* Admin Routes */}
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminDashboard />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/settings" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminSettings />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/security" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminSecurity />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/notifications" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminNotifications />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/activity" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminActivity />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminUsers />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/companies" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminCompanies />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/jobs" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminJobs />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/payments" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminPayments />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/analytics" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminAnalytics />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/logs" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminLogs />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            
+            {/* 404 - Redirect to home */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </div>
+      </Router>
     </SidebarProvider>
   );
 };

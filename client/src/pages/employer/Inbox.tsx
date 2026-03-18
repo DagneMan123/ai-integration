@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Send, Search, Trash2, Archive, Loader } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { employerMenu } from '../../config/menuConfig';
-import api from '../../utils/api';
+import { messageAPI } from '../../utils/api';
 
 interface Message {
   id: string;
@@ -30,10 +30,12 @@ const Inbox: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/messages');
-      setMessages(response.data || []);
+      const response = await messageAPI.getAll();
+      const messagesData = Array.isArray(response.data) ? response.data : (response as any)?.data?.data || [];
+      setMessages(messagesData);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch messages');
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to fetch messages';
+      setError(errorMessage);
       console.error('Error fetching messages:', err);
     } finally {
       setLoading(false);
@@ -47,7 +49,7 @@ const Inbox: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await api.delete(`/messages/${id}`);
+      await messageAPI.delete(id);
       setMessages(messages.filter(msg => msg.id !== id));
     } catch (err: any) {
       console.error('Error deleting message:', err);
@@ -59,7 +61,7 @@ const Inbox: React.FC = () => {
     try {
       const msg = messages.find(m => m.id === id);
       if (msg) {
-        await api.patch(`/messages/${id}`, { archived: !msg.archived });
+        await messageAPI.toggleArchive(id);
         setMessages(messages.map(m =>
           m.id === id ? { ...m, archived: !m.archived } : m
         ));
@@ -72,7 +74,7 @@ const Inbox: React.FC = () => {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await api.patch(`/messages/${id}`, { read: true });
+      await messageAPI.markAsRead(id);
       setMessages(messages.map(msg =>
         msg.id === id ? { ...msg, read: true } : msg
       ));

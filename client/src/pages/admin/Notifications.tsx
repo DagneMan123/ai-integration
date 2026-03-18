@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { Mail, Bell, MessageSquare, Zap } from 'lucide-react';
+import { Mail, Bell, Zap } from 'lucide-react';
 import { adminMenu } from '../../config/menuConfig';
 
 const AdminNotifications: React.FC = () => {

@@ -108,11 +108,11 @@ const SupportTickets: React.FC<SupportTicketsProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  // Calculate ticket statistics
-  const ticketStats = {
-    open: tickets.filter(t => t.status === 'open').length,
-    inProgress: tickets.filter(t => t.status === 'in-progress').length
-  };
+  // Calculate ticket statistics (for future use)
+  // const ticketStats = {
+  //   open: tickets.filter(t => t.status === 'open').length,
+  //   inProgress: tickets.filter(t => t.status === 'in-progress').length
+  // };
 
   return (
     <>

@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { useAuthStore } from '../../store/authStore';
 import { Settings as SettingsIcon, Bell, Eye, Lock } from 'lucide-react';
 import { adminMenu } from '../../config/menuConfig';
 
 const AdminSettings: React.FC = () => {
-  const { user } = useAuthStore();
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: false,

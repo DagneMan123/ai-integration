@@ -226,4 +226,13 @@ export const applicationAPI = {
   getJobApplications: (jobId: string) => request.get<Application[]>(`/applications/job/${jobId}`), // Alias
 };
 
+export const messageAPI = {
+  getAll: () => request.get('/messages'),
+  getOne: (id: string) => request.get(`/messages/${id}`),
+  send: (data: object) => request.post('/messages', data),
+  markAsRead: (id: string) => request.patch(`/messages/${id}/read`),
+  toggleArchive: (id: string) => request.patch(`/messages/${id}/archive`),
+  delete: (id: string) => request.delete(`/messages/${id}`),
+};
+
 export default api;

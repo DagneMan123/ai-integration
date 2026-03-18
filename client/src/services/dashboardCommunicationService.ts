@@ -107,7 +107,7 @@ class DashboardCommunicationService {
   requestData(from: DashboardRole, to: DashboardRole, dataType: string): Promise<any> {
     return new Promise((resolve) => {
       const requestId = `req-${Date.now()}`;
-      const message = this.sendMessage(from, to, 'request', `Data Request: ${dataType}`, `Requesting ${dataType}`, { requestId, dataType });
+      this.sendMessage(from, to, 'request', `Data Request: ${dataType}`, `Requesting ${dataType}`, { requestId, dataType });
       
       // Simulate response after 500ms
       setTimeout(() => {

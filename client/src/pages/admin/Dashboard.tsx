@@ -9,7 +9,6 @@ import { adminMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
 import DashboardNotifications from '../../components/DashboardNotifications';
-import DashboardInfoPanel from '../../components/DashboardInfoPanel';
 import CrossDashboardSync from '../../components/CrossDashboardSync';
 import { 
   Users, 
@@ -35,7 +34,7 @@ const AdminDashboard: React.FC = () => {
   useSessionMonitoring();
 
   // Dashboard communication
-  const { messages, stats, sendMessage, markAsRead, broadcastAlert, updateStats } = useDashboardCommunication('admin');
+  const { messages, sendMessage, markAsRead, broadcastAlert, updateStats } = useDashboardCommunication('admin');
 
   const fetchDashboardData = useCallback(async () => {
     try {

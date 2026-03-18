@@ -5,7 +5,6 @@ import { Settings as SettingsIcon, Bell, Eye, Lock } from 'lucide-react';
 import { employerMenu } from '../../config/menuConfig';
 
 const EmployerSettings: React.FC = () => {
-  const { user } = useAuthStore();
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: false,

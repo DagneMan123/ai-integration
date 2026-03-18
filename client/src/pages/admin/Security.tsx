@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { useAuthStore } from '../../store/authStore';
 import { Shield, Lock, Smartphone, AlertCircle } from 'lucide-react';
 import { adminMenu } from '../../config/menuConfig';
 

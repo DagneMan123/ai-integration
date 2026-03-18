@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { useAuthStore } from '../../store/authStore';
 import { Mail, Bell, Zap } from 'lucide-react';
 import { employerMenu } from '../../config/menuConfig';
 

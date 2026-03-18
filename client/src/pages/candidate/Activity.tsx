@@ -1,6 +1,5 @@
 import React from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { useAuthStore } from '../../store/authStore';
 import { Clock, LogIn, LogOut, Edit, FileText } from 'lucide-react';
 import { candidateMenu } from '../../config/menuConfig';
 
