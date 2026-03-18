@@ -31,7 +31,7 @@ const InterviewCalendar: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await api.get('/interviews');
-      setInterviews(response.data || []);
+      setInterviews(response.data?.data || []);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch interviews');
       console.error('Error fetching interviews:', err);

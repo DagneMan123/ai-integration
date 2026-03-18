@@ -5,6 +5,43 @@ const antiCheatService = require('../services/antiCheatService');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
+// Get employer interviews (for calendar view)
+exports.getEmployerInterviews = async (req, res, next) => {
+  try {
+    const interviews = await prisma.interview.findMany({
+      where: {
+        job: {
+          createdById: req.user.id
+        }
+      },
+      include: {
+        candidate: { select: { firstName: true, lastName: true, email: true } },
+        job: { select: { title: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Transform for calendar view
+    const transformedInterviews = interviews.map(interview => ({
+      id: interview.id,
+      candidateName: `${interview.candidate.firstName} ${interview.candidate.lastName}`,
+      candidateEmail: interview.candidate.email,
+      position: interview.job.title,
+      date: interview.startedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      time: interview.startedAt?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || 'TBD',
+      location: 'Virtual',
+      status: interview.status === 'COMPLETED' ? 'completed' : interview.status === 'IN_PROGRESS' ? 'scheduled' : 'scheduled'
+    }));
+
+    res.json({
+      success: true,
+      data: transformedInterviews
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Start interview
 exports.startInterview = async (req, res, next) => {
   try {

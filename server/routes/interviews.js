@@ -5,6 +5,9 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 router.use(authenticateToken);
 
+// Get all interviews for employer (for calendar view)
+router.get('/', authorizeRoles('employer', 'admin'), interviewController.getEmployerInterviews);
+
 // Candidate routes
 router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);
 router.post('/start', authorizeRoles('candidate'), interviewController.startInterview);

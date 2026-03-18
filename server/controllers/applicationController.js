@@ -3,6 +3,55 @@ const { AppError } = require('../middleware/errorHandler');
 const { sendEmail } = require('../utils/email');
 const { logger } = require('../utils/logger');
 
+// Get employer applications (for tracking view)
+exports.getEmployerApplications = async (req, res, next) => {
+  try {
+    // Get all jobs created by this employer
+    const jobs = await prisma.job.findMany({
+      where: { createdById: req.user.id },
+      select: { id: true }
+    });
+
+    const jobIds = jobs.map(job => job.id);
+
+    // Get all applications for these jobs
+    const applications = await prisma.application.findMany({
+      where: {
+        jobId: { in: jobIds }
+      },
+      include: {
+        candidate: {
+          select: { firstName: true, lastName: true, email: true, phone: true }
+        },
+        job: {
+          select: { title: true }
+        }
+      },
+      orderBy: { appliedAt: 'desc' }
+    });
+
+    // Transform for frontend
+    const transformedApplications = applications.map(app => ({
+      id: app.id,
+      firstName: app.candidate.firstName,
+      lastName: app.candidate.lastName,
+      email: app.candidate.email,
+      phone: app.candidate.phone || '',
+      position: app.job.title,
+      status: app.status.toLowerCase(),
+      appliedDate: app.appliedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      rating: 0
+    }));
+
+    res.json({
+      success: true,
+      data: transformedApplications
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Create application
 exports.createApplication = async (req, res, next) => {
   try {

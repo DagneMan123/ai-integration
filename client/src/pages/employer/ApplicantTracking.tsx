@@ -32,7 +32,7 @@ const ApplicantTracking: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await api.get('/applications');
-      const data = response.data || [];
+      const data = response.data?.data || [];
       setApplicants(data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch applicants');

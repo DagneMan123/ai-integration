@@ -47,7 +47,31 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ai', require('./routes/ai'));
-app.use('/api/messages', require('./routes/messages'));
+
+// Messages route - only enable if migration has been run
+try {
+  if (prisma.message) {
+    app.use('/api/messages', require('./routes/messages'));
+    logger.info('✅ Message service enabled');
+  } else {
+    logger.warn('⚠️  Message service disabled - database migration not run yet');
+    // Provide a helpful endpoint
+    app.use('/api/messages', (req, res) => {
+      res.status(503).json({
+        success: false,
+        message: 'Message service is not available. Please run: npx prisma migrate dev --name add_messages'
+      });
+    });
+  }
+} catch (error) {
+  logger.warn('⚠️  Message service disabled:', error.message);
+  app.use('/api/messages', (req, res) => {
+    res.status(503).json({
+      success: false,
+      message: 'Message service is not available. Please run database migration.'
+    });
+  });
+}
 
 // Health check
 app.get('/health', (req, res) => {

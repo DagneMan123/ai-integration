@@ -5,6 +5,9 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 router.use(authenticateToken);
 
+// Get all applications for employer (for tracking view)
+router.get('/', authorizeRoles('employer', 'admin'), applicationController.getEmployerApplications);
+
 // Candidate routes
 router.post('/', authorizeRoles('candidate'), applicationController.createApplication);
 router.get('/my-applications', authorizeRoles('candidate'), applicationController.getCandidateApplications);

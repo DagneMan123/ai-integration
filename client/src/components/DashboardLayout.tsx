@@ -143,17 +143,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 gap-4">
-          <div className="flex flex-col min-w-0">
+        <header className="h-20 bg-white border-b border-slate-200 flex items-center px-4 md:px-8 shrink-0">
+          <div className="flex flex-col min-w-0 flex-1">
             <h2 className="text-lg font-bold text-slate-900 leading-tight truncate">
               {role.charAt(0).toUpperCase() + role.slice(1)} Portal
             </h2>
             <p className="text-xs text-slate-500 font-medium truncate">Professional Recruitment Workspace</p>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-6 flex-shrink-0">
-            {/* Search Bar - Hidden on mobile */}
-            <div className="hidden lg:flex items-center bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 flex-shrink-0">
+          {/* Right side controls - flex-shrink-0 prevents overlap */}
+          <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+            {/* Search Bar - Hidden on mobile, takes fixed width */}
+            <div className="hidden lg:flex items-center bg-slate-100 px-4 py-2 rounded-lg border border-slate-200 flex-shrink-0">
                 <Search size={16} className="text-slate-400 flex-shrink-0" />
                 <input 
                     type="text" 
@@ -163,9 +164,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
             </div>
 
             {/* Notification Bell */}
-            <button className="relative p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0">
+            <button className="relative p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0 hover:text-slate-600">
               <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"></span>
             </button>
 
             {/* Admin Buttons - Only show for admin role */}
@@ -199,15 +200,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
             {role !== 'admin' && (
               <button
                 onClick={() => setSettingsOpen(true)}
-                className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0"
+                className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0 hover:text-slate-600"
                 title="Settings"
               >
                 <Settings size={20} />
               </button>
             )}
             
+            {/* Divider */}
+            <div className="h-6 w-px bg-slate-200 flex-shrink-0"></div>
+            
             {/* User Profile Section */}
-            <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-6 border-l border-slate-200 flex-shrink-0">
+            <div className="flex items-center gap-3 flex-shrink-0">
               <AccountMenu 
                 userName={user?.firstName || 'User'} 
                 userRole={role}
