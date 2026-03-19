@@ -8,8 +8,6 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { adminMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
-import DashboardNotifications from '../../components/DashboardNotifications';
-import CrossDashboardSync from '../../components/CrossDashboardSync';
 import { 
   Users, 
   Briefcase, 
@@ -78,14 +76,6 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <DashboardLayout menuItems={adminMenu} role="admin">
-      {/* Notification Panel */}
-      <div className="absolute top-24 right-8 z-40">
-        <DashboardNotifications messages={messages} role="admin" onMarkAsRead={markAsRead} />
-      </div>
-
-      {/* Cross-Dashboard Sync Monitor */}
-      <CrossDashboardSync role="admin" />
-
       <div className="space-y-10 animate-in fade-in duration-700">
         
         {/* Top Header Section */}

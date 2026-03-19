@@ -69,13 +69,13 @@ export const adminMenu: MenuItem[] = [
   { path: '/admin/dashboard', label: 'Command Center', icon: <LayoutDashboard size={20} /> },
   { path: '/admin/users', label: 'User Directory', icon: <Users size={20} /> },
   { path: '/admin/companies', label: 'Organization Audit', icon: <Factory size={20} /> },
-  { path: '/admin/interviews', // Added: Global interview monitoring
+  { path: '/admin/session-monitoring', // Changed: Now a full page
     label: 'Session Monitoring', 
     icon: <ClipboardList size={20} /> 
   },
   { path: '/admin/payments', label: 'Revenue Tracker', icon: <Wallet size={20} /> },
   { path: '/admin/analytics', label: 'System Analytics', icon: <BarChart3 size={20} /> },
-  { path: '/admin/support', // Added: Support ticket management
+  { path: '/admin/support-tickets', // Changed: Now a full page
     label: 'Support Tickets', 
     icon: <MessageSquare size={20} />, 
     badge: 3 

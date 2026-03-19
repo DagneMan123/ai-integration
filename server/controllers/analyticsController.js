@@ -8,12 +8,18 @@ exports.getCandidateDashboard = async (req, res, next) => {
     const candidateId = req.user.id;
 
     // Use single optimized query instead of multiple
-    const [applicationsCount, interviewsCount, recentInterviews] = await Promise.all([
+    const [applicationsCount, interviewsCount, completedInterviewsCount, recentInterviews] = await Promise.all([
       prisma.application.count({
         where: { candidateId }
       }),
       prisma.interview.count({
         where: { candidateId }
+      }),
+      prisma.interview.count({
+        where: { 
+          candidateId,
+          status: 'COMPLETED'
+        }
       }),
       prisma.interview.findMany({
         where: { candidateId },
@@ -47,6 +53,7 @@ exports.getCandidateDashboard = async (req, res, next) => {
       data: {
         applications: applicationsCount,
         interviews: interviewsCount,
+        completedInterviews: completedInterviewsCount,
         averageScore: Math.round(avgScore),
         recentInterviews: recentInterviews.map(interview => ({
           id: interview.id,
@@ -109,9 +116,15 @@ exports.getEmployerDashboard = async (req, res, next) => {
     const employerId = req.user.id;
 
     // Combine counts and recent applications in parallel
-    const [jobsCount, applicationsCount, interviewsCount, recentApplications] = await Promise.all([
+    const [jobsCount, activeJobsCount, applicationsCount, interviewsCount, recentApplications] = await Promise.all([
       prisma.job.count({
         where: { createdById: employerId }
+      }),
+      prisma.job.count({
+        where: { 
+          createdById: employerId,
+          status: 'ACTIVE'
+        }
       }),
       prisma.application.count({
         where: {
@@ -159,6 +172,7 @@ exports.getEmployerDashboard = async (req, res, next) => {
       success: true,
       data: {
         jobs: jobsCount,
+        activeJobs: activeJobsCount,
         applications: applicationsCount,
         interviews: interviewsCount,
         recentApplications: recentApplications.map(app => ({
@@ -233,11 +247,14 @@ exports.getJobAnalytics = async (req, res, next) => {
 exports.getAdminDashboard = async (req, res, next) => {
   try {
     // Fetch all counts and role breakdown in parallel
-    const [usersCount, jobsCount, applicationsCount, interviewsCount, paymentsCount, usersByRole, recentActivity] = await Promise.all([
+    const [usersCount, jobsCount, applicationsCount, interviewsCount, completedInterviewsCount, paymentsCount, usersByRole, recentActivity] = await Promise.all([
       prisma.user.count(),
       prisma.job.count(),
       prisma.application.count(),
       prisma.interview.count(),
+      prisma.interview.count({
+        where: { status: 'COMPLETED' }
+      }),
       prisma.payment.count(),
       prisma.user.groupBy({
         by: ['role'],
@@ -269,11 +286,12 @@ exports.getAdminDashboard = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        users: usersCount,
-        jobs: jobsCount,
-        applications: applicationsCount,
-        interviews: interviewsCount,
-        payments: paymentsCount,
+        totalUsers: usersCount,
+        totalJobs: jobsCount,
+        totalApplications: applicationsCount,
+        totalInterviews: interviewsCount,
+        completedInterviews: completedInterviewsCount,
+        totalPayments: paymentsCount,
         usersByRole: roleBreakdown,
         recentActivity: recentActivity.map(log => ({
           id: log.id,

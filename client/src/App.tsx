@@ -65,6 +65,8 @@ const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 const AdminSecurity = lazy(() => import('./pages/admin/Security'));
 const AdminNotifications = lazy(() => import('./pages/admin/Notifications'));
 const AdminActivity = lazy(() => import('./pages/admin/Activity'));
+const SessionMonitoring = lazy(() => import('./pages/admin/SessionMonitoring'));
+const SupportTickets = lazy(() => import('./pages/admin/SupportTickets'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 const App: React.FC = () => {
@@ -501,6 +503,26 @@ const App: React.FC = () => {
                 <PrivateRoute role="admin">
                   <Suspense fallback={<Loading />}>
                     <AdminLogs />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/session-monitoring" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <SessionMonitoring />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/support-tickets" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <SupportTickets />
                   </Suspense>
                 </PrivateRoute>
               } 

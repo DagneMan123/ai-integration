@@ -191,6 +191,12 @@ const CandidateDashboard: React.FC = () => {
             btnText="View Tracking"
           />
         </div>
+
+        {/* Shared Dashboard Information */}
+        <div className="border-t border-gray-100 pt-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Platform Overview</h2>
+          <SharedDashboardInfo role="candidate" />
+        </div>
       </div>
     </DashboardLayout>
   );

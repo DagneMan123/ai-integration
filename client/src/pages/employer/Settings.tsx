@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { useAuthStore } from '../../store/authStore';
 import { Settings as SettingsIcon, Bell, Eye, Lock } from 'lucide-react';
 import { employerMenu } from '../../config/menuConfig';
 
