@@ -39,16 +39,24 @@ Return as JSON array with format:
 }]`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       response_format: { type: 'json_object' }
     });
 
-    const questions = JSON.parse(response.choices[0].message.content);
-    return questions.questions || questions;
+    const content = response.choices[0].message.content;
+    const parsed = JSON.parse(content);
+    const questions = parsed.questions || parsed;
+    
+    // Ensure it's an array
+    if (!Array.isArray(questions)) {
+      return generateFallbackQuestions(job, count);
+    }
+    
+    return questions;
   } catch (error) {
-    logger.error('AI question generation failed:', error);
+    logger.error('AI question generation failed:', error.message);
     return generateFallbackQuestions(job, count);
   }
 };
@@ -235,11 +243,19 @@ Return JSON: {
 }`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.4,
       response_format: { type: 'json_object' }
     });
+
+    const evaluation = JSON.parse(response.choices[0].message.content);
+    return evaluation;
+  } catch (error) {
+    logger.error('Answer evaluation failed:', error.message);
+    return generateFallbackEvaluation(question, answer);
+  }
+};
 
     const evaluation = JSON.parse(response.choices[0].message.content);
     
@@ -368,18 +384,90 @@ const generateReport = generateComprehensiveReport;
  * Fallback functions when AI is not available
  */
 function generateFallbackQuestions(job, count) {
-  const questions = [];
-  for (let i = 1; i <= count; i++) {
-    questions.push({
-      id: i,
-      question: `Question ${i}: Tell me about your experience with ${job.requiredSkills?.[0] || 'this role'}.`,
+  const defaultQuestions = [
+    {
+      id: 1,
+      question: `Tell me about your experience with ${job.requiredSkills?.[0] || 'the required technologies'}.`,
       type: 'technical',
       difficulty: 'medium',
-      expectedKeywords: job.requiredSkills || [],
+      expectedKeywords: job.requiredSkills?.slice(0, 3) || [],
+      followUpTriggers: ['project', 'experience', 'years']
+    },
+    {
+      id: 2,
+      question: `Describe a challenging project you've worked on and how you solved it.`,
+      type: 'problem-solving',
+      difficulty: 'medium',
+      expectedKeywords: ['challenge', 'solution', 'approach', 'result'],
+      followUpTriggers: ['difficult', 'problem', 'overcome']
+    },
+    {
+      id: 3,
+      question: `How do you approach learning new technologies or frameworks?`,
+      type: 'behavioral',
+      difficulty: 'easy',
+      expectedKeywords: ['learn', 'practice', 'documentation', 'community'],
+      followUpTriggers: ['learn', 'new', 'technology']
+    },
+    {
+      id: 4,
+      question: `Tell me about a time you had to work with a difficult team member. How did you handle it?`,
+      type: 'behavioral',
+      difficulty: 'medium',
+      expectedKeywords: ['communication', 'empathy', 'resolution', 'professional'],
+      followUpTriggers: ['conflict', 'difficult', 'team']
+    },
+    {
+      id: 5,
+      question: `What are your career goals for the next 3-5 years?`,
+      type: 'behavioral',
+      difficulty: 'easy',
+      expectedKeywords: ['growth', 'development', 'leadership', 'expertise'],
+      followUpTriggers: ['goal', 'future', 'career']
+    },
+    {
+      id: 6,
+      question: `How do you ensure code quality and maintainability in your projects?`,
+      type: 'technical',
+      difficulty: 'medium',
+      expectedKeywords: ['testing', 'documentation', 'review', 'standards'],
+      followUpTriggers: ['quality', 'testing', 'code']
+    },
+    {
+      id: 7,
+      question: `Describe your experience with ${job.requiredSkills?.[1] || 'database management'}.`,
+      type: 'technical',
+      difficulty: 'medium',
+      expectedKeywords: job.requiredSkills?.slice(1, 3) || [],
+      followUpTriggers: ['database', 'data', 'query']
+    },
+    {
+      id: 8,
+      question: `How do you handle tight deadlines and pressure?`,
+      type: 'behavioral',
+      difficulty: 'easy',
+      expectedKeywords: ['prioritize', 'organize', 'communicate', 'deliver'],
+      followUpTriggers: ['deadline', 'pressure', 'stress']
+    },
+    {
+      id: 9,
+      question: `What interests you most about this ${job.title} position?`,
+      type: 'behavioral',
+      difficulty: 'easy',
+      expectedKeywords: ['role', 'company', 'growth', 'challenge'],
+      followUpTriggers: ['interested', 'position', 'role']
+    },
+    {
+      id: 10,
+      question: `Do you have any questions for us about the role or company?`,
+      type: 'behavioral',
+      difficulty: 'easy',
+      expectedKeywords: ['question', 'clarification', 'interest'],
       followUpTriggers: []
-    });
-  }
-  return questions;
+    }
+  ];
+
+  return defaultQuestions.slice(0, count);
 }
 
 function generateFallbackEvaluation(question, answer) {

@@ -1,4 +1,4 @@
-const prisma = require('../lib/prisma');
+const { prisma } = require('../config/database');
 const enhancedAI = require('../services/enhancedAIService');
 const antiCheatService = require('../services/antiCheatService');
 const { AppError } = require('../middleware/errorHandler');
