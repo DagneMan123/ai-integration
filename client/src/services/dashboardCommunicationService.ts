@@ -99,8 +99,8 @@ class DashboardCommunicationService {
 
   // Broadcast alert to all dashboards
   broadcastAlert(from: DashboardRole, title: string, content: string, severity: 'info' | 'warning' | 'error'): void {
-    const message = this.sendMessage(from, 'all', 'alert', title, content, { severity });
-    this.notifyListeners('alert-broadcast', message);
+    this.sendMessage(from, 'all', 'alert', title, content, { severity });
+    this.notifyListeners('alert-broadcast', { title, content, severity });
   }
 
   // Request data from another dashboard

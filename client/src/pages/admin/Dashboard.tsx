@@ -32,7 +32,7 @@ const AdminDashboard: React.FC = () => {
   useSessionMonitoring();
 
   // Dashboard communication
-  const { messages, sendMessage, markAsRead, broadcastAlert, updateStats } = useDashboardCommunication('admin');
+  const { sendMessage, broadcastAlert, updateStats } = useDashboardCommunication('admin');
 
   const fetchDashboardData = useCallback(async () => {
     try {

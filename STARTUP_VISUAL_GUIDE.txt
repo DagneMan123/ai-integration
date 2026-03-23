@@ -1,0 +1,232 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                    SIMUAI PLATFORM - STARTUP VISUAL GUIDE                 ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+STEP 1: START POSTGRESQL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Double-click: START_POSTGRES_NOW.bat                       │
+    │                                                             │
+    │  OR                                                         │
+    │                                                             │
+    │  Win + R → services.msc → Find PostgreSQL → Start          │
+    └─────────────────────────────────────────────────────────────┘
+                              ↓
+                    ✅ PostgreSQL Running
+                    (localhost:5432)
+
+
+STEP 2: OPEN TERMINAL 1 - START SERVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Command Prompt                                             │
+    │  ─────────────────────────────────────────────────────────  │
+    │  C:\> cd server                                             │
+    │  C:\server> npm run dev                                     │
+    │                                                             │
+    │  [nodemon] starting `node index.js`                         │
+    │  Database connection established successfully via Prisma.   │
+    │  Server running on port 5000                               │
+    └─────────────────────────────────────────────────────────────┘
+                              ↓
+                    ✅ Server Running
+                    (localhost:5000)
+
+
+STEP 3: OPEN TERMINAL 2 - START CLIENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Command Prompt (NEW WINDOW)                                │
+    │  ─────────────────────────────────────────────────────────  │
+    │  C:\> cd client                                             │
+    │  C:\client> npm run dev                                     │
+    │                                                             │
+    │  Compiled successfully!                                     │
+    │  Local: http://localhost:3000                              │
+    └─────────────────────────────────────────────────────────────┘
+                              ↓
+                    ✅ Client Running
+                    (localhost:3000)
+
+
+STEP 4: OPEN BROWSER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Browser Address Bar                                        │
+    │  ─────────────────────────────────────────────────────────  │
+    │  http://localhost:3000                                      │
+    │                                                             │
+    │  ┌─────────────────────────────────────────────────────┐   │
+    │  │                                                     │   │
+    │  │           🎯 SimuAI Platform Homepage              │   │
+    │  │                                                     │   │
+    │  │  [Register]  [Login]  [Browse Jobs]                │   │
+    │  │                                                     │   │
+    │  │  💬 Chatbot Button (bottom-right corner)           │   │
+    │  │                                                     │   │
+    │  └─────────────────────────────────────────────────────┘   │
+    └─────────────────────────────────────────────────────────────┘
+                              ↓
+                    ✅ Application Ready
+
+
+ARCHITECTURE OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ┌──────────────────────────────────────────────────────────────┐
+    │                                                              │
+    │  Browser (http://localhost:3000)                            │
+    │  ├─ React Frontend                                          │
+    │  ├─ Chatbot Component (bottom-right)                        │
+    │  └─ Dashboard Pages                                         │
+    │                                                              │
+    │                          ↕ (API Calls)                      │
+    │                                                              │
+    │  Node.js Server (http://localhost:5000)                     │
+    │  ├─ Express Routes                                          │
+    │  ├─ AI Service (OpenAI GPT-4o)                             │
+    │  ├─ Interview System                                        │
+    │  └─ Authentication                                          │
+    │                                                              │
+    │                          ↕ (SQL Queries)                    │
+    │                                                              │
+    │  PostgreSQL Database (localhost:5432)                       │
+    │  ├─ Users Table                                             │
+    │  ├─ Jobs Table                                              │
+    │  ├─ Interviews Table                                        │
+    │  ├─ Applications Table                                      │
+    │  └─ Other Tables                                            │
+    │                                                              │
+    └──────────────────────────────────────────────────────────────┘
+
+
+TERMINAL LAYOUT (RECOMMENDED)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Terminal 1: Server                                         │
+    │  ─────────────────────────────────────────────────────────  │
+    │  C:\server> npm run dev                                     │
+    │  [nodemon] starting `node index.js`                         │
+    │  Server running on port 5000                               │
+    │  (Keep this running)                                        │
+    └─────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Terminal 2: Client                                         │
+    │  ─────────────────────────────────────────────────────────  │
+    │  C:\client> npm run dev                                     │
+    │  Compiled successfully!                                     │
+    │  Local: http://localhost:3000                              │
+    │  (Keep this running)                                        │
+    └─────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  Browser: http://localhost:3000                             │
+    │  ─────────────────────────────────────────────────────────  │
+    │  SimuAI Platform                                            │
+    │  (Use this to interact with the app)                        │
+    └─────────────────────────────────────────────────────────────┘
+
+
+FEATURES YOU CAN TEST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ✅ Register New Account
+       └─ Click "Register" → Fill form → Verify email
+
+    ✅ Login
+       └─ Click "Login" → Enter credentials → Access dashboard
+
+    ✅ Browse Jobs
+       └─ Click "Jobs" → View listings → Click job for details
+
+    ✅ AI Chatbot
+       └─ Click chat button (bottom-right) → Type message → Get AI response
+
+    ✅ Interview System
+       └─ Apply for job → Start interview → Answer questions → Get report
+
+    ✅ Dashboards
+       └─ Candidate: View applications, interviews, results
+       └─ Employer: Post jobs, view candidates, schedule interviews
+       └─ Admin: Manage users, view analytics, system settings
+
+
+TROUBLESHOOTING QUICK REFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ❌ "Can't reach database server"
+       → PostgreSQL not running
+       → Solution: Run START_POSTGRES_NOW.bat
+
+    ❌ "Port 5000 already in use"
+       → Another process using port 5000
+       → Solution: taskkill /F /IM node.exe
+
+    ❌ "Port 3000 already in use"
+       → Another process using port 3000
+       → Solution: taskkill /F /IM node.exe
+
+    ❌ "Module not found"
+       → Dependencies not installed
+       → Solution: npm install (in server and client folders)
+
+    ❌ "Chatbot not responding"
+       → Check OpenAI API key in server/.env
+       → Solution: Verify API key is valid
+
+
+IMPORTANT REMINDERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ⚠️  PostgreSQL MUST be running before starting the server
+    ⚠️  Keep both terminals (server and client) open while developing
+    ⚠️  Don't close the terminals - they keep the services running
+    ⚠️  If you close a terminal, restart that service
+    ⚠️  Browser will auto-refresh when you make code changes
+
+
+QUICK COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Start PostgreSQL:
+    net start postgresql-x64-16
+
+    Stop PostgreSQL:
+    net stop postgresql-x64-16
+
+    Start Server:
+    cd server && npm run dev
+
+    Start Client:
+    cd client && npm run dev
+
+    Test Database:
+    cd server && node -e "const {PrismaClient} = require('@prisma/client'); const p = new PrismaClient(); p.$connect().then(() => console.log('✅ Connected')).catch(e => console.log('❌', e.message))"
+
+
+READY TO START?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    1. ✅ Double-click: START_POSTGRES_NOW.bat
+    2. ✅ Open Terminal 1: cd server && npm run dev
+    3. ✅ Open Terminal 2: cd client && npm run dev
+    4. ✅ Open Browser: http://localhost:3000
+    5. ✅ Start exploring!
+
+═══════════════════════════════════════════════════════════════════════════════
+
+For more help:
+  - COMPLETE_STARTUP_GUIDE.md (detailed instructions)
+  - QUICK_START_CHECKLIST.txt (quick reference)
+  - DATABASE_STARTUP_SUMMARY.md (database help)
+
+═══════════════════════════════════════════════════════════════════════════════

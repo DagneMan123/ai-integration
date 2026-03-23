@@ -5,6 +5,7 @@ import { useAuthStore } from './store/authStore';
 import { SidebarProvider } from './context/SidebarContext';
 import Loading from './components/Loading';
 import GlobalSidebars from './components/GlobalSidebars';
+import Chatbot from './components/Chatbot';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -531,6 +532,7 @@ const App: React.FC = () => {
             {/* 404 - Redirect to home */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
+          <Chatbot />
         </div>
       </Router>
     </SidebarProvider>

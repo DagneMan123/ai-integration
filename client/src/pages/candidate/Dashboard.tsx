@@ -4,6 +4,7 @@ import { analyticsAPI } from '../../utils/api';
 import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
+import SharedDashboardInfo from '../../components/SharedDashboardInfo';
 import { candidateMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';

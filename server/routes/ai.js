@@ -186,4 +186,28 @@ router.post('/skill-development-plan', authenticateToken, async (req, res, next)
   }
 });
 
+// Chatbot conversation
+router.post('/chat', async (req, res, next) => {
+  try {
+    const { message, conversationHistory = [] } = req.body;
+
+    if (!message) {
+      return next(new AppError('Message is required', 400));
+    }
+
+    const response = await aiService.chatWithAI(message, conversationHistory);
+
+    res.json({
+      success: true,
+      data: {
+        response: response,
+        timestamp: new Date()
+      },
+      message: 'Chat response generated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

@@ -1,270 +1,136 @@
 const prisma = require('../lib/prisma');
-const { generateInterviewQuestions, evaluateAnswer, generateReport } = require('../services/aiService');
 const enhancedAI = require('../services/enhancedAIService');
 const antiCheatService = require('../services/antiCheatService');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
-// Get employer interviews (for calendar view)
-exports.getEmployerInterviews = async (req, res, next) => {
-  try {
-    const interviews = await prisma.interview.findMany({
-      where: {
-        job: {
-          createdById: req.user.id
-        }
-      },
-      include: {
-        candidate: { select: { firstName: true, lastName: true, email: true } },
-        job: { select: { title: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    // Transform for calendar view
-    const transformedInterviews = interviews.map(interview => ({
-      id: interview.id,
-      candidateName: `${interview.candidate.firstName} ${interview.candidate.lastName}`,
-      candidateEmail: interview.candidate.email,
-      position: interview.job.title,
-      date: interview.startedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-      time: interview.startedAt?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || 'TBD',
-      location: 'Virtual',
-      status: interview.status === 'COMPLETED' ? 'completed' : interview.status === 'IN_PROGRESS' ? 'scheduled' : 'scheduled'
-    }));
-
-    res.json({
-      success: true,
-      data: transformedInterviews
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Start interview
+// 1. Start Interview (Modified with 5 ETB Credit Logic)
 exports.startInterview = async (req, res, next) => {
   try {
     const { jobId, applicationId, interviewMode = 'text', strictnessLevel = 'moderate' } = req.body;
+    const userId = req.user.id;
 
-    // Verify job exists
-    const job = await prisma.job.findUnique({
-      where: { id: jobId }
-    });
-    if (!job) {
-      return next(new AppError('Job not found', 404));
+    // A. Check if user has sufficient credits (The 5 ETB Check)
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.credits < 1) {
+      return res.status(402).json({
+        success: false,
+        message: "Insufficient credits. Please top up 5 ETB to start this interview.",
+        requiresTopUp: true
+      });
     }
 
-    // Check if application exists and belongs to the candidate
-    const application = await prisma.application.findUnique({
-      where: { id: applicationId }
-    });
+    // B. Verify job and application
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) return next(new AppError('Job not found', 404));
 
-    if (!application || application.candidateId !== req.user.id) {
-      return next(new AppError('Application not found', 404));
+    const application = await prisma.application.findUnique({ where: { id: applicationId } });
+    if (!application || application.candidateId !== userId) {
+      return next(new AppError('Application not authorized', 403));
     }
 
-    // Check if interview already exists
+    // C. Check if interview already exists
     const existingInterview = await prisma.interview.findFirst({
-      where: {
-        applicationId,
-        status: { in: ['IN_PROGRESS', 'COMPLETED'] }
-      }
+      where: { applicationId, status: { in: ['IN_PROGRESS', 'COMPLETED'] } }
     });
+    if (existingInterview) return next(new AppError('Interview already in progress or completed', 400));
 
-    if (existingInterview) {
-      return next(new AppError('Interview already exists for this application', 400));
-    }
-
-    // Generate AI questions using enhanced service
-    const questions = await enhancedAI.generateInterviewQuestions(job, strictnessLevel, 10);
-
-    // Initialize anti-cheat session
-    antiCheatService.initializeSession(applicationId, req.user.id);
-
-    // Create interview
-    const interview = await prisma.interview.create({
-      data: {
-        jobId,
-        candidateId: req.user.id,
-        applicationId,
-        questions: questions,
-        status: 'IN_PROGRESS',
-        startedAt: new Date(),
-        interviewMode,
-        strictnessLevel,
-        antiCheatData: { 
-          tabSwitches: 0, 
-          copyPasteAttempts: 0,
-          suspiciousActivities: [],
-          browserFingerprint: null
-        },
-        identityVerification: {
-          snapshots: [],
-          verified: false
+    // D. Deduct 1 Credit (5 ETB) and Start Interview in a Transaction
+    const [updatedUser, questions, interview] = await prisma.$transaction([
+      // Deduct credit
+      prisma.user.update({
+        where: { id: userId },
+        data: { credits: { decrement: 1 } }
+      }),
+      // Generate AI questions
+      enhancedAI.generateInterviewQuestions(job, strictnessLevel, 10),
+      // Create record
+      prisma.interview.create({
+        data: {
+          jobId,
+          candidateId: userId,
+          applicationId,
+          status: 'IN_PROGRESS',
+          startedAt: new Date(),
+          interviewMode,
+          strictnessLevel,
+          questions: [], // Will be updated below
+          antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] },
+          identityVerification: { snapshots: [], verified: false }
         }
-      }
+      })
+    ]);
+
+    // Update interview with generated questions
+    const finalInterview = await prisma.interview.update({
+      where: { id: interview.id },
+      data: { questions: questions }
     });
 
-    // Update application status
-    await prisma.application.update({
-      where: { id: applicationId },
-      data: { status: 'INTERVIEW_SCHEDULED' }
-    });
-
-    logger.info(`Interview started: ${interview.id} for job ${jobId} in ${interviewMode} mode`);
+    antiCheatService.initializeSession(applicationId, userId);
 
     res.status(201).json({
       success: true,
       data: {
-        interviewId: interview.id,
-        questions: interview.questions,
-        interviewMode,
-        strictnessLevel,
-        currentQuestion: interview.questions[0],
-        requiresIdentityVerification: true
+        interviewId: finalInterview.id,
+        currentQuestion: questions[0],
+        remainingCredits: updatedUser.credits
       }
     });
   } catch (error) {
+    logger.error('Start Interview Error:', error);
     next(error);
   }
 };
 
-// Submit answer
+// 2. Submit Answer (Turn-by-turn with AI)
 exports.submitAnswer = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { questionIndex, answer, timeTaken, audioTranscript, audioDuration } = req.body;
+    const { questionIndex, answer, timeTaken, audioTranscript } = req.body;
 
     const interview = await prisma.interview.findUnique({
       where: { id },
       include: { job: true }
     });
 
-    if (!interview) {
-      return next(new AppError('Interview not found', 404));
+    if (!interview || interview.status !== 'IN_PROGRESS') {
+      return next(new AppError('Active interview session not found', 404));
     }
 
-    if (interview.candidateId !== req.user.id) {
-      return next(new AppError('Not authorized', 403));
-    }
-
-    if (interview.status !== 'IN_PROGRESS') {
-      return next(new AppError('Interview is not in progress', 400));
-    }
-
-    const questions = interview.questions;
-    const question = questions[questionIndex];
     const textToEvaluate = audioTranscript || answer;
+    const currentQuestion = interview.questions[questionIndex];
 
-    // AI Plagiarism Detection
-    const plagiarismCheck = await enhancedAI.detectAIContent(textToEvaluate);
+    // Perform AI Checks concurrently
+    const [evaluation, followUp, plagiarism] = await Promise.all([
+      enhancedAI.evaluateAnswer(currentQuestion, textToEvaluate, interview.job, interview.strictnessLevel),
+      enhancedAI.generateFollowUpQuestion(currentQuestion.question, textToEvaluate, interview.job),
+      enhancedAI.detectAIContent(textToEvaluate)
+    ]);
 
-    // Speech Analysis (if audio mode)
-    let speechAnalysis = null;
-    if (interview.interviewMode === 'audio' && audioTranscript) {
-      speechAnalysis = enhancedAI.analyzeSpeechPatterns(audioTranscript, audioDuration);
-    }
-
-    // Sentiment Analysis
-    const sentimentAnalysis = await enhancedAI.analyzeSentiment(textToEvaluate);
-
-    // Evaluate answer using enhanced AI
-    const evaluation = await enhancedAI.evaluateAnswer(
-      question,
-      textToEvaluate,
-      interview.job,
-      interview.strictnessLevel
-    );
-
-    // Check if follow-up is needed
-    const followUp = await enhancedAI.generateFollowUpQuestion(
-      question.question,
-      textToEvaluate,
-      interview.job
-    );
-
-    // Prepare responses array
     const responses = interview.responses || [];
     responses.push({
       questionIndex,
-      question: question.question,
+      question: currentQuestion.question,
       answer: textToEvaluate,
-      timeTaken,
       score: evaluation.score,
       feedback: evaluation.feedback,
-      plagiarismCheck,
-      speechAnalysis,
-      sentimentAnalysis,
-      followUp: followUp ? followUp.followUp : null
+      isAI: plagiarism.isAIGenerated,
+      followUp: followUp?.followUp || null
     });
 
-    // Update behavioral and confidence metrics
-    const behavioralMetrics = interview.behavioralMetrics || {};
-    const confidenceMetrics = interview.confidenceMetrics || {};
-
-    if (speechAnalysis) {
-      behavioralMetrics.avgSpeechRate = (behavioralMetrics.avgSpeechRate || 0) + speechAnalysis.speechRate;
-      behavioralMetrics.totalFillers = (behavioralMetrics.totalFillers || 0) + speechAnalysis.fillerCount;
-      confidenceMetrics.avgFluency = (confidenceMetrics.avgFluency || 0) + speechAnalysis.fluencyScore;
-    }
-
-    if (sentimentAnalysis) {
-      behavioralMetrics.avgSentiment = (behavioralMetrics.avgSentiment || 0) + sentimentAnalysis.sentimentScore;
-      confidenceMetrics.avgProfessionalism = (confidenceMetrics.avgProfessionalism || 0) + sentimentAnalysis.professionalismScore;
-    }
-
-    // Update plagiarism flags
-    const plagiarismFlags = interview.plagiarismFlags || { flaggedAnswers: [] };
-    if (plagiarismCheck.isAIGenerated) {
-      plagiarismFlags.flaggedAnswers.push({
-        questionIndex,
-        confidence: plagiarismCheck.confidence,
-        indicators: plagiarismCheck.indicators,
-        recommendation: plagiarismCheck.recommendation
-      });
-    }
-
-    // Update interview record
-    const updatedInterview = await prisma.interview.update({
+    // Update DB
+    await prisma.interview.update({
       where: { id },
-      data: {
-        responses,
-        behavioralMetrics,
-        confidenceMetrics,
-        plagiarismFlags
-      }
+      data: { responses }
     });
-
-    // Determine next question (could be follow-up or next in sequence)
-    let nextQuestion = null;
-    let isLastQuestion = false;
-
-    if (followUp && followUp.followUp) {
-      // Insert follow-up question
-      nextQuestion = {
-        id: `${questionIndex}-followup`,
-        question: followUp.followUp,
-        type: 'follow-up',
-        reason: followUp.reason
-      };
-    } else if (questionIndex + 1 < questions.length) {
-      nextQuestion = questions[questionIndex + 1];
-    } else {
-      isLastQuestion = true;
-    }
 
     res.json({
       success: true,
-      message: 'Answer submitted successfully',
       data: {
-        nextQuestion,
-        isLastQuestion,
-        evaluation: {
-          score: evaluation.score,
-          feedback: evaluation.feedback
-        },
-        integrityWarning: plagiarismCheck.isAIGenerated ? plagiarismCheck.recommendation : null
+        nextQuestion: followUp?.followUp ? { question: followUp.followUp, type: 'follow-up' } : interview.questions[questionIndex + 1],
+        isLastQuestion: !followUp?.followUp && questionIndex + 1 >= interview.questions.length,
+        score: evaluation.score
       }
     });
   } catch (error) {
@@ -272,196 +138,153 @@ exports.submitAnswer = async (req, res, next) => {
   }
 };
 
-// Complete interview
+// 3. Record Anti-Cheat Event
+exports.recordAntiCheatEvent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { eventType, data } = req.body;
+
+    // Use JSONB update in Prisma for performance
+    const interview = await prisma.interview.findUnique({ where: { id } });
+    if (!interview) return next(new AppError('Interview not found', 404));
+
+    const antiCheatData = interview.antiCheatData || {};
+    if (eventType === 'TAB_SWITCH') antiCheatData.tabSwitches = (antiCheatData.tabSwitches || 0) + 1;
+    if (eventType === 'COPY_PASTE') antiCheatData.copyPasteAttempts = (antiCheatData.copyPasteAttempts || 0) + 1;
+    
+    antiCheatData.suspiciousActivities.push({
+      type: eventType,
+      timestamp: new Date(),
+      metadata: data
+    });
+
+    await prisma.interview.update({
+      where: { id },
+      data: { antiCheatData }
+    });
+
+    res.json({ success: true, message: 'Event logged' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 4. Complete Interview & Final Report
 exports.completeInterview = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    const interview = await prisma.interview.findUnique({
-      where: { id },
-      include: { job: true }
+    const interview = await prisma.interview.findUnique({ 
+        where: { id },
+        include: { job: true } 
     });
 
-    if (!interview) {
-      return next(new AppError('Interview not found', 404));
-    }
-
-    if (interview.candidateId !== req.user.id) {
-      return next(new AppError('Not authorized', 403));
-    }
-
-    // Generate comprehensive AI report using enhanced service
     const report = await enhancedAI.generateComprehensiveReport(interview);
+    const integrity = antiCheatService.calculateIntegrityScore(id);
 
-    // Calculate integrity score based on anti-cheat data
-    const integrityAnalysis = antiCheatService.calculateIntegrityScore(id);
-
-    // Update Interview and Application in a transaction
     await prisma.$transaction([
       prisma.interview.update({
         where: { id },
         data: {
           status: 'COMPLETED',
           completedAt: new Date(),
-          evaluation: report,
           overallScore: report.overallScore,
-          technicalScore: report.technicalScore,
-          communicationScore: report.communicationScore,
-          problemSolvingScore: report.problemSolvingScore,
-          softSkillsScore: report.softSkillsScore,
-          confidenceScore: report.confidenceScore,
-          fluencyScore: report.fluencyScore,
-          professionalismScore: report.professionalismScore,
-          integrityScore: integrityAnalysis.score,
-          integrityRisk: integrityAnalysis.riskLevel
+          evaluation: report, // Matches your schema
+          integrityScore: integrity.score,
+          integrityRisk: integrity.riskLevel
         }
       }),
       prisma.application.update({
         where: { id: interview.applicationId },
-        data: {
-          status: 'INTERVIEWED'
-        }
+        data: { status: 'INTERVIEWED' }
       })
     ]);
 
-    // Clean up anti-cheat session
     antiCheatService.endSession(id);
 
-    logger.info(`Interview completed: ${id} with overall score ${report.overallScore}`);
-
     res.json({
       success: true,
-      data: {
-        interviewId: id,
-        overallScore: report.overallScore,
-        integrityScore: integrityAnalysis.score,
-        integrityRisk: integrityAnalysis.riskLevel,
-        reportAvailable: true
-      }
+      data: { overallScore: report.overallScore, integrityScore: integrity.score }
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Record anti-cheat event
-exports.recordAntiCheatEvent = async (req, res, next) => {
+// 5. Results for Candidate
+exports.getCandidateResults = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { eventType, timestamp, data } = req.body;
-
-    const interview = await prisma.interview.findUnique({
-      where: { id }
+    const results = await prisma.interview.findMany({
+      where: { candidateId: req.user.id, status: 'COMPLETED' },
+      include: { job: { include: { company: true } } },
+      orderBy: { completedAt: 'desc' }
     });
 
-    if (!interview || interview.candidateId !== req.user.id) {
-      return next(new AppError('Interview not found', 404));
-    }
+    res.json({ success: true, data: results });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    // Record event in anti-cheat service
-    switch (eventType) {
-      case 'TAB_SWITCH':
-        antiCheatService.recordTabSwitch(id, timestamp);
-        break;
-      case 'COPY_PASTE':
-        antiCheatService.recordCopyPaste(id, timestamp, data.content);
-        break;
-      case 'WINDOW_BLUR':
-        antiCheatService.recordWindowBlur(id, timestamp, data.duration);
-        break;
-      case 'BROWSER_FINGERPRINT':
-        antiCheatService.recordBrowserFingerprint(id, data);
-        break;
-      default:
-        return next(new AppError('Invalid event type', 400));
-    }
 
-    // Update interview anti-cheat data
-    const session = antiCheatService.sessions.get(id);
-    if (session) {
-      await prisma.interview.update({
-        where: { id },
-        data: {
-          antiCheatData: {
-            tabSwitches: session.tabSwitches,
-            copyPasteAttempts: session.copyPasteAttempts,
-            suspiciousActivities: session.suspiciousActivities,
-            browserFingerprint: session.browserFingerprint,
-            events: session.events
+// 6. Get Employer Interviews (for calendar view)
+exports.getEmployerInterviews = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const interviews = await prisma.interview.findMany({
+      where: {
+        job: {
+          createdBy: userId
+        }
+      },
+      include: {
+        job: true,
+        application: {
+          include: {
+            candidate: true
           }
         }
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Event recorded',
-      warning: session?.suspiciousActivities.length > 3 ? 'Multiple suspicious activities detected' : null
+      },
+      orderBy: { startedAt: 'desc' }
     });
+
+    res.json({ success: true, data: interviews });
   } catch (error) {
     next(error);
   }
 };
 
-// Record identity verification snapshot
-exports.recordIdentitySnapshot = async (req, res, next) => {
+// 7. Get Candidate Interviews
+exports.getCandidateInterviews = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { imageData, faceDetected, confidence, metadata } = req.body;
-
-    const interview = await prisma.interview.findUnique({
-      where: { id }
+    const userId = req.user.id;
+    const interviews = await prisma.interview.findMany({
+      where: { candidateId: userId },
+      include: {
+        job: {
+          include: { company: true }
+        },
+        application: true
+      },
+      orderBy: { startedAt: 'desc' }
     });
 
-    if (!interview || interview.candidateId !== req.user.id) {
-      return next(new AppError('Interview not found', 404));
-    }
-
-    // In production, upload imageData to cloud storage (S3, Cloudinary, etc.)
-    // For now, we'll store metadata only
-    const snapshotData = {
-      imageUrl: `snapshot_${id}_${Date.now()}`, // Placeholder
-      faceDetected,
-      confidence,
-      metadata
-    };
-
-    antiCheatService.recordIdentitySnapshot(id, snapshotData);
-
-    // Update interview identity verification
-    const session = antiCheatService.sessions.get(id);
-    if (session) {
-      await prisma.interview.update({
-        where: { id },
-        data: {
-          identityVerification: {
-            snapshots: session.identitySnapshots,
-            verified: session.identitySnapshots.every(s => s.faceDetected),
-            lastVerified: new Date()
-          }
-        }
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Identity snapshot recorded',
-      verified: faceDetected
-    });
+    res.json({ success: true, data: interviews });
   } catch (error) {
     next(error);
   }
 };
 
-// Get integrity report
-exports.getIntegrityReport = async (req, res, next) => {
+// 8. Get Interview Report
+exports.getInterviewReport = async (req, res, next) => {
   try {
     const { id } = req.params;
-
     const interview = await prisma.interview.findUnique({
       where: { id },
       include: {
-        job: { select: { title: true, createdBy: true } }
+        job: true,
+        application: {
+          include: { candidate: true }
+        }
       }
     });
 
@@ -469,130 +292,60 @@ exports.getIntegrityReport = async (req, res, next) => {
       return next(new AppError('Interview not found', 404));
     }
 
-    // Authorization: candidate, employer, or admin
-    const isOwner = interview.candidateId === req.user.id;
-    const isEmployer = interview.job.createdBy === req.user.id;
-    const isAdmin = req.user.role === 'ADMIN';
-
-    if (!isOwner && !isEmployer && !isAdmin) {
-      return next(new AppError('Not authorized', 403));
-    }
-
-    const integrityReport = {
-      integrityScore: interview.integrityScore,
-      integrityRisk: interview.integrityRisk,
-      antiCheatData: interview.antiCheatData,
-      plagiarismFlags: interview.plagiarismFlags,
-      identityVerification: interview.identityVerification,
-      recommendations: []
-    };
-
-    // Add recommendations based on risk level
-    if (interview.integrityRisk === 'HIGH') {
-      integrityReport.recommendations.push('Manual review recommended');
-      integrityReport.recommendations.push('Consider additional verification');
-    } else if (interview.integrityRisk === 'MEDIUM') {
-      integrityReport.recommendations.push('Review flagged activities');
-    }
-
-    res.json({
-      success: true,
-      data: integrityReport
-    });
+    res.json({ success: true, data: interview });
   } catch (error) {
     next(error);
   }
 };
 
-// Get candidate interview results/insights
-exports.getCandidateResults = async (req, res, next) => {
+// 9. Record Identity Snapshot
+exports.recordIdentitySnapshot = async (req, res, next) => {
   try {
-    const interviews = await prisma.interview.findMany({
-      where: { 
-        candidateId: req.user.id,
-        status: 'COMPLETED'
-      },
-      include: {
-        job: { 
-          select: { 
-            title: true,
-            company: { select: { name: true } }
-          } 
-        }
-      },
-      orderBy: { completedAt: 'desc' }
-    });
+    const { id } = req.params;
+    const { imageData, timestamp } = req.body;
 
-    // Transform data for frontend
-    const results = interviews.map(interview => ({
-      id: interview.id,
-      jobTitle: interview.job.title,
-      companyName: interview.job.company?.name || 'Unknown Company',
-      date: interview.completedAt?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-      score: interview.overallScore || 0,
-      feedback: interview.feedback || 'No feedback available',
-      strengths: interview.evaluation?.strengths || [],
-      improvements: interview.evaluation?.improvements || [],
-      status: 'completed',
-      technicalScore: interview.technicalScore || 0,
-      communicationScore: interview.communicationScore || 0,
-      problemSolvingScore: interview.problemSolvingScore || 0,
-      softSkillsScore: interview.softSkillsScore || 0
-    }));
-
-    res.json({
-      success: true,
-      data: results
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Get candidate interviews
-exports.getCandidateInterviews = async (req, res, next) => {
-  try {
-    const interviews = await prisma.interview.findMany({
-      where: { candidateId: req.user.id },
-      include: {
-        job: { select: { title: true, company: { select: { name: true } } } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    res.json({ success: true, data: interviews });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Get interview report
-exports.getInterviewReport = async (req, res, next) => {
-  try {
-    const interview = await prisma.interview.findUnique({
-      where: { id: req.params.id },
-      include: {
-        job: { select: { title: true, createdBy: true } },
-        candidate: { select: { firstName: true, lastName: true, email: true } }
-      }
-    });
-
-    if (!interview) return next(new AppError('Interview not found', 404));
-
-    // Authorization check
-    const isOwner = interview.candidateId === req.user.id;
-    const isEmployer = interview.job.createdBy === req.user.id;
-    const isAdmin = req.user.role === 'admin';
-
-    if (!isOwner && !isEmployer && !isAdmin) {
-      return next(new AppError('Not authorized', 403));
+    const interview = await prisma.interview.findUnique({ where: { id } });
+    if (!interview) {
+      return next(new AppError('Interview not found', 404));
     }
+
+    const identityVerification = interview.identityVerification || { snapshots: [], verified: false };
+    identityVerification.snapshots.push({
+      imageData,
+      timestamp: new Date(timestamp),
+      verified: false
+    });
+
+    await prisma.interview.update({
+      where: { id },
+      data: { identityVerification }
+    });
+
+    res.json({ success: true, message: 'Identity snapshot recorded' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 10. Get Integrity Report
+exports.getIntegrityReport = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const interview = await prisma.interview.findUnique({ where: { id } });
+
+    if (!interview) {
+      return next(new AppError('Interview not found', 404));
+    }
+
+    const integrityScore = antiCheatService.calculateIntegrityScore(id);
 
     res.json({
       success: true,
       data: {
-        interview,
-        report: interview.aiEvaluation
+        integrityScore: interview.integrityScore || 0,
+        integrityRisk: interview.integrityRisk || 'LOW',
+        antiCheatData: interview.antiCheatData,
+        identityVerification: interview.identityVerification
       }
     });
   } catch (error) {
@@ -600,24 +353,18 @@ exports.getInterviewReport = async (req, res, next) => {
   }
 };
 
-// Get job interviews (employer)
+// 11. Get Job Interviews
 exports.getJobInterviews = async (req, res, next) => {
   try {
     const { jobId } = req.params;
-
-    const job = await prisma.job.findUnique({ where: { id: jobId } });
-    if (!job) return next(new AppError('Job not found', 404));
-
-    if (job.createdBy !== req.user.id && req.user.role !== 'admin') {
-      return next(new AppError('Not authorized', 403));
-    }
-
     const interviews = await prisma.interview.findMany({
       where: { jobId },
       include: {
-        candidate: { select: { firstName: true, lastName: true, email: true } }
+        application: {
+          include: { candidate: true }
+        }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { startedAt: 'desc' }
     });
 
     res.json({ success: true, data: interviews });
@@ -626,75 +373,61 @@ exports.getJobInterviews = async (req, res, next) => {
   }
 };
 
-// Evaluate interview (employer manual evaluation)
+// 12. Evaluate Interview (Employer)
 exports.evaluateInterview = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { employerNotes, employerRating, decision } = req.body;
+    const { score, feedback, recommendation } = req.body;
 
-    const interview = await prisma.interview.findUnique({
-      where: { id },
-      include: { job: true }
-    });
-
-    if (!interview) return next(new AppError('Interview not found', 404));
-
-    if (interview.job.createdBy !== req.user.id && req.user.role !== 'admin') {
-      return next(new AppError('Not authorized', 403));
+    const interview = await prisma.interview.findUnique({ where: { id } });
+    if (!interview) {
+      return next(new AppError('Interview not found', 404));
     }
 
-    const updatedInterview = await prisma.interview.update({
+    const updated = await prisma.interview.update({
       where: { id },
       data: {
         employerEvaluation: {
-          notes: employerNotes,
-          rating: employerRating,
-          decision,
-          evaluatedBy: req.user.id,
+          score,
+          feedback,
+          recommendation,
           evaluatedAt: new Date()
         }
       }
     });
 
-    if (decision) {
-      await prisma.application.update({
-        where: { id: interview.applicationId },
-        data: { status: decision === 'accept' ? 'accepted' : 'rejected' }
-      });
-    }
-
-    res.json({ success: true, data: updatedInterview });
+    res.json({ success: true, data: updated });
   } catch (error) {
     next(error);
   }
 };
 
-// Get all interviews (admin)
+// 13. Get All Interviews (Admin)
 exports.getAllInterviews = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const { limit = 50, offset = 0 } = req.query;
 
-    const [interviews, count] = await prisma.$transaction([
-      prisma.interview.findMany({
-        include: {
-          candidate: { select: { firstName: true, lastName: true, email: true } },
-          job: { select: { title: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: skip,
-        take: parseInt(limit)
-      }),
-      prisma.interview.count()
-    ]);
+    const interviews = await prisma.interview.findMany({
+      include: {
+        job: true,
+        application: {
+          include: { candidate: true }
+        }
+      },
+      orderBy: { startedAt: 'desc' },
+      take: parseInt(limit),
+      skip: parseInt(offset)
+    });
+
+    const total = await prisma.interview.count();
 
     res.json({
       success: true,
       data: interviews,
       pagination: {
-        total: count,
-        page: parseInt(page),
-        pages: Math.ceil(count / limit)
+        total,
+        limit: parseInt(limit),
+        offset: parseInt(offset)
       }
     });
   } catch (error) {

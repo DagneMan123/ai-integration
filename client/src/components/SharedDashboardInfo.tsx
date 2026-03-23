@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Users, Briefcase, FileCheck, Activity, AlertCircle, Loader } from 'lucide-react';
-import crossDashboardService, { DashboardStats } from '../services/crossDashboardService';
+import crossDashboardService from '../services/crossDashboardService';
 
 interface SharedDashboardInfoProps {
   role: 'candidate' | 'employer' | 'admin';
@@ -10,13 +10,6 @@ const SharedDashboardInfo: React.FC<SharedDashboardInfoProps> = ({ role }) => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchStats();
-    // Refresh stats every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
-  }, [role]);
 
   const fetchStats = async () => {
     try {
@@ -40,6 +33,13 @@ const SharedDashboardInfo: React.FC<SharedDashboardInfoProps> = ({ role }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchStats();
+    // Refresh stats every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, [role]);
 
   if (loading) {
     return (
