@@ -41,6 +41,9 @@ model User {
   activityLogs     ActivityLog[]
   sentMessages     Message[] @relation("MessageSender")
   receivedMessages Message[] @relation("MessageRecipient")
+  subscriptions    Subscription[]
+  wallet           Wallet?
+  practiceSessions PracticeSession[]
 
   @@map("users")
 }
@@ -246,6 +249,86 @@ model Message {
   @@index([recipientId])
   @@index([createdAt])
   @@map("messages")
+}
+
+model SubscriptionPlan {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("ETB")
+  duration    Int      // in days
+  features    String[]
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id            Int      @id @default(autoincrement())
+  employerId    Int      @map("employer_id")
+  planId        Int      @map("plan_id")
+  status        String   @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED
+  startDate     DateTime @map("start_date")
+  endDate       DateTime @map("end_date")
+  cancelledAt   DateTime? @map("cancelled_at")
+  paymentMethod String?  @map("payment_method")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  employer User @relation(fields: [employerId], references: [id])
+  plan     SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([employerId])
+  @@index([planId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Wallet {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique @map("user_id")
+  balance   Decimal  @default(0) @db.Decimal(10, 2)
+  currency  String   @default("ETB")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  amount    Decimal  @db.Decimal(10, 2)
+  type      String   // TOPUP, DEDUCT, REFUND
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("wallet_transactions")
+}
+
+model PracticeSession {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  topic     String
+  difficulty String  @default("medium")
+  status    String   @default("active") // active, completed
+  startedAt DateTime @map("started_at")
+  endedAt   DateTime? @map("ended_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("practice_sessions")
 }
 
 enum UserRole {

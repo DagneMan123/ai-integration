@@ -22,7 +22,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Admin user created:', admin.email);
+  console.log('Admin user created:', admin.email);
 
   // Create sample employer
   const employerPassword = await bcrypt.hash('employer123', 12);

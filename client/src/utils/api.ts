@@ -181,7 +181,7 @@ export const paymentAPI = {
   verifyPayment: (txRef: string) => request.get<any>(`/payments/verify/${txRef}`), // Alias
   getHistory: () => request.get<Payment[]>('/payments/history'),
   getPaymentHistory: () => request.get<Payment[]>('/payments/history'), // Alias
-  getSubscription: () => request.get<any>('/payments/subscription'), // Alias
+  getSubscription: () => request.get<any>('/subscription'), // Fixed: use /subscription endpoint
 };
 
 export const companyAPI = {

@@ -5,14 +5,17 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 router.use(authenticateToken);
 
+// Candidate routes - MUST come before /:id route
+router.post('/', authorizeRoles('candidate'), applicationController.createApplication);
+router.get('/candidate/my-applications', authorizeRoles('candidate'), applicationController.getCandidateApplications);
+router.get('/my-applications', authorizeRoles('candidate'), applicationController.getCandidateApplications); // Alias
+router.delete('/:id', authorizeRoles('candidate'), applicationController.withdrawApplication);
+
+// Get single application
+router.get('/:id', applicationController.getApplication);
+
 // Get all applications for employer (for tracking view)
 router.get('/', authorizeRoles('employer', 'admin'), applicationController.getEmployerApplications);
-
-// Candidate routes
-router.post('/', authorizeRoles('candidate'), applicationController.createApplication);
-router.get('/my-applications', authorizeRoles('candidate'), applicationController.getCandidateApplications);
-router.get('/:id', applicationController.getApplication);
-router.delete('/:id', authorizeRoles('candidate'), applicationController.withdrawApplication);
 
 // Employer routes
 router.get('/job/:jobId', authorizeRoles('employer', 'admin'), applicationController.getJobApplications);

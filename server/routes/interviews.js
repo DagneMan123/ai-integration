@@ -5,21 +5,22 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 router.use(authenticateToken);
 
-// Get all interviews for employer (for calendar view)
-router.get('/', authorizeRoles('employer', 'admin'), interviewController.getEmployerInterviews);
-
-// Candidate routes
-router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);
+// Candidate routes - MUST come before /:id route
 router.post('/start', authorizeRoles('candidate'), interviewController.startInterview);
+router.get('/candidate/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews);
+router.get('/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews); // Alias
+router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);
 router.post('/:id/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.post('/:id/complete', authorizeRoles('candidate'), interviewController.completeInterview);
-router.get('/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews);
-router.get('/:id/report', interviewController.getInterviewReport);
-
-// Anti-cheat routes
 router.post('/:id/anti-cheat-event', authorizeRoles('candidate'), interviewController.recordAntiCheatEvent);
 router.post('/:id/identity-snapshot', authorizeRoles('candidate'), interviewController.recordIdentitySnapshot);
+
+// Get single interview report
+router.get('/:id/report', interviewController.getInterviewReport);
 router.get('/:id/integrity-report', interviewController.getIntegrityReport);
+
+// Get all interviews for employer (for calendar view)
+router.get('/', authorizeRoles('employer', 'admin'), interviewController.getEmployerInterviews);
 
 // Employer routes
 router.get('/job/:jobId/interviews', authorizeRoles('employer', 'admin'), interviewController.getJobInterviews);

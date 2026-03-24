@@ -75,7 +75,7 @@ const App: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <Toaster position="top-right" />

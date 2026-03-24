@@ -1,0 +1,54 @@
+========================================
+DATABASE MIGRATION INSTRUCTIONS
+========================================
+
+The subscription, wallet, and practice session tables need to be created.
+
+STEP 1: Run the Migration
+================================
+Open PowerShell in the server directory and run:
+
+  cd server
+  npx prisma migrate dev --name add_subscription_wallet_practice
+
+This will:
+- Create the migration file
+- Apply it to your database
+- Generate updated Prisma client
+
+STEP 2: Restart the Server
+================================
+After migration completes, restart your server:
+
+  npm run dev
+
+STEP 3: Test the Subscription Endpoint
+================================
+The subscription endpoint should now work without 500 errors.
+
+========================================
+WHAT IF MIGRATION FAILS?
+========================================
+
+If you get an error about existing tables:
+  - The tables might already exist
+  - Run: npx prisma db push
+  - This will sync your schema with the database
+
+If you get a connection error:
+  - Make sure PostgreSQL is running
+  - Check DATABASE_URL in server/.env
+
+If you want to reset everything:
+  - WARNING: This deletes all data!
+  - Run: npx prisma migrate reset
+  - Then run the migration again
+
+========================================
+QUICK COMMAND
+================================
+Run this to do everything at once:
+
+  cd server && npx prisma migrate dev --name add_subscription_wallet_practice && npm run dev
+
+========================================

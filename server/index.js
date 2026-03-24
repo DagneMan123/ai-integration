@@ -36,6 +36,9 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve static files (for images, logos, etc.)
+app.use(express.static('public'));
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
@@ -48,14 +51,19 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/subscription', require('./routes/subscription'));
+app.use('/api/wallet', require('./routes/wallet'));
+app.use('/api/practice', require('./routes/practice'));
+app.use('/api/webhook', require('./routes/chapaWebhook'));
+app.use('/api', require('./routes/interviewPersona'));
 
 // Messages route - only enable if migration has been run
 try {
   if (prisma.message) {
     app.use('/api/messages', require('./routes/messages'));
-    logger.info('✅ Message service enabled');
+    logger.info(' Message service enabled');
   } else {
-    logger.warn('⚠️  Message service disabled - database migration not run yet');
+    logger.warn('  Message service disabled - database migration not run yet');
     // Provide a helpful endpoint
     app.use('/api/messages', (req, res) => {
       res.status(503).json({
@@ -65,7 +73,7 @@ try {
     });
   }
 } catch (error) {
-  logger.warn('⚠️  Message service disabled:', error.message);
+  logger.warn('  Message service disabled:', error.message);
   app.use('/api/messages', (req, res) => {
     res.status(503).json({
       success: false,

@@ -192,7 +192,10 @@ router.post('/chat', async (req, res, next) => {
     const { message, conversationHistory = [] } = req.body;
 
     if (!message) {
-      return next(new AppError('Message is required', 400));
+      return res.status(400).json({
+        success: false,
+        message: 'Message is required'
+      });
     }
 
     const response = await aiService.chatWithAI(message, conversationHistory);
@@ -206,7 +209,12 @@ router.post('/chat', async (req, res, next) => {
       message: 'Chat response generated successfully'
     });
   } catch (error) {
-    next(error);
+    logger.error('Chat error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process chat message',
+      error: error.message
+    });
   }
 });
 

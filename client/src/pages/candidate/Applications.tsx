@@ -109,9 +109,10 @@ const CandidateApplications: React.FC = () => {
             filteredApplications.map((app) => {
               const { color, icon, label } = getStatusDetails(app.status);
               const jobData = typeof app.job === 'object' ? app.job : null;
+              const appKey = app.id || app._id || `app-${Math.random()}`;
 
               return (
-                <div key={app._id} className="group bg-white rounded-[2rem] border border-gray-100 p-6 md:p-8 hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300 relative overflow-hidden">
+                <div key={appKey} className="group bg-white rounded-[2rem] border border-gray-100 p-6 md:p-8 hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300 relative overflow-hidden">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
 
                     <div className="flex items-center gap-5">

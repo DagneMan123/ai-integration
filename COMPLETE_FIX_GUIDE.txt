@@ -1,0 +1,133 @@
+========================================
+COMPLETE FIX GUIDE - 500 ERROR
+========================================
+
+ERROR: Subscription endpoint returns 500 error
+
+CAUSE: Database tables don't exist
+
+SOLUTION: Run database migration
+
+========================================
+QUICK FIX (Recommended)
+========================================
+
+1. Open PowerShell in the server directory:
+   cd server
+
+2. Run the migration:
+   npx prisma migrate dev --name add_subscription_wallet_practice
+
+3. Wait for it to complete (should say "Migration applied successfully")
+
+4. Restart the server:
+   npm run dev
+
+5. Refresh your browser
+
+DONE! The 500 error should be gone.
+
+========================================
+WHAT IF IT STILL DOESN'T WORK?
+========================================
+
+Try this instead:
+
+1. cd server
+2. npx prisma db push
+3. npm run dev
+
+========================================
+AUTOMATED FIX
+========================================
+
+Run this batch file from the root directory:
+
+  FIX_500_ERROR.bat
+
+This will:
+- Stop any running servers
+- Run the migration
+- Start the server
+
+========================================
+WHAT GETS CREATED
+========================================
+
+The migration creates these database tables:
+
+1. subscription_plans
+   - Stores subscription plan definitions
+   - Basic, Professional, Premium plans
+
+2. subscriptions
+   - Tracks user subscriptions
+   - Links users to plans
+
+3. wallets
+   - User wallet/credits balance
+   - One per user
+
+4. wallet_transactions
+   - Transaction history
+   - Topups, deductions, refunds
+
+5. practice_sessions
+   - Practice interview sessions
+   - User practice data
+
+========================================
+AFTER MIGRATION
+========================================
+
+These endpoints will work:
+
+GET  /api/subscription/plans
+GET  /api/subscription
+POST /api/subscription
+POST /api/subscription/cancel
+GET  /api/subscription/history
+GET  /api/subscription/status
+
+GET  /api/wallet/balance
+POST /api/wallet/topup
+POST /api/wallet/deduct
+POST /api/wallet/refund
+GET  /api/wallet/history
+
+GET  /api/practice/sessions
+POST /api/practice/sessions
+GET  /api/practice/sessions/:id
+POST /api/practice/sessions/:id/answer
+POST /api/practice/sessions/:id/end
+GET  /api/practice/stats
+
+========================================
+TROUBLESHOOTING
+========================================
+
+Q: Migration says "Table already exists"
+A: Run: npx prisma db push
+
+Q: Connection refused error
+A: Make sure PostgreSQL is running
+   Run: start-postgres-now.bat
+
+Q: Still getting 500 error
+A: Check server logs for the actual error
+   Look in: server/logs/error.log
+
+Q: Want to start fresh
+A: Run: npx prisma migrate reset
+   WARNING: This deletes all data!
+
+========================================
+NEED HELP?
+========================================
+
+See these files for more info:
+- FIX_SUBSCRIPTION_500_ERROR.md
+- MIGRATION_INSTRUCTIONS.txt
+- server/logs/error.log (for detailed errors)
+
+========================================
