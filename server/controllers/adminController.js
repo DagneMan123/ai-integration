@@ -1,4 +1,4 @@
-const prisma = require('../lib/prisma');
+const { prisma } = require('../config/database');
 const { AppError } = require('../middleware/errorHandler');
 const { sendEmail } = require('../utils/email');
 const { logger } = require('../utils/logger');

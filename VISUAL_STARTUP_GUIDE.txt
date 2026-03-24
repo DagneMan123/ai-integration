@@ -1,0 +1,224 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    SimuAI Platform - Visual Startup Guide                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+STEP 1: START POSTGRESQL DATABASE
+═════════════════════════════════════════════════════════════════════════════
+
+  Windows Services Method:
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 1. Press: Win + R                                                   │
+  │ 2. Type: services.msc                                               │
+  │ 3. Press: Enter                                                     │
+  │ 4. Find: postgresql-x64-15 (or similar)                             │
+  │ 5. Right-click: Select "Start"                                      │
+  │ 6. Wait: Status shows "Running"                                     │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  Verify PostgreSQL is running:
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ Command: psql -U postgres -c "SELECT version();"                    │
+  │ Expected: PostgreSQL version number                                 │
+  │ Status: ✓ PostgreSQL is running                                     │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+STEP 2: START BACKEND SERVER (Port 5000)
+═════════════════════════════════════════════════════════════════════════════
+
+  Open Terminal 1:
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ Command: cd server                                                  │
+  │ Command: npm run dev                                                │
+  │                                                                     │
+  │ Expected Output:                                                    │
+  │ ✓ Database connection established successfully via Prisma.          │
+  │ ✓ AI Service initialized via Mock Mode                              │
+  │ ✓ Server running on port 5000                                       │
+  │                                                                     │
+  │ Status: ✓ Backend is running                                        │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+STEP 3: START FRONTEND CLIENT (Port 3000)
+═════════════════════════════════════════════════════════════════════════════
+
+  Open Terminal 2 (NEW TERMINAL):
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ Command: cd client                                                  │
+  │ Command: npm run dev                                                │
+  │                                                                     │
+  │ Expected Output:                                                    │
+  │ ✓ Compiled successfully!                                            │
+  │ ✓ You can now view the app in the browser.                          │
+  │ ✓ Local: http://localhost:3000                                      │
+  │                                                                     │
+  │ Status: ✓ Frontend is running                                       │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+STEP 4: VERIFY ALL SERVICES
+═════════════════════════════════════════════════════════════════════════════
+
+  Check Services Status:
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ PostgreSQL (Port 5432):  ✓ Running                                   │
+  │ Backend (Port 5000):     ✓ Running                                   │
+  │ Frontend (Port 3000):    ✓ Running                                   │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  Open Browser:
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ URL: http://localhost:3000                                          │
+  │ Expected: SimuAI Login/Register Page                                │
+  │ Status: ✓ Application is accessible                                 │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+SYSTEM ARCHITECTURE
+═════════════════════════════════════════════════════════════════════════════
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                                                                      │
+  │  Browser (http://localhost:3000)                                    │
+  │  ├─ React Frontend                                                  │
+  │  └─ TypeScript Components                                           │
+  │           │                                                         │
+  │           │ HTTP/REST API Calls                                     │
+  │           ▼                                                         │
+  │  ┌──────────────────────────────────────────────────────────────┐  │
+  │  │ Backend Server (http://localhost:5000)                       │  │
+  │  │ ├─ Express.js                                                │  │
+  │  │ ├─ Interview Controller (16 functions)                       │  │
+  │  │ ├─ Job Controller                                            │  │
+  │  │ ├─ Application Controller                                    │  │
+  │  │ └─ Auth Middleware                                           │  │
+  │  └──────────────────────────────────────────────────────────────┘  │
+  │           │                                                         │
+  │           │ SQL Queries                                             │
+  │           ▼                                                         │
+  │  ┌──────────────────────────────────────────────────────────────┐  │
+  │  │ PostgreSQL Database (localhost:5432)                         │  │
+  │  │ ├─ Users Table                                               │  │
+  │  │ ├─ Interviews Table                                          │  │
+  │  │ ├─ Jobs Table                                                │  │
+  │  │ ├─ Applications Table                                        │  │
+  │  │ └─ Companies Table                                           │  │
+  │  └──────────────────────────────────────────────────────────────┘  │
+  │                                                                      │
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+TROUBLESHOOTING
+═════════════════════════════════════════════════════════════════════════════
+
+  Problem: "Can't reach database server at localhost:5432"
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ Solution: PostgreSQL is not running                                 │
+  │ Action: Start PostgreSQL using Windows Services (Step 1)            │
+  │ Then: Restart backend server                                        │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  Problem: "Route.get() requires a callback function"
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ Solution: Interview controller functions not exported               │
+  │ Status: ✓ FIXED - All 16 functions are now exported                 │
+  │ Action: Restart backend server                                      │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  Problem: "Loading chunk failed (timeout)"
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ Solution: Webpack build cache is stale                              │
+  │ Action: Clear cache and rebuild                                     │
+  │ Commands:                                                           │
+  │   cd client                                                         │
+  │   rmdir /s /q build                                                 │
+  │   del /s /q node_modules\.cache                                     │
+  │   npm install                                                       │
+  │   npm run dev                                                       │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  Problem: "Port 5000 already in use"
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ Solution: Another process is using port 5000                        │
+  │ Action: Kill the process and restart                                │
+  │ Commands:                                                           │
+  │   netstat -ano | findstr :5000                                      │
+  │   taskkill /PID <PID> /F                                            │
+  │   npm run dev                                                       │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+QUICK COMMANDS
+═════════════════════════════════════════════════════════════════════════════
+
+  Start Backend:
+  $ cd server && npm run dev
+
+  Start Frontend:
+  $ cd client && npm run dev
+
+  Run Diagnostics:
+  $ node diagnose-system.js
+
+  Clear Frontend Cache:
+  $ cd client && rmdir /s /q build && del /s /q node_modules\.cache
+
+  Check PostgreSQL:
+  $ psql -U postgres -c "SELECT version();"
+
+  Check Port Usage:
+  $ netstat -ano | findstr :5000
+  $ netstat -ano | findstr :3000
+  $ netstat -ano | findstr :5432
+
+
+IMPORTANT NOTES
+═════════════════════════════════════════════════════════════════════════════
+
+  ⚠️  STARTUP ORDER MATTERS:
+      1. PostgreSQL (port 5432) - START FIRST
+      2. Backend (port 5000) - START SECOND
+      3. Frontend (port 3000) - START THIRD
+
+  ⚠️  KEEP TERMINALS OPEN:
+      Do NOT close the terminal windows while services are running.
+      They will stop immediately.
+
+  ⚠️  MOCK AI MODE:
+      USE_MOCK_AI=true in server/.env
+      All AI calls return fallback responses (no API quota needed)
+
+  ⚠️  DATABASE REQUIRED:
+      PostgreSQL must be running before backend server starts.
+      Backend will fail to connect if database is not available.
+
+
+VERIFICATION CHECKLIST
+═════════════════════════════════════════════════════════════════════════════
+
+  [ ] PostgreSQL is running (port 5432)
+  [ ] Backend server is running (port 5000)
+  [ ] Frontend client is running (port 3000)
+  [ ] Can access http://localhost:3000 in browser
+  [ ] No errors in browser console (F12)
+  [ ] Can login/register successfully
+  [ ] Interview section loads without errors
+  [ ] All three services are running simultaneously
+
+  If all items are checked: ✓ System is ready!
+
+
+NEXT STEPS
+═════════════════════════════════════════════════════════════════════════════
+
+  1. Start PostgreSQL (Windows Services)
+  2. Open Terminal 1: cd server && npm run dev
+  3. Open Terminal 2: cd client && npm run dev
+  4. Open Browser: http://localhost:3000
+  5. Test the application
+  6. Check browser console for any errors (F12)
+
+═════════════════════════════════════════════════════════════════════════════
+                              Ready to start? 🚀
+═════════════════════════════════════════════════════════════════════════════

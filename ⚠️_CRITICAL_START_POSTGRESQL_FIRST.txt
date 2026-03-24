@@ -1,0 +1,191 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                    ⚠️  CRITICAL - READ THIS NOW  ⚠️                       ║
+║                                                                            ║
+║                   PostgreSQL Is NOT Running                               ║
+║                   You Must Start It First                                 ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+🚨 THE ERROR YOU'RE SEEING
+═════════════════════════════════════════════════════════════════════════════
+
+Can't reach database server at `localhost:5432`
+Please make sure your database server is running at `localhost:5432`.
+
+
+❌ WHY THIS IS HAPPENING
+═════════════════════════════════════════════════════════════════════════════
+
+PostgreSQL database is NOT running on your computer.
+
+The backend server starts successfully, but when it tries to use the database,
+it fails because PostgreSQL is not available.
+
+
+✅ HOW TO FIX IT
+═════════════════════════════════════════════════════════════════════════════
+
+STEP 1: Start PostgreSQL Service
+
+Method A - Using Batch Script (EASIEST):
+  → Double-click: START_POSTGRESQL_NOW.bat
+  → Wait for it to complete
+  → It will tell you when PostgreSQL is ready
+
+Method B - Using Windows Services:
+  1. Press: Win + R
+  2. Type: services.msc
+  3. Press: Enter
+  4. Find: postgresql-x64-15 (or similar)
+  5. Right-click: Select "Start"
+  6. Wait: Status shows "Running"
+
+Method C - Using Command Line:
+  → Open Command Prompt as Administrator
+  → Run: net start postgresql-x64-15
+  → Wait for success message
+
+
+STEP 2: Verify PostgreSQL Is Running
+
+Run this command:
+  psql -U postgres -c "SELECT version();"
+
+Expected output:
+  PostgreSQL 15.x (or similar version number)
+
+If you see the version, PostgreSQL is running ✓
+
+
+STEP 3: Restart Backend Server
+
+Once PostgreSQL is running:
+  cd server
+  npm run dev
+
+Expected output:
+  Database connection established successfully via Prisma.
+  ✓ AI Service initialized via Mock Mode
+  Server running on port 5000
+
+
+STEP 4: Test the Application
+
+  1. Open browser: http://localhost:3000
+  2. Try to login
+  3. Navigate to interviews
+  4. Check browser console (F12) for errors
+
+
+🎯 STARTUP ORDER (CRITICAL!)
+═════════════════════════════════════════════════════════════════════════════
+
+ALWAYS start in this order:
+
+  1️⃣  PostgreSQL (port 5432)
+      → START FIRST
+      → Use: START_POSTGRESQL_NOW.bat or services.msc
+
+  2️⃣  Backend Server (port 5000)
+      → START SECOND
+      → Use: cd server && npm run dev
+
+  3️⃣  Frontend Client (port 3000)
+      → START THIRD
+      → Use: cd client && npm run dev
+
+
+If you start them in wrong order, you'll get connection errors!
+
+
+📋 VERIFICATION CHECKLIST
+═════════════════════════════════════════════════════════════════════════════
+
+Before restarting backend:
+  [ ] PostgreSQL is installed on your computer
+  [ ] PostgreSQL service is running
+  [ ] Port 5432 is listening
+  [ ] Database "simuai_db" exists
+
+After restarting backend:
+  [ ] Backend server starts without errors
+  [ ] "Database connection established" message appears
+  [ ] Can access http://localhost:3000
+  [ ] Can login/register successfully
+  [ ] No "Can't reach database" errors
+
+
+🔍 QUICK DIAGNOSTICS
+═════════════════════════════════════════════════════════════════════════════
+
+Check if PostgreSQL is running:
+  tasklist | findstr postgres
+
+Check if port 5432 is listening:
+  netstat -ano | findstr :5432
+
+Verify database connection:
+  psql -U postgres -c "SELECT version();"
+
+Check database exists:
+  psql -U postgres -c "\l"
+
+
+⚡ QUICK FIX (3 STEPS)
+═════════════════════════════════════════════════════════════════════════════
+
+1. Double-click: START_POSTGRESQL_NOW.bat
+   (Wait for it to complete)
+
+2. Run in terminal:
+   cd server
+   npm run dev
+
+3. Open browser:
+   http://localhost:3000
+
+
+🆘 TROUBLESHOOTING
+═════════════════════════════════════════════════════════════════════════════
+
+Problem: "PostgreSQL service not found"
+→ PostgreSQL is not installed
+→ Download from: https://www.postgresql.org/download/windows/
+→ Install with default settings
+
+Problem: "Access denied" when starting service
+→ Run Command Prompt as Administrator
+→ Then run: net start postgresql-x64-15
+
+Problem: "Port 5432 already in use"
+→ Another PostgreSQL instance is running
+→ Check: netstat -ano | findstr :5432
+→ Kill: taskkill /PID <PID> /F
+
+Problem: "Can't connect to database"
+→ Verify database "simuai_db" exists
+→ Check server/.env has correct DATABASE_URL
+→ Verify PostgreSQL user is "postgres" with password "MYlove8"
+
+
+📞 SUPPORT
+═════════════════════════════════════════════════════════════════════════════
+
+For detailed help, read:
+  → POSTGRESQL_NOT_RUNNING.md
+  → READ_THIS_FIRST.txt
+  → STARTUP_GUIDE_COMPLETE.md
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+                    DO THIS NOW:
+
+                    1. Double-click: START_POSTGRESQL_NOW.bat
+                    2. Wait for it to complete
+                    3. Restart backend server
+                    4. Test at http://localhost:3000
+
+═════════════════════════════════════════════════════════════════════════════

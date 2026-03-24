@@ -1,4 +1,4 @@
-const prisma = require('../lib/prisma');
+const { prisma } = require('../config/database');
 const { initializeChapa, verifyChapa } = require('../services/chapaService');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');

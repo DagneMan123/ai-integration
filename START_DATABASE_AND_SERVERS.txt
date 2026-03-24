@@ -1,0 +1,125 @@
+COMPLETE STARTUP GUIDE
+======================
+
+STEP 1: START POSTGRESQL DATABASE
+----------------------------------
+1. Open PowerShell as Administrator
+2. Run: start-postgres-now.bat
+   OR manually:
+   - Open Services (services.msc)
+   - Find "PostgreSQL"
+   - Right-click → Start
+   - Wait 10 seconds for it to start
+
+3. Verify it's running:
+   netstat -ano | findstr :5432
+   (Should show a process listening on port 5432)
+
+STEP 2: START SERVER
+--------------------
+1. Open PowerShell
+2. Navigate to server folder:
+   cd server
+
+3. Start server:
+   npm run dev
+
+4. Wait for message:
+   "Database connection established successfully via Prisma."
+
+STEP 3: START CLIENT
+--------------------
+1. Open another PowerShell
+2. Navigate to client folder:
+   cd client
+
+3. Start client:
+   npm run dev
+
+4. Browser should open at http://localhost:3000
+
+VERIFICATION CHECKLIST
+======================
+✓ PostgreSQL running on port 5432
+✓ Server running on port 5000
+✓ Client running on port 3000
+✓ No errors in server console
+✓ No errors in browser console
+✓ Can login to application
+
+TROUBLESHOOTING
+===============
+
+If PostgreSQL won't start:
+1. Check if port 5432 is in use:
+   netstat -ano | findstr :5432
+
+2. If in use, kill the process:
+   taskkill /PID <PID> /F
+
+3. Try starting again
+
+If server won't connect to database:
+1. Verify PostgreSQL is running
+2. Check .env file has correct DATABASE_URL
+3. Verify database exists: simuai_db
+4. Check credentials are correct
+
+If client won't load:
+1. Clear browser cache: Ctrl+Shift+R
+2. Check server is running on port 5000
+3. Check client is running on port 3000
+4. Check browser console for errors
+
+QUICK START SCRIPT
+==================
+Create a file called "start-all.bat":
+
+@echo off
+echo Starting PostgreSQL...
+start start-postgres-now.bat
+
+echo Waiting for database...
+timeout /t 5
+
+echo Starting Server...
+start cmd /k "cd server && npm run dev"
+
+echo Waiting for server...
+timeout /t 3
+
+echo Starting Client...
+start cmd /k "cd client && npm run dev"
+
+echo.
+echo All services starting...
+echo Server: http://localhost:5000
+echo Client: http://localhost:3000
+echo.
+pause
+
+Then just run: start-all.bat
+
+IMPORTANT NOTES
+===============
+- Always start PostgreSQL FIRST
+- Always start Server SECOND
+- Always start Client THIRD
+- Keep all three running while developing
+- Don't close any terminal windows
+- If something crashes, restart that service
+
+DATABASE CONNECTION STRING
+===========================
+Should be in server/.env:
+DATABASE_URL="postgresql://user:password@localhost:5432/simuai_db"
+
+If missing, add it and restart server.
+
+PORTS USED
+==========
+- PostgreSQL: 5432
+- Server: 5000
+- Client: 3000
+
+Make sure these ports are not blocked by firewall.

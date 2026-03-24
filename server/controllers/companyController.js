@@ -1,4 +1,4 @@
-const prisma = require('../lib/prisma');
+const { prisma } = require('../config/database');
 const { AppError } = require('../middleware/errorHandler');
 const { uploadToCloud } = require('../utils/cloudStorage');
 

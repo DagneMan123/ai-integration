@@ -18,6 +18,7 @@ const InterviewSession: React.FC = () => {
   const navigate = useNavigate();
   const [interview, setInterview] = useState<any>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -26,13 +27,15 @@ const InterviewSession: React.FC = () => {
   const fetchInterview = useCallback(async () => {
     try {
       const response = await interviewAPI.getInterviewReport(id!);
-      const data = (response.data.data as any).interview;
+      const data = response.data.data as any;
       setInterview(data);
-      if (data.questions && data.currentQuestionIndex < data.questions.length) {
-        setCurrentQuestion(data.questions[data.currentQuestionIndex]);
-        setTimeLeft(data.timeLimit * 60);
+      if (data?.questions && data.questions.length > 0) {
+        setCurrentQuestion(data.questions[0]);
+        setCurrentQuestionIndex(0);
+        setTimeLeft(data.timeLimit ? data.timeLimit * 60 : 3600); // Default 1 hour
       }
     } catch (error) {
+      console.error('Session loading error:', error);
       toast.error('Session loading failed');
       navigate('/candidate/interviews');
     } finally {
@@ -60,22 +63,23 @@ const InterviewSession: React.FC = () => {
     setSubmitting(true);
     try {
       await interviewAPI.submitAnswer(id!, {
-        questionIndex: interview.currentQuestionIndex,
+        questionIndex: currentQuestionIndex,
         answer,
-        timeTaken: (interview.timeLimit * 60) - timeLeft
+        timeTaken: (interview.timeLimit ? interview.timeLimit * 60 : 3600) - timeLeft
       });
 
-      if (interview.currentQuestionIndex + 1 >= interview.questions.length) {
+      if (currentQuestionIndex + 1 >= interview.questions.length) {
         await interviewAPI.completeInterview(id!);
         toast.success('Interview completed!');
         navigate(`/candidate/interview/${id}/report`);
       } else {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setCurrentQuestion(interview.questions[currentQuestionIndex + 1]);
         setAnswer('');
-        await fetchInterview();
-        window.scrollTo(0, 0);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Submission failed');
+      console.error('Submit error:', error);
+      toast.error(error.response?.data?.message || 'Submission failed');
     } finally {
       setSubmitting(false);
     }
@@ -89,7 +93,7 @@ const InterviewSession: React.FC = () => {
 
   if (loading) return <Loading />;
 
-  const progress = ((interview?.currentQuestionIndex + 1) / interview?.questions?.length) * 100;
+  const progress = interview?.questions?.length ? ((currentQuestionIndex + 1) / interview.questions.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-[#fcfcfd] flex flex-col">
@@ -109,7 +113,7 @@ const InterviewSession: React.FC = () => {
                     style={{ width: `${progress}%` }} 
                   />
                 </div>
-                <span className="text-[10px] font-bold text-gray-400">Step {interview?.currentQuestionIndex + 1}/{interview?.questions?.length}</span>
+                <span className="text-[10px] font-bold text-gray-400">Step {currentQuestionIndex + 1}/{interview?.questions?.length}</span>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-const prisma = require('../lib/prisma');
+const { prisma } = require('../config/database');
 const { generateToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { sendEmail } = require('../utils/email');
 const { AppError } = require('../middleware/errorHandler');

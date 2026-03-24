@@ -1,0 +1,81 @@
+WEBPACK CHUNK LOADING ERROR - QUICK FIX
+=====================================
+
+ERROR: Loading chunk src_components_DashboardLayout_tsx-src_config_menuConfig_tsx failed (timeout)
+
+CAUSE: Build cache is stale or dev server not running
+
+QUICK FIX (Choose One):
+
+Option 1: Run Fix Script (EASIEST)
+----------------------------------
+1. Open PowerShell in project root
+2. Run: fix-chunk-error.bat
+3. Wait for build to complete
+4. Browser should auto-refresh
+
+Option 2: Manual Fix
+-------------------
+1. Stop all running servers (Ctrl+C)
+
+2. Clear cache:
+   cd client
+   rmdir /s /q build
+   rmdir /s /q node_modules\.cache
+
+3. Rebuild:
+   npm run build
+
+4. Start servers:
+   Terminal 1: cd server && npm run dev
+   Terminal 2: cd client && npm run dev
+
+5. Hard refresh browser: Ctrl+Shift+R
+
+Option 3: Complete Reset
+------------------------
+1. Stop all servers
+
+2. Clear everything:
+   cd client
+   rmdir /s /q build
+   rmdir /s /q node_modules
+   npm install
+
+3. Rebuild:
+   npm run build
+
+4. Start:
+   Terminal 1: cd server && npm run dev
+   Terminal 2: cd client && npm run dev
+
+5. Hard refresh: Ctrl+Shift+R
+
+VERIFY FIX:
+-----------
+✓ Both servers running (port 5000 and 3000)
+✓ No errors in browser console
+✓ Dashboard loads without timeout
+✓ All pages accessible
+
+STILL NOT WORKING?
+------------------
+1. Check if servers are running:
+   - Server: http://localhost:5000
+   - Client: http://localhost:3000
+
+2. Check browser console (F12)
+   - Look for specific error messages
+   - Check Network tab for failed requests
+
+3. Check for port conflicts:
+   netstat -ano | findstr :3000
+
+4. Try hard refresh: Ctrl+Shift+R
+
+5. Clear browser storage:
+   - DevTools → Application
+   - Clear Local Storage
+   - Clear Cookies
+
+RECOMMENDED: Use Option 1 (fix-chunk-error.bat) for fastest resolution.

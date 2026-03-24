@@ -17,13 +17,15 @@ import {
   ArrowRight, 
   UserCircle,
   Clock,
-  TrendingUp
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 
 const CandidateDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Session monitoring
   useSessionMonitoring();
@@ -33,19 +35,16 @@ const CandidateDashboard: React.FC = () => {
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      // Set timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      setRefreshing(true);
+      setError(null);
       
       const response = await analyticsAPI.getCandidateDashboard();
-      clearTimeout(timeoutId);
+      const dashboardData = response.data.data;
       
-      const dashboardData = response.data.data || null;
       setData(dashboardData);
-    } catch (error) {
-      console.error('Dashboard fetch error:', error);
-      // Show cached data or empty state instead of error
-      setData(null);
+    } catch (err: any) {
+      console.error('Dashboard fetch error:', err);
+      setError('Failed to sync dashboard data. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -53,15 +52,18 @@ const CandidateDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Load dashboard immediately
     fetchDashboardData();
-    
-    // Refresh every 60 seconds instead of 30
     const interval = setInterval(fetchDashboardData, 60000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
   if (loading) return <Loading />;
+
+  // Helper to ensure we show the correct count (handles both number and array responses)
+  const getCount = (val: any) => {
+    if (Array.isArray(val)) return val.length;
+    return val || 0;
+  };
 
   return (
     <DashboardLayout menuItems={candidateMenu} role="candidate">
@@ -71,11 +73,11 @@ const CandidateDashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Welcome back! 👋</h1>
-            <p className="text-gray-500 font-medium mt-1">Here's what's happening with your job search today.</p>
+            <p className="text-gray-500 font-medium mt-1">Review your latest interview progress and applications.</p>
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setRefreshing(true); fetchDashboardData(); }}
+              onClick={fetchDashboardData}
               disabled={refreshing}
               className="p-2.5 text-gray-500 hover:text-blue-600 bg-white border border-gray-100 rounded-xl shadow-sm transition-all active:scale-95"
             >
@@ -91,26 +93,33 @@ const CandidateDashboard: React.FC = () => {
           </div>
         </div>
 
+        {error && (
+          <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl">
+            <AlertCircle className="w-5 h-5" />
+            <p className="text-sm font-bold">{error}</p>
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard 
             title="Applications" 
-            value={data?.applications || 0} 
-            subtitle="Active job pursuits"
+            value={getCount(data?.applications)} 
+            subtitle="Total jobs applied"
             icon={<Briefcase className="w-6 h-6 text-blue-600" />}
             color="blue"
           />
           <StatCard 
             title="Interviews" 
-            value={data?.interviews || 0} 
-            subtitle="Scheduled meetings"
+            value={getCount(data?.interviews)} 
+            subtitle="Scheduled sessions"
             icon={<Calendar className="w-6 h-6 text-emerald-600" />}
             color="emerald"
           />
           <StatCard 
             title="Avg Score" 
             value={data?.averageScore ? `${data.averageScore.toFixed(1)}%` : 'N/A'} 
-            subtitle="Performance metric"
+            subtitle="Performance accuracy"
             icon={<Trophy className="w-6 h-6 text-purple-600" />}
             color="purple"
           />
@@ -121,10 +130,10 @@ const CandidateDashboard: React.FC = () => {
           <div className="p-8 border-b border-gray-50 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Recent Interviews</h2>
-              <p className="text-sm text-gray-500 font-medium">Keep track of your latest assessments</p>
+              <p className="text-sm text-gray-500 font-medium">Detailed performance history</p>
             </div>
             <Link to="/candidate/interviews" className="text-sm font-bold text-blue-600 hover:underline underline-offset-4">
-              View Schedule
+              Full History
             </Link>
           </div>
 
@@ -138,8 +147,8 @@ const CandidateDashboard: React.FC = () => {
                         <TrendingUp className="w-6 h-6" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-bold text-gray-900 truncate">{interview.jobTitle}</h4>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">{interview.companyName}</p>
+                        <h4 className="font-bold text-gray-900 truncate">{interview.jobTitle || 'Role Not Specified'}</h4>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">{interview.companyName || 'Private Organization'}</p>
                       </div>
                     </div>
                     
@@ -147,12 +156,14 @@ const CandidateDashboard: React.FC = () => {
                       <div className="hidden md:block text-right">
                         <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5 whitespace-nowrap">
                           <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                          {new Date(interview.date).toLocaleDateString()}
+                          {interview.date && !isNaN(Date.parse(interview.date)) 
+                            ? new Date(interview.date).toLocaleDateString() 
+                            : 'Pending Date'}
                         </p>
-                        <p className="text-xs font-medium text-gray-400">Interview Date</p>
+                        <p className="text-xs font-medium text-gray-400">Activity Date</p>
                       </div>
                       
-                      {interview.score && (
+                      {interview.score !== undefined && interview.score !== null && (
                         <div className="w-12 h-12 rounded-full border-4 border-blue-50 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-black text-blue-600">{interview.score}</span>
                         </div>
@@ -166,44 +177,38 @@ const CandidateDashboard: React.FC = () => {
             ) : (
               <div className="text-center py-10">
                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-10 h-10 text-gray-200" />
+                  <Search className="w-10 h-10 text-gray-200" />
                 </div>
-                <p className="text-gray-500 font-bold">No upcoming interviews</p>
-                <p className="text-gray-400 text-sm">Your schedule is currently clear.</p>
+                <p className="text-gray-500 font-bold">No active sessions found</p>
+                <p className="text-gray-400 text-sm">Apply for a job to start your AI interview.</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Quick Actions Grid */}
+        {/* Quick Actions */}
         <div className="grid md:grid-cols-2 gap-6">
           <ActionCard 
-            title="Complete Your Profile"
-            desc="Improve your visibility to employers by 40%."
+            title="Professional Profile"
+            desc="Keep your skills updated to match new job postings."
             link="/candidate/profile"
             icon={<UserCircle className="w-8 h-8 text-blue-600" />}
-            btnText="Edit Profile"
+            btnText="Settings"
           />
           <ActionCard 
-            title="Application Status"
-            desc="Check where you stand in your applied roles."
+            title="Applications Tracker"
+            desc="Track the status of all your current job submissions."
             link="/candidate/applications"
             icon={<Briefcase className="w-8 h-8 text-orange-600" />}
-            btnText="View Tracking"
+            btnText="View List"
           />
-        </div>
-
-        {/* Shared Dashboard Information */}
-        <div className="border-t border-gray-100 pt-10">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Platform Overview</h2>
-          <SharedDashboardInfo role="candidate" />
         </div>
       </div>
     </DashboardLayout>
   );
 };
 
-/* --- Sub-Components --- */
+/* --- UI Sub-Components --- */
 
 const StatCard = ({ title, value, subtitle, icon, color }: any) => {
   const colors: any = {
@@ -219,7 +224,7 @@ const StatCard = ({ title, value, subtitle, icon, color }: any) => {
           <h3 className="text-4xl font-black text-gray-900 mt-2">{value}</h3>
           <p className="text-sm font-medium text-gray-500 mt-1">{subtitle}</p>
         </div>
-        <div className="p-3 bg-white rounded-2xl shadow-sm italic">
+        <div className="p-3 bg-white rounded-2xl shadow-sm">
           {icon}
         </div>
       </div>
@@ -228,14 +233,17 @@ const StatCard = ({ title, value, subtitle, icon, color }: any) => {
 };
 
 const StatusBadge = ({ status }: { status: string }) => {
+  const normalizedStatus = status?.toUpperCase();
   const styles: any = {
     COMPLETED: "bg-emerald-100 text-emerald-700",
     IN_PROGRESS: "bg-blue-100 text-blue-700",
     SCHEDULED: "bg-amber-100 text-amber-700",
+    PENDING: "bg-gray-100 text-gray-600",
+    REJECTED: "bg-red-100 text-red-700"
   };
   return (
-    <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-tight ${styles[status] || "bg-gray-100"}`}>
-      {status.replace('_', ' ')}
+    <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-tight ${styles[normalizedStatus] || "bg-gray-100 text-gray-500"}`}>
+      {status ? status.replace('_', ' ') : 'UNKNOWN'}
     </span>
   );
 };
