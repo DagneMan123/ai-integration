@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { interviewAPI } from '../../utils/api';
-import { Interview } from '../../types';
+import { interviewAPI, jobAPI } from '../../utils/api';
+import { Interview, Job } from '../../types';
 import Loading from '../../components/Loading';
 import { 
   CheckCircle2, 
@@ -15,23 +15,65 @@ import {
   Mic,
   Video,
   Type,
-  Trophy
+  Trophy,
+  MapPin,
+  Briefcase,
+  DollarSign
 } from 'lucide-react';
 
 const CandidateInterviews: React.FC = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [jobsMap, setJobsMap] = useState<Record<string, Job>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchInterviews();
+    fetchInterviewsWithJobs();
   }, []);
 
-  const fetchInterviews = async () => {
+  const fetchInterviewsWithJobs = async () => {
     try {
-      const response = await interviewAPI.getCandidateInterviews();
-      setInterviews(response.data.data || []);
-    } catch (error) {
-      console.error('Failed to fetch interviews', error);
+      setLoading(true);
+      setError(null);
+
+      // Fetch interviews
+      const interviewResponse = await interviewAPI.getCandidateInterviews();
+      const interviewsData = interviewResponse.data?.data || [];
+      
+      console.log('Interviews fetched:', interviewsData);
+
+      // Extract job IDs from interviews
+      const jobIds = new Set<string>();
+      interviewsData.forEach((interview: any) => {
+        if (interview.jobId) {
+          jobIds.add(interview.jobId);
+        } else if (interview.job && typeof interview.job === 'string') {
+          jobIds.add(interview.job);
+        }
+      });
+
+      console.log('Job IDs to fetch:', Array.from(jobIds));
+
+      // Fetch job details for each job ID
+      const jobsData: Record<string, Job> = {};
+      for (const jobId of jobIds) {
+        try {
+          const jobResponse = await jobAPI.getJob(jobId);
+          if (jobResponse.data?.data) {
+            jobsData[jobId] = jobResponse.data.data;
+          }
+        } catch (err) {
+          console.error(`Failed to fetch job ${jobId}:`, err);
+        }
+      }
+
+      console.log('Jobs fetched:', jobsData);
+
+      setJobsMap(jobsData);
+      setInterviews(interviewsData);
+    } catch (error: any) {
+      console.error('Failed to fetch interviews:', error);
+      setError('Failed to load interviews. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -55,6 +97,18 @@ const CandidateInterviews: React.FC = () => {
     }
   };
 
+  const getJobData = (interview: any) => {
+    // Try to get job from jobsMap first
+    if (interview.jobId && jobsMap[interview.jobId]) {
+      return jobsMap[interview.jobId];
+    }
+    // Fallback to interview.job if it's an object
+    if (interview.job && typeof interview.job === 'object') {
+      return interview.job;
+    }
+    return null;
+  };
+
   if (loading) return <Loading />;
 
   return (
@@ -67,14 +121,21 @@ const CandidateInterviews: React.FC = () => {
           <p className="text-gray-500 font-medium mt-2">Manage your AI assessments and view performance reports.</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
+        )}
+
         <div className="grid gap-6">
           {interviews.length > 0 ? (
             interviews.map((interview) => {
               const { color, icon, label } = getStatusConfig(interview.status);
-              const jobData = typeof interview.job === 'object' ? interview.job : null;
+              const jobData = getJobData(interview);
 
               return (
-                <div key={interview._id} className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 p-6 md:p-8 overflow-hidden relative">
+                <div key={interview._id || interview.id} className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 p-6 md:p-8 overflow-hidden relative">
                   
                   {/* Decorative corner for completed ones */}
                   {interview.status === 'completed' && (
@@ -100,15 +161,35 @@ const CandidateInterviews: React.FC = () => {
                         <h3 className="text-xl md:text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">
                           {jobData ? jobData.title : 'General Assessment'}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2">
-                          <span className="flex items-center gap-2 text-sm font-semibold text-gray-500">
-                            <Building2 className="w-4 h-4 text-gray-400" />
-                            {jobData?.company?.name || 'SimuAI Talent Pool'}
-                          </span>
-                          <span className="flex items-center gap-2 text-sm font-semibold text-gray-500">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            {new Date(interview.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
+                        
+                        {/* Job Details */}
+                        {jobData && (
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-3 text-sm font-semibold text-gray-500">
+                            <span className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-gray-400" />
+                              {jobData.company?.name || 'Company'}
+                            </span>
+                            <span className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-gray-400" />
+                              {jobData.location || 'Remote'}
+                            </span>
+                            <span className="flex items-center gap-2">
+                              <Briefcase className="w-4 h-4 text-gray-400" />
+                              {jobData.experienceLevel || 'Entry Level'}
+                            </span>
+                            {jobData.salary?.min && (
+                              <span className="flex items-center gap-2 text-emerald-600">
+                                <DollarSign className="w-4 h-4" />
+                                {`${(jobData.salary.min/1000)}k - ${(jobData.salary.max/1000)}k`}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Interview Date */}
+                        <div className="flex items-center gap-2 mt-3 text-sm font-semibold text-gray-500">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          {new Date(interview.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
                       </div>
                     </div>
@@ -125,7 +206,7 @@ const CandidateInterviews: React.FC = () => {
                             </div>
                           </div>
                           <Link
-                            to={`/candidate/interview/${interview._id}/report`}
+                            to={`/candidate/interview/${interview._id || interview.id}/report`}
                             className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-3.5 rounded-2xl font-bold hover:bg-black transition-all shadow-lg active:scale-95"
                           >
                             <FileText className="w-4 h-4" />
@@ -134,7 +215,7 @@ const CandidateInterviews: React.FC = () => {
                         </div>
                       ) : interview.status === 'in_progress' ? (
                         <Link
-                          to={`/candidate/interview/${interview._id}`}
+                          to={`/candidate/interview/${interview._id || interview.id}`}
                           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
                         >
                           Continue Session
@@ -142,7 +223,7 @@ const CandidateInterviews: React.FC = () => {
                         </Link>
                       ) : interview.status === 'pending' ? (
                         <Link
-                          to={`/candidate/interview/${interview._id}`}
+                          to={`/candidate/interview/${interview._id || interview.id}`}
                           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 active:scale-95"
                         >
                           Start Interview

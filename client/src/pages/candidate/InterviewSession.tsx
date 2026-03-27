@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { interviewAPI } from '../../utils/api';
+import { interviewAPI, jobAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
 import toast from 'react-hot-toast';
 import { 
@@ -10,13 +10,18 @@ import {
   ChevronRight, 
   Cpu, 
   Maximize2,
-  Info
+  Info,
+  Building2,
+  MapPin,
+  Briefcase,
+  DollarSign
 } from 'lucide-react';
 
 const InterviewSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [interview, setInterview] = useState<any>(null);
+  const [job, setJob] = useState<any>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -29,6 +34,18 @@ const InterviewSession: React.FC = () => {
       const response = await interviewAPI.getInterviewReport(id!);
       const data = response.data.data as any;
       setInterview(data);
+      
+      // Fetch job details if jobId exists
+      if (data?.jobId) {
+        try {
+          const jobResponse = await jobAPI.getJob(data.jobId);
+          setJob(jobResponse.data?.data);
+          console.log('Job fetched:', jobResponse.data?.data);
+        } catch (jobError) {
+          console.error('Failed to fetch job:', jobError);
+        }
+      }
+      
       if (data?.questions && data.questions.length > 0) {
         setCurrentQuestion(data.questions[0]);
         setCurrentQuestionIndex(0);
@@ -183,6 +200,70 @@ const InterviewSession: React.FC = () => {
 
         {/* Sidebar Guidelines */}
         <div className="lg:col-span-4 space-y-6">
+          {/* Job Information Card */}
+          {job && (
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[2rem] border border-blue-100 shadow-sm p-6">
+              <h3 className="text-sm font-black text-blue-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-blue-600" /> Position Details
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Job Title</p>
+                  <p className="text-sm font-bold text-gray-900">{job.title}</p>
+                </div>
+                
+                {job.company && (
+                  <div>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                      <Building2 className="w-3 h-3" /> Company
+                    </p>
+                    <p className="text-sm font-bold text-gray-900">{job.company.name}</p>
+                  </div>
+                )}
+                
+                {job.location && (
+                  <div>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> Location
+                    </p>
+                    <p className="text-sm font-bold text-gray-900">{job.location}</p>
+                  </div>
+                )}
+                
+                {job.experienceLevel && (
+                  <div>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Experience Level</p>
+                    <p className="text-sm font-bold text-gray-900 capitalize">{job.experienceLevel}</p>
+                  </div>
+                )}
+                
+                {job.salary?.min && (
+                  <div>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                      <DollarSign className="w-3 h-3" /> Salary Range
+                    </p>
+                    <p className="text-sm font-bold text-emerald-600">
+                      ${(job.salary.min/1000)}k - ${(job.salary.max/1000)}k {job.salary.currency}
+                    </p>
+                  </div>
+                )}
+                
+                {job.requiredSkills && job.requiredSkills.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">Required Skills</p>
+                    <div className="flex flex-wrap gap-2">
+                      {job.requiredSkills.slice(0, 5).map((skill: string, idx: number) => (
+                        <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-lg">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6">
             <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
               <Info className="w-4 h-4 text-blue-600" /> Guidelines

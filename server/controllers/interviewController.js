@@ -22,7 +22,7 @@ exports.startInterview = async (req, res, next) => {
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) return next(new AppError('Job not found', 404));
     const questions = await enhancedAI.generateInterviewQuestions(job, strictnessLevel, 10);
-    const [updatedUser, interview] = await prisma.$transaction([
+    const [, interview] = await prisma.$transaction([
       prisma.user.update({ where: { id: userId }, data: { credits: { decrement: 1 } } }),
       prisma.interview.create({
         data: {

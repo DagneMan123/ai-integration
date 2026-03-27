@@ -8,7 +8,14 @@ const { logger } = require('../utils/logger');
  */
 exports.getAllJobs = async (req, res, next) => {
   try {
-    const { search, experienceLevel, location, page = 1, limit = 10, sort = 'createdAt' } = req.query;
+    const { 
+      search, 
+      experienceLevel, 
+      location, 
+      page = 1, 
+      limit = 10, 
+      sort = 'createdAt' 
+    } = req.query;
 
     const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
     const take = parseInt(limit, 10);
@@ -44,22 +51,29 @@ exports.getAllJobs = async (req, res, next) => {
 
     res.json({
       success: true,
+      count: jobs.length,
+      total: count,
       data: jobs,
-      pagination: { total: count, page: parseInt(page, 10), pages: Math.ceil(count / take) }
+      pagination: {
+        total: count,
+        page: parseInt(page, 10),
+        pages: Math.ceil(count / take)
+      }
     });
   } catch (error) {
+    logger.error('Error in getAllJobs:', error.message);
     next(error);
   }
 };
 
 /**
  * POST /api/jobs
- * Employer Only: Create a job
+ * Employer Only: Create a new job post
  */
 exports.createJob = async (req, res, next) => {
   try {
     if (req.user.role !== 'EMPLOYER' && req.user.role !== 'ADMIN') {
-      return next(new AppError('Unauthorized: Only employers can create jobs.', 403));
+      return next(new AppError('Only employers can create jobs.', 403));
     }
 
     const company = await prisma.company.findFirst({
@@ -67,13 +81,13 @@ exports.createJob = async (req, res, next) => {
     });
 
     if (!company) {
-      return next(new AppError('Company profile not found. Please complete it first.', 404));
+      return next(new AppError('Please create a company profile first.', 400));
     }
 
     const { title, description, location, requiredSkills, experienceLevel, jobType, interviewType } = req.body;
     
     if (!title || !description || !location) {
-      return next(new AppError('Missing required fields: Title, Description, or Location', 400));
+      return next(new AppError('Please provide title, description, and location.', 400));
     }
 
     const job = await prisma.job.create({
@@ -91,56 +105,8 @@ exports.createJob = async (req, res, next) => {
       }
     });
 
-    logger.info(`Job Created: ${job.title} by Employer ID: ${req.user.id}`);
+    logger.info(`New Job Created: ${job.title} (ID: ${job.id})`);
     res.status(201).json({ success: true, data: job });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * PATCH /api/jobs/:id
- * Employer Only: Update job details
- */
-exports.updateJob = async (req, res, next) => {
-  try {
-    const jobId = parseInt(req.params.id, 10);
-    const job = await prisma.job.findUnique({ where: { id: jobId } });
-
-    if (!job) return next(new AppError('Job not found', 404));
-    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
-      return next(new AppError('Unauthorized access', 403));
-    }
-
-    // Protection: Destructure only allowed fields
-    const { title, description, location, status, experienceLevel, requiredSkills } = req.body;
-
-    const updatedJob = await prisma.job.update({
-      where: { id: jobId },
-      data: { title, description, location, status, experienceLevel, requiredSkills }
-    });
-
-    res.json({ success: true, message: 'Job updated successfully', data: updatedJob });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * DELETE /api/jobs/:id
- */
-exports.deleteJob = async (req, res, next) => {
-  try {
-    const jobId = parseInt(req.params.id, 10);
-    const job = await prisma.job.findUnique({ where: { id: jobId } });
-
-    if (!job) return next(new AppError('Job not found', 404));
-    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
-      return next(new AppError('Unauthorized', 403));
-    }
-
-    await prisma.job.delete({ where: { id: jobId } });
-    res.json({ success: true, message: 'Job deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -153,11 +119,13 @@ exports.deleteJob = async (req, res, next) => {
 exports.getJob = async (req, res, next) => {
   try {
     const jobId = parseInt(req.params.id, 10);
+    if (isNaN(jobId)) return next(new AppError('Invalid Job ID', 400));
+
     const job = await prisma.job.findUnique({
       where: { id: jobId },
       include: {
-        company: { select: { id: true, name: true, logo: true, isVerified: true } },
-        _count: { select: { applications: true, interviews: true } }
+        company: { select: { id: true, name: true, logo: true, isVerified: true, description: true } },
+        _count: { select: { applications: true } }
       }
     });
 
@@ -169,7 +137,56 @@ exports.getJob = async (req, res, next) => {
 };
 
 /**
+ * PUT /api/jobs/:id
+ * Update job details
+ */
+exports.updateJob = async (req, res, next) => {
+  try {
+    const jobId = parseInt(req.params.id, 10);
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+
+    if (!job) return next(new AppError('Job not found', 404));
+    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
+      return next(new AppError('Unauthorized', 403));
+    }
+
+    const { title, description, location, status, experienceLevel, requiredSkills } = req.body;
+
+    const updatedJob = await prisma.job.update({
+      where: { id: jobId },
+      data: { title, description, location, status, experienceLevel, requiredSkills }
+    });
+
+    res.json({ success: true, data: updatedJob });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/jobs/:id
+ * Delete a job
+ */
+exports.deleteJob = async (req, res, next) => {
+  try {
+    const jobId = parseInt(req.params.id, 10);
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+
+    if (!job) return next(new AppError('Job not found', 404));
+    if (job.createdById !== req.user.id && req.user.role !== 'ADMIN') {
+      return next(new AppError('Unauthorized', 403));
+    }
+
+    await prisma.job.delete({ where: { id: jobId } });
+    res.json({ success: true, message: 'Job deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * GET /api/jobs/employer/my-jobs
+ * Get all jobs created by the employer
  */
 exports.getEmployerJobs = async (req, res, next) => {
   try {
@@ -188,7 +205,7 @@ exports.getEmployerJobs = async (req, res, next) => {
 
 /**
  * PATCH /api/jobs/:id/status
- * Update job status
+ * Update job status (ACTIVE, CLOSED, DRAFT)
  */
 exports.updateJobStatus = async (req, res, next) => {
   try {
@@ -196,7 +213,7 @@ exports.updateJobStatus = async (req, res, next) => {
     const { status } = req.body;
 
     if (!['ACTIVE', 'CLOSED', 'DRAFT'].includes(status)) {
-      return next(new AppError('Invalid status', 400));
+      return next(new AppError('Invalid status. Must be ACTIVE, CLOSED, or DRAFT.', 400));
     }
 
     const job = await prisma.job.findUnique({ where: { id: jobId } });
@@ -210,6 +227,7 @@ exports.updateJobStatus = async (req, res, next) => {
       data: { status }
     });
 
+    logger.info(`Job Status Updated: ${job.title} (ID: ${jobId}) → ${status}`);
     res.json({ success: true, message: 'Job status updated', data: updated });
   } catch (error) {
     next(error);

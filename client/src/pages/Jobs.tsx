@@ -6,54 +6,77 @@ import {
   Search, 
   MapPin, 
   Briefcase, 
-  DollarSign, 
   Filter, 
   ChevronRight, 
   ShieldCheck, 
-  Zap,
-  Clock
+  Zap
 } from 'lucide-react';
 
 const Jobs: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await jobAPI.getAllJobs({ search, category });
-      const rawData = response.data?.data || response.data;
-      const jobsArray = Array.isArray(rawData) ? rawData : [];
+      setError(null);
+      
+      // Build query params
+      const params: any = { limit: 100 };
+      if (search) params.search = search;
+      if (experienceLevel) params.experienceLevel = experienceLevel;
 
+      console.log('Fetching jobs with params:', params);
+      const response = await jobAPI.getAllJobs(params);
+      
+      console.log('API Response:', response);
+      
+      // Extract data from response - handle multiple response formats
+      let jobsArray: any[] = [];
+      
+      if (response.data?.data) {
+        jobsArray = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (Array.isArray(response.data)) {
+        jobsArray = response.data;
+      }
+
+      console.log('Jobs array:', jobsArray);
+
+      // Normalize jobs
       const normalizedJobs = jobsArray
         .filter((job: any) => job && (job._id || job.id))
         .map((job: any) => ({
           ...job,
           id: job._id || job.id,
-          skills: Array.isArray(job.skills) ? job.skills : job.requiredSkills || [],
+          requiredSkills: Array.isArray(job.requiredSkills) ? job.requiredSkills : [],
           location: job.location || 'Remote',
           experienceLevel: job.experienceLevel || 'Entry Level',
-          company: job.companyId || job.company || { name: 'SimuAI Partner', isVerified: false }
+          company: job.company || { name: 'Company', isVerified: false },
+          createdAt: job.createdAt || new Date().toISOString()
         }));
 
+      console.log('Normalized jobs:', normalizedJobs);
       setJobs(normalizedJobs);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error fetching jobs:', error);
+      setError('Failed to load jobs. Please try again.');
       setJobs([]);
     } finally {
       setLoading(false);
     }
-  }, [search, category]);
+  }, [search, experienceLevel]);
 
   useEffect(() => {
-    // Debounce logic: ተጠቃሚው ጽፎ ከጨረሰ ከ 500ms በኋላ fetch ያደርጋል
+    // Debounce: wait 500ms after user stops typing before fetching
     const delayDebounceFn = setTimeout(() => {
       fetchJobs();
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [search, category, fetchJobs]);
+  }, [search, experienceLevel, fetchJobs]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
@@ -82,19 +105,26 @@ const Jobs: React.FC = () => {
             <div className="relative md:w-64">
               <Filter className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={experienceLevel}
+                onChange={(e) => setExperienceLevel(e.target.value)}
                 className="w-full pl-12 pr-10 py-3.5 bg-gray-50 border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-50 transition-all outline-none appearance-none font-bold text-gray-600 cursor-pointer"
               >
-                <option value="">All Categories</option>
-                <option value="technology">Technology</option>
-                <option value="marketing">Marketing</option>
-                <option value="design">Creative & Design</option>
-                <option value="finance">Finance & Accounting</option>
+                <option value="">All Levels</option>
+                <option value="entry">Entry Level</option>
+                <option value="mid">Mid Level</option>
+                <option value="senior">Senior Level</option>
+                <option value="lead">Lead / Managerial</option>
               </select>
             </div>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
+        )}
 
         {/* Jobs Feed */}
         <div className="grid gap-6">
@@ -128,7 +158,7 @@ const Jobs: React.FC = () => {
                       {job.title}
                     </h3>
                     <p className="text-gray-500 font-bold flex items-center gap-2 mb-6">
-                      {job.company?.name}
+                      {job.company?.name || 'Company'}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-semibold text-gray-400">
@@ -138,16 +168,17 @@ const Jobs: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <Briefcase className="w-4 h-4 text-gray-300" /> {job.experienceLevel}
                       </div>
-                      <div className="flex items-center gap-2 text-emerald-600/80">
-                        <DollarSign className="w-4 h-4" /> 
-                        {job.salary?.min ? `${(job.salary.min/1000)}k - ${(job.salary.max/1000)}k ${job.salary.currency}` : 'Competitive Salary'}
-                      </div>
+                      {job.salary?.min && (
+                        <div className="flex items-center gap-2 text-emerald-600/80">
+                          {`$${(job.salary.min/1000)}k - $${(job.salary.max/1000)}k ${job.salary.currency}`}
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end gap-4">
                     <div className="hidden md:flex flex-wrap justify-end gap-2 max-w-[300px]">
-                      {job.skills?.slice(0, 3).map((skill, idx) => (
+                      {job.requiredSkills?.slice(0, 3).map((skill, idx) => (
                         <span key={idx} className="px-3 py-1 bg-gray-50 text-gray-400 text-[11px] font-bold rounded-lg border border-gray-100">
                           {skill}
                         </span>
@@ -162,7 +193,6 @@ const Jobs: React.FC = () => {
                 
                 {/* Meta: Posted Time */}
                 <div className="mt-6 pt-6 border-t border-gray-50 flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-widest">
-                  <Clock className="w-3 h-3" />
                   Posted {new Date(job.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                 </div>
               </Link>
@@ -171,7 +201,7 @@ const Jobs: React.FC = () => {
             <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-gray-200">
               <Zap className="w-12 h-12 text-gray-200 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">No matching jobs</h2>
-              <p className="text-gray-500 font-medium">Try broadening your search or changing categories.</p>
+              <p className="text-gray-500 font-medium">Try broadening your search or changing filters.</p>
             </div>
           )}
         </div>
