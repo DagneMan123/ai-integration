@@ -1,86 +1,110 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middleware/errorHandler');
-const { sendEmail } = require('../utils/email');
 const { logger } = require('../utils/logger');
 
+/**
+ * POST /api/applications
+ * logic: Create application and automatically create a linked Interview record.
+ */
 exports.createApplication = async (req, res, next) => {
   try {
-    const { jobId } = req.body;
-    const candidateId = req.user.id;
+    const { jobId, coverLetter } = req.body;
+    const userId = req.user.id;
 
-    if (!jobId) return next(new AppError('Job ID is required', 400));
+    if (!jobId) {
+      return next(new AppError('Job ID is required', 400));
+    }
 
     const jobIdInt = parseInt(jobId, 10);
     const job = await prisma.job.findUnique({ where: { id: jobIdInt } });
-    if (!job) return next(new AppError('Job not found', 404));
+    
+    if (!job) {
+      return next(new AppError('Target job not found', 404));
+    }
 
-    const existing = await prisma.application.findFirst({
-      where: { jobId: jobIdInt, candidateId }
+    // Allow multiple applications for the same position
+
+    // Transaction: Both records must be created together or not at all
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create the Application record
+      const application = await tx.application.create({
+        data: {
+          jobId: jobIdInt,
+          candidateId: userId,
+          coverLetter: coverLetter || "",
+          status: 'PENDING',
+          appliedAt: new Date()
+        }
+      });
+
+      // 2. Create the Interview record (Status: IN_PROGRESS so it's ready to use)
+      const interview = await tx.interview.create({
+        data: {
+          jobId: jobIdInt,
+          candidateId: userId,
+          applicationId: application.id,
+          status: 'IN_PROGRESS',
+          interviewMode: 'text',
+          questions: null,
+          startedAt: new Date()
+        }
+      });
+
+      return { application, interview };
     });
-    if (existing) return next(new AppError('You have already applied for this job', 400));
 
-    const application = await prisma.application.create({
-      data: {
-        jobId: jobIdInt,
-        candidateId,
-        status: 'PENDING',
-        appliedAt: new Date()
-      }
+    logger.info(`Auto-Flow Success: App ${result.application.id} and Interview ${result.interview.id} created for User ${userId}`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Application submitted and interview scheduled.',
+      data: result.application
     });
-
-    logger.info(`Application created: ${application.id} for Job: ${jobId}`);
-    res.status(201).json({ success: true, data: application });
   } catch (error) {
+    logger.error('Error in createApplication:', error.message);
     next(error);
   }
 };
 
+/**
+ * GET /api/applications/candidate/my-applications
+ */
 exports.getCandidateApplications = async (req, res, next) => {
   try {
-    const candidateId = req.user.id;
+    const userId = req.user.id;
     const applications = await prisma.application.findMany({
-      where: { candidateId },
+      where: { candidateId: userId },
       include: {
         job: {
-          select: { id: true, title: true, company: { select: { name: true } } }
+          include: { company: { select: { name: true } } }
         }
       },
       orderBy: { appliedAt: 'desc' }
     });
 
-    res.json({ success: true, data: applications });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getApplication = async (req, res, next) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const application = await prisma.application.findUnique({
-      where: { id },
-      include: {
-        job: true,
-        candidate: { select: { id: true, firstName: true, lastName: true, email: true } }
-      }
+    res.json({
+      success: true,
+      data: applications
     });
-
-    if (!application) return next(new AppError('Application not found', 404));
-    res.json({ success: true, data: application });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * GET /api/applications/employer/tracking
+ */
 exports.getEmployerApplications = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const employerId = req.user.id;
+    
     const jobs = await prisma.job.findMany({
-      where: { createdById: userId },
+      where: { createdById: employerId },
       select: { id: true }
     });
 
-    const jobIds = jobs.map(job => job.id);
+    const jobIds = jobs.map(j => j.id);
+
     const applications = await prisma.application.findMany({
       where: { jobId: { in: jobIds } },
       include: {
@@ -90,40 +114,44 @@ exports.getEmployerApplications = async (req, res, next) => {
       orderBy: { appliedAt: 'desc' }
     });
 
-    res.json({ success: true, data: applications });
+    res.json({
+      success: true,
+      data: applications
+    });
   } catch (error) {
     next(error);
   }
 };
 
-exports.getJobApplications = async (req, res, next) => {
+/**
+ * GET /api/applications/:id
+ */
+exports.getApplication = async (req, res, next) => {
   try {
-    const jobId = parseInt(req.params.jobId, 10);
-    const applications = await prisma.application.findMany({
-      where: { jobId },
+    const id = parseInt(req.params.id, 10);
+    const application = await prisma.application.findUnique({
+      where: { id },
       include: {
-        candidate: { select: { id: true, firstName: true, lastName: true, email: true } }
-      },
-      orderBy: { appliedAt: 'desc' }
+        job: true,
+        candidate: { select: { firstName: true, lastName: true, email: true } }
+      }
     });
 
-    res.json({ success: true, data: applications });
+    if (!application) return next(new AppError('Application not found', 404));
+    
+    res.json({ success: true, data: application });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * PATCH /api/applications/:id/status
+ */
 exports.updateApplicationStatus = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { status } = req.body;
-
-    if (!['PENDING', 'SHORTLISTED', 'REJECTED', 'ACCEPTED'].includes(status)) {
-      return next(new AppError('Invalid status', 400));
-    }
-
-    const application = await prisma.application.findUnique({ where: { id } });
-    if (!application) return next(new AppError('Application not found', 404));
 
     const updated = await prisma.application.update({
       where: { id },
@@ -136,40 +164,66 @@ exports.updateApplicationStatus = async (req, res, next) => {
   }
 };
 
-exports.shortlistCandidate = async (req, res, next) => {
+/**
+ * DELETE /api/applications/:id
+ */
+exports.withdrawApplication = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const application = await prisma.application.findUnique({
-      where: { id },
-      include: { job: true, candidate: true }
-    });
+    const application = await prisma.application.findUnique({ where: { id } });
 
-    if (!application) return next(new AppError('Application not found', 404));
+    if (!application || application.candidateId !== req.user.id) {
+      return next(new AppError('Unauthorized to withdraw this application', 403));
+    }
 
-    const updated = await prisma.application.update({
-      where: { id },
-      data: { status: 'SHORTLISTED' }
-    });
-
-    res.json({ success: true, data: updated });
+    await prisma.application.delete({ where: { id } });
+    res.json({ success: true, message: 'Application withdrawn successfully' });
   } catch (error) {
     next(error);
   }
 };
 
-exports.withdrawApplication = async (req, res, next) => {
+
+/**
+ * GET /api/applications/job/:jobId
+ */
+exports.getJobApplications = async (req, res, next) => {
+  try {
+    const jobId = parseInt(req.params.jobId, 10);
+    const applications = await prisma.application.findMany({
+      where: { jobId },
+      include: {
+        candidate: { select: { id: true, firstName: true, lastName: true, email: true } }
+      },
+      orderBy: { appliedAt: 'desc' }
+    });
+
+    res.json({
+      success: true,
+      data: applications
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/applications/:id/shortlist
+ */
+exports.shortlistCandidate = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const candidateId = req.user.id;
+    
+    const updated = await prisma.application.update({
+      where: { id },
+      data: { status: 'SHORTLISTED' }
+    });
 
-    const application = await prisma.application.findUnique({ where: { id } });
-    if (!application) return next(new AppError('Application not found', 404));
-    if (application.candidateId !== candidateId) {
-      return next(new AppError('Unauthorized', 403));
-    }
-
-    await prisma.application.delete({ where: { id } });
-    res.json({ success: true, message: 'Application withdrawn' });
+    res.json({
+      success: true,
+      message: 'Candidate shortlisted successfully',
+      data: updated
+    });
   } catch (error) {
     next(error);
   }

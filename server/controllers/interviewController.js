@@ -5,11 +5,11 @@ const { AppError } = require('../middleware/errorHandler');
 const { fetchInterviewWithJob, fetchInterviewsWithJob } = require('../utils/queryHelpers');
 
 const checkAndDeductCredit = async (userId) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.credits < 1) {
+  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+  if (!wallet || wallet.balance < 1) {
     throw new AppError("Insufficient credits. Please top up 5 ETB.", 402);
   }
-  return user;
+  return wallet;
 };
 
 exports.startInterview = async (req, res, next) => {
@@ -23,11 +23,11 @@ exports.startInterview = async (req, res, next) => {
     if (!job) return next(new AppError('Job not found', 404));
     const questions = await enhancedAI.generateInterviewQuestions(job, strictnessLevel, 10);
     const [, interview] = await prisma.$transaction([
-      prisma.user.update({ where: { id: userId }, data: { credits: { decrement: 1 } } }),
+      prisma.wallet.update({ where: { userId }, data: { balance: { decrement: 1 } } }),
       prisma.interview.create({
         data: {
           jobId, candidateId: userId, applicationId, status: 'IN_PROGRESS',
-          startedAt: new Date(), interviewMode, strictnessLevel, questions,
+          startedAt: new Date(), interviewMode, strictnessLevel, questions: questions,
           antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] }
         }
       })
@@ -42,18 +42,33 @@ exports.submitAnswer = async (req, res, next) => {
     const id = parseInt(req.params.id);
     const { questionIndex, answer, audioTranscript } = req.body;
     const interview = await prisma.interview.findUnique({ where: { id }, include: { job: true } });
-    if (!interview || interview.status !== 'IN_PROGRESS') return next(new AppError('Interview not in progress', 400));
+    if (!interview) return next(new AppError('Interview not found', 404));
+    if (interview.status !== 'IN_PROGRESS') return next(new AppError('Interview not in progress', 400));
+    
     const textToEvaluate = audioTranscript || answer;
-    const currentQuestion = interview.questions[questionIndex];
-    const [evaluation, followUp, plagiarism] = await Promise.all([
-      enhancedAI.evaluateAnswer(currentQuestion, textToEvaluate, interview.job, interview.strictnessLevel),
-      enhancedAI.generateFollowUpQuestion(currentQuestion.question, textToEvaluate, interview.job),
-      enhancedAI.detectAIContent(textToEvaluate)
-    ]);
-    const responses = interview.responses || [];
-    responses.push({ questionIndex, question: currentQuestion.question, answer: textToEvaluate, score: evaluation.overallScore || 0, feedback: evaluation.feedback, isAI: plagiarism.isAIGenerated });
-    await prisma.interview.update({ where: { id }, data: { responses } });
-    res.json({ success: true, data: { nextQuestion: followUp?.followUp ? { question: followUp.followUp, type: 'follow-up' } : interview.questions[questionIndex + 1], isLastQuestion: !followUp?.followUp && questionIndex + 1 >= interview.questions.length } });
+    if (!textToEvaluate) return next(new AppError('Answer is required', 400));
+    
+    const questions = interview.questions || [];
+    const currentQuestion = questions[questionIndex] || { question: 'General Question', type: 'general' };
+    
+    try {
+      const [evaluation, followUp, plagiarism] = await Promise.all([
+        enhancedAI.evaluateAnswer(currentQuestion, textToEvaluate, interview.job, interview.strictnessLevel),
+        enhancedAI.generateFollowUpQuestion(currentQuestion.question || 'General', textToEvaluate, interview.job),
+        enhancedAI.detectAIContent(textToEvaluate)
+      ]);
+      
+      const responses = interview.responses || [];
+      responses.push({ questionIndex, question: currentQuestion.question || 'General Question', answer: textToEvaluate, score: evaluation.overallScore || 0, feedback: evaluation.feedback, isAI: plagiarism.isAIGenerated });
+      await prisma.interview.update({ where: { id }, data: { responses } });
+      
+      res.json({ success: true, data: { nextQuestion: followUp?.followUp ? { question: followUp.followUp, type: 'follow-up' } : questions[questionIndex + 1], isLastQuestion: !followUp?.followUp && questionIndex + 1 >= questions.length } });
+    } catch (aiError) {
+      const responses = interview.responses || [];
+      responses.push({ questionIndex, question: currentQuestion.question || 'General Question', answer: textToEvaluate, score: 0, feedback: 'Response recorded', isAI: false });
+      await prisma.interview.update({ where: { id }, data: { responses } });
+      res.json({ success: true, data: { nextQuestion: questions[questionIndex + 1], isLastQuestion: questionIndex + 1 >= questions.length } });
+    }
   } catch (error) { next(error); }
 };
 
@@ -79,15 +94,14 @@ exports.completeInterview = async (req, res, next) => {
 
 exports.createInterviewWithPersona = async (req, res, next) => {
   try {
-    const { personaId } = req.params;
     const jobId = parseInt(req.body.jobId);
     const applicationId = parseInt(req.body.applicationId);
     const userId = req.user.id;
     await checkAndDeductCredit(userId);
     const interview = await prisma.$transaction([
-      prisma.user.update({ where: { id: userId }, data: { credits: { decrement: 1 } } }),
+      prisma.wallet.update({ where: { userId }, data: { balance: { decrement: 1 } } }),
       prisma.interview.create({
-        data: { jobId, candidateId: userId, applicationId, status: 'IN_PROGRESS', startedAt: new Date(), persona: personaId, questions: [], antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] } }
+        data: { jobId, candidateId: userId, applicationId, status: 'IN_PROGRESS', startedAt: new Date(), questions: null, antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] } }
       })
     ]);
     res.status(201).json({ success: true, data: { interviewId: interview[1].id } });
