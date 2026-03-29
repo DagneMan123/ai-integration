@@ -7,18 +7,12 @@ const walletController = require('../controllers/walletController');
 router.use(authenticateToken);
 
 // Get wallet balance
-router.get('/balance', walletController.getWalletBalance);
+router.get('/balance', walletController.getBalance);
 
-// Top up wallet
-router.post('/topup', walletController.topupWallet);
+// Get wallet transaction history
+router.get('/transactions', walletController.getTransactions);
 
-// Deduct credits
-router.post('/deduct', walletController.deductCredits);
-
-// Refund credits
-router.post('/refund', walletController.refundCredits);
-
-// Get transaction history
-router.get('/history', walletController.getTransactionHistory);
+// Check if user has sufficient credits
+router.get('/check-credits', walletController.checkCredits);
 
 module.exports = router;

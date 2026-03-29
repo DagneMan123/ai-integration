@@ -517,3 +517,13 @@
 {"level":"error","message":"Interview not in progress or session expired - /api/interviews/2/submit-answer - POST - ::1","service":"simuai-api","timestamp":"2026-03-27T23:07:16.559Z"}
 {"level":"error","message":"Interview not in progress - /api/interviews/2/submit-answer - POST - ::1","service":"simuai-api","timestamp":"2026-03-27T23:10:46.150Z"}
 {"level":"error","message":"Interview not in progress - /api/interviews/2/submit-answer - POST - ::1","service":"simuai-api","timestamp":"2026-03-27T23:19:33.763Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-28T17:53:43.435Z"}
+{"level":"error","message":"Failed to fetch credit bundles: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","timestamp":"2026-03-28T18:13:30.254Z"}
+{"level":"error","message":"Failed to fetch bundles: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","timestamp":"2026-03-28T18:13:30.808Z"}
+{"level":"error","message":"Failed to fetch credit bundles: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","timestamp":"2026-03-28T18:15:44.208Z"}
+{"level":"error","message":"Failed to fetch bundles: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","timestamp":"2026-03-28T18:15:44.353Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-28T18:25:15.238Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-28T19:18:10.561Z"}
+{"level":"error","message":"Chapa payment URL generation error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-28T19:33:23.508Z"}
+{"level":"error","message":"Payment initialization error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-28T19:33:23.723Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-28T20:32:56.393Z"}

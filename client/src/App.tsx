@@ -36,6 +36,7 @@ const CandidateInterviews = lazy(() => import('./pages/candidate/Interviews'));
 const InterviewSession = lazy(() => import('./pages/candidate/InterviewSession'));
 const InterviewReport = lazy(() => import('./pages/candidate/InterviewReport'));
 const CandidatePayments = lazy(() => import('./pages/candidate/Payments'));
+// const PaymentHistory = lazy(() => import('./pages/candidate/PaymentHistory'));
 const InterviewInsights = lazy(() => import('./pages/candidate/InterviewInsights'));
 const HelpCenter = lazy(() => import('./pages/candidate/HelpCenter'));
 
@@ -224,6 +225,17 @@ const App: React.FC = () => {
                 </PrivateRoute>
               } 
             />
+            {/* Payment History Route - Temporarily disabled */}
+            {/* <Route 
+              path="/candidate/payment-history" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <PaymentHistory />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            /> */}
             <Route 
               path="/candidate/results" 
               element={

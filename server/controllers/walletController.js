@@ -1,223 +1,89 @@
-const { prisma } = require('../config/database');
+const walletService = require('../services/walletService');
 const { logger } = require('../utils/logger');
 
-// Get wallet balance
-exports.getWalletBalance = async (req, res) => {
-  try {
-    const userId = req.user.id;
+class WalletController {
+  /**
+   * Get wallet balance
+   * GET /api/wallet/balance
+   */
+  async getBalance(req, res) {
+    try {
+      const userId = req.user?.id;
 
-    let wallet = await prisma.wallet.findUnique({
-      where: { userId }
-    });
+      const balance = await walletService.getBalance(userId);
 
-    if (!wallet) {
-      wallet = await prisma.wallet.create({
-        data: {
-          userId,
-          balance: 0
-        }
+      return res.status(200).json({
+        success: true,
+        ...balance
       });
-    }
+    } catch (error) {
+      logger.error(`Failed to get wallet balance: ${error.message}`);
 
-    res.json({
-      success: true,
-      data: {
-        balance: wallet.balance,
-        currency: 'ETB'
-      }
-    });
-  } catch (error) {
-    logger.error('Error fetching wallet balance:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch wallet balance',
-      error: error.message
-    });
-  }
-};
-
-// Top up wallet
-exports.topupWallet = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { amount } = req.body;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({
+      return res.status(500).json({
         success: false,
-        message: 'Valid amount is required'
+        error: error.message || 'Failed to get wallet balance'
       });
     }
-
-    let wallet = await prisma.wallet.findUnique({
-      where: { userId }
-    });
-
-    if (!wallet) {
-      wallet = await prisma.wallet.create({
-        data: {
-          userId,
-          balance: amount
-        }
-      });
-    } else {
-      wallet = await prisma.wallet.update({
-        where: { userId },
-        data: {
-          balance: {
-            increment: amount
-          }
-        }
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Wallet topped up successfully',
-      data: {
-        balance: wallet.balance
-      }
-    });
-  } catch (error) {
-    logger.error('Error topping up wallet:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to top up wallet',
-      error: error.message
-    });
   }
-};
 
-// Deduct credits
-exports.deductCredits = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { amount, reason } = req.body;
+  /**
+   * Get wallet transaction history
+   * GET /api/wallet/transactions
+   */
+  async getTransactions(req, res) {
+    try {
+      const userId = req.user?.id;
+      const { limit = 50 } = req.query;
 
-    if (!amount || amount <= 0) {
-      return res.status(400).json({
+      const transactions = await walletService.getTransactionHistory(
+        userId,
+        Math.min(parseInt(limit), 100)
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: transactions
+      });
+    } catch (error) {
+      logger.error(`Failed to get wallet transactions: ${error.message}`);
+
+      return res.status(500).json({
         success: false,
-        message: 'Valid amount is required'
+        error: error.message || 'Failed to get wallet transactions'
       });
     }
-
-    let wallet = await prisma.wallet.findUnique({
-      where: { userId }
-    });
-
-    if (!wallet) {
-      return res.status(404).json({
-        success: false,
-        message: 'Wallet not found'
-      });
-    }
-
-    if (wallet.balance < amount) {
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient balance'
-      });
-    }
-
-    wallet = await prisma.wallet.update({
-      where: { userId },
-      data: {
-        balance: {
-          decrement: amount
-        }
-      }
-    });
-
-    res.json({
-      success: true,
-      message: 'Credits deducted successfully',
-      data: {
-        balance: wallet.balance
-      }
-    });
-  } catch (error) {
-    logger.error('Error deducting credits:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to deduct credits',
-      error: error.message
-    });
   }
-};
 
-// Refund credits
-exports.refundCredits = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { amount, reason } = req.body;
+  /**
+   * Check if user has sufficient credits for interview
+   * GET /api/wallet/check-credits
+   */
+  async checkCredits(req, res) {
+    try {
+      const userId = req.user?.id;
+      const { requiredCredits = 1 } = req.query;
 
-    if (!amount || amount <= 0) {
-      return res.status(400).json({
+      const balance = await walletService.getBalance(userId);
+      const hasSufficientCredits = balance.balance >= requiredCredits;
+
+      return res.status(200).json({
+        success: true,
+        hasSufficientCredits,
+        balance: balance.balance,
+        requiredCredits: parseInt(requiredCredits),
+        message: hasSufficientCredits
+          ? 'Sufficient credits available'
+          : `Insufficient credits. Need ${requiredCredits}, have ${balance.balance}`
+      });
+    } catch (error) {
+      logger.error(`Failed to check credits: ${error.message}`);
+
+      return res.status(500).json({
         success: false,
-        message: 'Valid amount is required'
+        error: error.message || 'Failed to check credits'
       });
     }
-
-    let wallet = await prisma.wallet.findUnique({
-      where: { userId }
-    });
-
-    if (!wallet) {
-      wallet = await prisma.wallet.create({
-        data: {
-          userId,
-          balance: amount
-        }
-      });
-    } else {
-      wallet = await prisma.wallet.update({
-        where: { userId },
-        data: {
-          balance: {
-            increment: amount
-          }
-        }
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Refund processed successfully',
-      data: {
-        balance: wallet.balance
-      }
-    });
-  } catch (error) {
-    logger.error('Error processing refund:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to process refund',
-      error: error.message
-    });
   }
-};
+}
 
-// Get transaction history
-exports.getTransactionHistory = async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const transactions = await prisma.walletTransaction.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 50
-    });
-
-    res.json({
-      success: true,
-      data: transactions
-    });
-  } catch (error) {
-    logger.error('Error fetching transaction history:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch transaction history',
-      error: error.message
-    });
-  }
-};
+module.exports = new WalletController();

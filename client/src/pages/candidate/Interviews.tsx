@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { interviewAPI, jobAPI } from '../../utils/api';
 import { Interview, Job } from '../../types';
 import Loading from '../../components/Loading';
+import toast from 'react-hot-toast';
+import api from '../../utils/api';
 import { 
   CheckCircle2, 
   Clock, 
@@ -17,14 +19,17 @@ import {
   Type,
   Trophy,
   MapPin,
-  Briefcase
+  Briefcase,
+  CreditCard
 } from 'lucide-react';
 
 const CandidateInterviews: React.FC = () => {
+  const navigate = useNavigate();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [jobsMap, setJobsMap] = useState<Record<string, Job>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState<string | null>(null);
 
   const fetchInterviewsWithJobs = useCallback(async () => {
     try {
@@ -93,6 +98,30 @@ const CandidateInterviews: React.FC = () => {
   const getJobData = (interview: any) => {
     const id = interview.jobId || interview.job;
     return jobsMap[id] || (typeof interview.job === 'object' ? interview.job : null);
+  };
+
+  const handleStartInterview = async (interviewId: string) => {
+    try {
+      setCheckingPayment(interviewId);
+      
+      // Check if user has sufficient credits (1 credit required per interview)
+      const response = await api.get('/wallet/check-credits?requiredCredits=1');
+      
+      if (!response.data.hasSufficientCredits) {
+        toast.error('Insufficient credits. Please top up your wallet first.');
+        navigate('/candidate/dashboard');
+        return;
+      }
+      
+      // If payment check passes, navigate to interview
+      navigate(`/candidate/interview/${interviewId}`);
+    } catch (err: any) {
+      console.error('Payment check error:', err);
+      toast.error('Please top up your wallet to start an interview');
+      navigate('/candidate/dashboard');
+    } finally {
+      setCheckingPayment(null);
+    }
   };
 
   if (loading) return <Loading />;
@@ -171,17 +200,34 @@ const CandidateInterviews: React.FC = () => {
                           </Link>
                         </div>
                       ) : (
-                        <Link
-                          to={`/candidate/interview/${interviewId}`}
+                        <button
+                          onClick={() => handleStartInterview(interviewId)}
+                          disabled={checkingPayment === interviewId}
                           className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${
-                            statusNormalized === 'IN_PROGRESS' 
+                            checkingPayment === interviewId
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : statusNormalized === 'IN_PROGRESS' 
                             ? 'bg-blue-600 text-white hover:bg-blue-700' 
                             : 'bg-emerald-600 text-white hover:bg-emerald-700'
                           }`}
                         >
-                          {statusNormalized === 'IN_PROGRESS' ? 'Continue Interview' : 'Start AI Interview'}
-                          {statusNormalized === 'IN_PROGRESS' ? <ChevronRight className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
-                        </Link>
+                          {checkingPayment === interviewId ? (
+                            <>
+                              <Clock className="w-5 h-5 animate-spin" />
+                              Checking...
+                            </>
+                          ) : statusNormalized === 'IN_PROGRESS' ? (
+                            <>
+                              Continue Interview
+                              <ChevronRight className="w-5 h-5" />
+                            </>
+                          ) : (
+                            <>
+                              Start AI Interview
+                              <PlayCircle className="w-5 h-5" />
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
 
