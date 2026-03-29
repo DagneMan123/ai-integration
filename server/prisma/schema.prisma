@@ -315,6 +315,18 @@ model WalletTransaction {
   @@map("wallet_transactions")
 }
 
+model CreditBundle {
+  id            Int      @id @default(autoincrement())
+  name          String
+  creditAmount  Int
+  priceETB      Decimal  @db.Decimal(10, 2)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("credit_bundles")
+}
+
 model PracticeSession {
   id        Int      @id @default(autoincrement())
   userId    Int      @map("user_id")

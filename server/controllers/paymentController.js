@@ -1,5 +1,4 @@
 const paymentService = require('../services/paymentService');
-const walletService = require('../services/walletService');
 const chapaService = require('../services/chapaService');
 const { logger } = require('../utils/logger');
 
@@ -10,7 +9,7 @@ class PaymentController {
    */
   async initialize(req, res) {
     try {
-      const { bundleId, amount, creditAmount, txRef, metadata } = req.body;
+      const { bundleId, amount, creditAmount, txRef } = req.body;
       const userId = req.user?.id;
 
       // Validate inputs
@@ -28,6 +27,8 @@ class PaymentController {
         });
       }
 
+      logger.info(`Payment initialization: userId=${userId}, amount=${amount}, creditAmount=${creditAmount}`);
+
       // Initialize payment
       const paymentData = await paymentService.initializePayment(
         bundleId || null,
@@ -37,19 +38,35 @@ class PaymentController {
         txRef
       );
 
+      logger.info(`Payment initialized: txRef=${paymentData.txRef}`);
+
       // Generate Chapa payment URL
-      const chapaUrl = await chapaService.generatePaymentUrl(
-        paymentData.txRef,
-        paymentData.amount,
-        {
-          userId,
-          email: req.user?.email,
-          firstName: req.user?.firstName,
-          lastName: req.user?.lastName,
-          creditAmount: paymentData.creditAmount,
-          bundleName: paymentData.bundleName
-        }
-      );
+      let chapaUrl;
+      try {
+        chapaUrl = await chapaService.generatePaymentUrl(
+          paymentData.txRef,
+          paymentData.amount,
+          {
+            userId,
+            email: req.user?.email || 'noreply@simuai.com',
+            firstName: req.user?.firstName || 'User',
+            lastName: req.user?.lastName || 'SimuAI',
+            creditAmount: paymentData.creditAmount,
+            bundleName: paymentData.bundleName
+          }
+        );
+        logger.info(`Chapa URL generated: ${chapaUrl}`);
+      } catch (chapaError) {
+        logger.error(`Chapa URL generation failed: ${chapaError.message}`);
+        
+        // Return error with details
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to initialize payment with Chapa',
+          error: chapaError.message,
+          details: chapaError.response?.data || null
+        });
+      }
 
       return res.status(200).json({
         success: true,
@@ -83,7 +100,7 @@ class PaymentController {
    */
   async webhook(req, res) {
     try {
-      const { tx_ref, status, amount, reference, customization } = req.body;
+      const { tx_ref, status, amount, reference } = req.body;
 
       // Validate signature
       const signature = req.headers['x-chapa-signature'];
@@ -119,6 +136,95 @@ class PaymentController {
       return res.status(500).json({
         success: false,
         error: error.message || 'Failed to process webhook'
+      });
+    }
+  }
+
+  /**
+   * Verify payment status
+   * GET /api/payments/verify/:txRef
+   */
+  async verifyPayment(req, res) {
+    try {
+      const { txRef } = req.params;
+      const userId = req.user?.id;
+
+      if (!txRef) {
+        return res.status(400).json({
+          success: false,
+          error: 'Transaction reference is required'
+        });
+      }
+
+      logger.info(`Verifying payment: txRef=${txRef}, userId=${userId}`);
+
+      // Get payment from database
+      const payment = await paymentService.getPaymentByTxRef(txRef);
+
+      if (!payment) {
+        return res.status(404).json({
+          success: false,
+          error: 'Payment not found'
+        });
+      }
+
+      // Verify payment belongs to user
+      if (payment.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Unauthorized access to payment'
+        });
+      }
+
+      // If payment is not completed, try to verify with Chapa
+      if (payment.status !== 'COMPLETED') {
+        try {
+          const chapaStatus = await chapaService.verifyPaymentStatus(txRef);
+          
+          if (chapaStatus.status === 'success') {
+            // Update payment status
+            await paymentService.verifyAndProcessPayment(txRef, {
+              status: 'success',
+              amount: chapaStatus.amount,
+              reference: chapaStatus.reference
+            });
+            
+            // Fetch updated payment
+            const updatedPayment = await paymentService.getPaymentByTxRef(txRef);
+            
+            return res.status(200).json({
+              success: true,
+              data: {
+                txRef: updatedPayment.transactionId || updatedPayment.chapaReference || txRef,
+                amount: updatedPayment.amount,
+                status: updatedPayment.status,
+                creditAmount: updatedPayment.metadata?.creditAmount || 0,
+                paidAt: updatedPayment.paidAt
+              }
+            });
+          }
+        } catch (chapaError) {
+          logger.warn(`Chapa verification failed: ${chapaError.message}`);
+        }
+      }
+
+      // Return current payment status
+      return res.status(200).json({
+        success: payment.status === 'COMPLETED',
+        data: {
+          txRef: payment.transactionId || payment.chapaReference || txRef,
+          amount: payment.amount,
+          status: payment.status,
+          creditAmount: payment.metadata?.creditAmount || 0,
+          paidAt: payment.paidAt
+        }
+      });
+    } catch (error) {
+      logger.error(`Payment verification error: ${error.message}`);
+
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to verify payment'
       });
     }
   }

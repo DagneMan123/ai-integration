@@ -5,8 +5,21 @@ const { AppError } = require('../middleware/errorHandler');
 const { fetchInterviewWithJob, fetchInterviewsWithJob } = require('../utils/queryHelpers');
 
 const checkAndDeductCredit = async (userId) => {
-  const wallet = await prisma.wallet.findUnique({ where: { userId } });
-  if (!wallet || wallet.balance < 1) {
+  // Ensure wallet exists
+  let wallet = await prisma.wallet.findUnique({ where: { userId } });
+  
+  if (!wallet) {
+    // Create wallet for new user
+    wallet = await prisma.wallet.create({
+      data: {
+        userId,
+        balance: 0,
+        currency: 'ETB'
+      }
+    });
+  }
+  
+  if (wallet.balance < 1) {
     throw new AppError("Insufficient credits. Please top up 5 ETB.", 402);
   }
   return wallet;
@@ -18,23 +31,45 @@ exports.startInterview = async (req, res, next) => {
     const applicationId = parseInt(req.body.applicationId);
     const userId = req.user.id;
     const { interviewMode = 'text', strictnessLevel = 'moderate' } = req.body;
+    
     await checkAndDeductCredit(userId);
+    
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) return next(new AppError('Job not found', 404));
+    
     const questions = await enhancedAI.generateInterviewQuestions(job, strictnessLevel, 10);
-    const [, interview] = await prisma.$transaction([
+    
+    // Execute transaction properly
+    const result = await prisma.$transaction([
       prisma.wallet.update({ where: { userId }, data: { balance: { decrement: 1 } } }),
       prisma.interview.create({
         data: {
-          jobId, candidateId: userId, applicationId, status: 'IN_PROGRESS',
-          startedAt: new Date(), interviewMode, strictnessLevel, questions: questions,
+          jobId, 
+          candidateId: userId, 
+          applicationId, 
+          status: 'IN_PROGRESS',
+          startedAt: new Date(), 
+          interviewMode, 
+          strictnessLevel, 
+          questions: questions,
           antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] }
         }
       })
     ]);
+    
+    const interview = result[1];
     antiCheatService.initializeSession(applicationId, userId);
-    res.status(201).json({ success: true, data: { interviewId: interview.id, currentQuestion: questions[0] } });
-  } catch (error) { next(error); }
+    
+    res.status(201).json({ 
+      success: true, 
+      data: { 
+        interviewId: interview.id, 
+        currentQuestion: questions[0] 
+      } 
+    });
+  } catch (error) { 
+    next(error); 
+  }
 };
 
 exports.submitAnswer = async (req, res, next) => {
@@ -97,15 +132,30 @@ exports.createInterviewWithPersona = async (req, res, next) => {
     const jobId = parseInt(req.body.jobId);
     const applicationId = parseInt(req.body.applicationId);
     const userId = req.user.id;
+    
     await checkAndDeductCredit(userId);
-    const interview = await prisma.$transaction([
+    
+    // Execute transaction properly
+    const result = await prisma.$transaction([
       prisma.wallet.update({ where: { userId }, data: { balance: { decrement: 1 } } }),
       prisma.interview.create({
-        data: { jobId, candidateId: userId, applicationId, status: 'IN_PROGRESS', startedAt: new Date(), questions: null, antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] } }
+        data: { 
+          jobId, 
+          candidateId: userId, 
+          applicationId, 
+          status: 'IN_PROGRESS', 
+          startedAt: new Date(), 
+          questions: null, 
+          antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] } 
+        }
       })
     ]);
-    res.status(201).json({ success: true, data: { interviewId: interview[1].id } });
-  } catch (error) { next(error); }
+    
+    const interview = result[1];
+    res.status(201).json({ success: true, data: { interviewId: interview.id } });
+  } catch (error) { 
+    next(error); 
+  }
 };
 
 exports.recordAntiCheatEvent = async (req, res, next) => {

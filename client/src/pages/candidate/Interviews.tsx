@@ -104,21 +104,15 @@ const CandidateInterviews: React.FC = () => {
     try {
       setCheckingPayment(interviewId);
       
-      // Check if user has sufficient credits (1 credit required per interview)
-      const response = await api.get('/wallet/check-credits?requiredCredits=1');
+      // Store interview ID and redirect to dashboard billing section
+      localStorage.setItem('pendingInterviewId', interviewId);
+      localStorage.setItem('showBillingSection', 'true');
       
-      if (!response.data.hasSufficientCredits) {
-        toast.error('Insufficient credits. Please top up your wallet first.');
-        navigate('/candidate/dashboard');
-        return;
-      }
-      
-      // If payment check passes, navigate to interview
-      navigate(`/candidate/interview/${interviewId}`);
-    } catch (err: any) {
-      console.error('Payment check error:', err);
-      toast.error('Please top up your wallet to start an interview');
+      // Redirect to dashboard where user can complete payment
       navigate('/candidate/dashboard');
+    } catch (err: any) {
+      console.error('Navigation error:', err);
+      toast.error('Failed to start interview');
     } finally {
       setCheckingPayment(null);
     }

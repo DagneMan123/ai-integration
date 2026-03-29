@@ -23,7 +23,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 60000, // Increased from 30s to 60s to handle Chapa verification
 });
 
 // Remove Content-Type header for FormData requests
@@ -175,8 +175,8 @@ export const interviewAPI = {
 };
 
 export const paymentAPI = {
-  initialize: (data: { amount: number; type: string; description?: string }) => request.post<any>('/payments/initialize', data),
-  initializePayment: (data: { amount: number; type: string; description?: string }) => request.post<any>('/payments/initialize', data), // Alias
+  initialize: (data: { amount: number; type: string; description?: string; creditAmount?: number; bundleId?: string }) => request.post<any>('/payments/initialize', data),
+  initializePayment: (data: { amount: number; type: string; description?: string; creditAmount?: number; bundleId?: string }) => request.post<any>('/payments/initialize', data), // Alias
   verify: (txRef: string) => request.get<any>(`/payments/verify/${txRef}`),
   verifyPayment: (txRef: string) => request.get<any>(`/payments/verify/${txRef}`), // Alias
   getHistory: () => request.get<Payment[]>('/payments/history'),

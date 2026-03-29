@@ -33,6 +33,7 @@ const CandidateNotifications = lazy(() => import('./pages/candidate/Notification
 const CandidateActivity = lazy(() => import('./pages/candidate/Activity'));
 const CandidateApplications = lazy(() => import('./pages/candidate/Applications'));
 const CandidateInterviews = lazy(() => import('./pages/candidate/Interviews'));
+const InterviewPayment = lazy(() => import('./pages/candidate/InterviewPayment'));
 const InterviewSession = lazy(() => import('./pages/candidate/InterviewSession'));
 const InterviewReport = lazy(() => import('./pages/candidate/InterviewReport'));
 const CandidatePayments = lazy(() => import('./pages/candidate/Payments'));
@@ -191,6 +192,16 @@ const App: React.FC = () => {
                 <PrivateRoute role="candidate">
                   <Suspense fallback={<Loading />}>
                     <CandidateInterviews />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/interview/:interviewId/payment" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewPayment />
                   </Suspense>
                 </PrivateRoute>
               } 

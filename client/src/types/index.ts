@@ -190,9 +190,15 @@ export interface Payment extends BaseEntity {
   currency: string;
   type: 'subscription' | 'credit_topup';
   status: 'pending' | 'completed' | 'failed';
-  transactionRef: string;
-  provider: 'chapa' | 'telebirr' | 'stripe';
-  description: string;
+  transactionRef?: string;
+  transactionId?: string;
+  chapaReference?: string;
+  paymentMethod?: string;
+  provider?: 'chapa' | 'telebirr' | 'stripe';
+  description?: string;
+  creditAmount?: number;
+  paidAt?: string;
+  metadata?: Record<string, any>;
 }
 
 /**

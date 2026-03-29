@@ -283,6 +283,22 @@ class PaymentService {
   }
 
   /**
+   * Get payment by transaction reference
+   */
+  async getPaymentByTxRef(txRef) {
+    try {
+      const payment = await prisma.payment.findUnique({
+        where: { transactionId: txRef }
+      });
+
+      return payment;
+    } catch (error) {
+      logger.error(`Failed to fetch payment by txRef: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get credit bundles
    */
   async getCreditBundles() {

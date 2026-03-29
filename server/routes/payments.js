@@ -15,6 +15,9 @@ router.use(authenticateToken);
 // Initialize payment
 router.post('/initialize', paymentController.initialize);
 
+// Verify payment
+router.get('/verify/:txRef', paymentController.verifyPayment);
+
 // Get payment history
 router.get('/history', paymentController.getHistory);
 
@@ -23,11 +26,6 @@ router.get('/analytics', paymentController.getAnalytics);
 
 // Export payment history
 router.get('/export', paymentController.exportHistory);
-
-// Legacy routes (kept for backward compatibility)
-router.get('/verify/:tx_ref', paymentController.initialize);
-router.get('/subscription', paymentController.getAnalytics);
-router.post('/subscription/cancel', paymentController.initialize);
 
 // Admin routes
 router.get('/all', authorizeRoles('admin'), paymentController.getHistory);

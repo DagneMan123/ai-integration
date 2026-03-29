@@ -23,6 +23,7 @@ const PaymentSuccess: React.FC = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       let txRef = searchParams.get('tx_ref') || localStorage.getItem('pendingPaymentTxRef');
+      const interviewId = localStorage.getItem('pendingInterviewId');
 
       if (!txRef) {
         setStatus('error');
@@ -35,9 +36,9 @@ const PaymentSuccess: React.FC = () => {
         const response = await paymentAPI.verifyPayment(txRef);
 
         if (response.data.success) {
-          setTxDetails(response.data.data); // የክፍያ ዝርዝሩን እዚህ እንይዛለን
+          setTxDetails(response.data.data);
           setStatus('success');
-          setMessage('Your subscription is now active!');
+          setMessage(interviewId ? 'Payment successful! Starting your interview...' : 'Your subscription is now active!');
           confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
           localStorage.removeItem('pendingPaymentTxRef');
@@ -48,7 +49,13 @@ const PaymentSuccess: React.FC = () => {
             setCountdown((prev) => {
               if (prev <= 1) {
                 clearInterval(timer);
-                navigate('/employer/subscription');
+                // If interview ID exists, redirect to interview; otherwise go to subscription
+                if (interviewId) {
+                  localStorage.removeItem('pendingInterviewId');
+                  navigate(`/candidate/interview/${interviewId}`);
+                } else {
+                  navigate('/employer/subscription');
+                }
               }
               return prev - 1;
             });
@@ -61,7 +68,14 @@ const PaymentSuccess: React.FC = () => {
         }
       } catch (error: any) {
         setStatus('error');
-        setMessage(error.response?.data?.message || 'Server connection lost');
+        const errorMessage = error.response?.data?.message || error.message || 'Server connection lost';
+        
+        // Handle timeout errors specifically
+        if (errorMessage.includes('timeout') || error.code === 'ECONNABORTED') {
+          setMessage('Payment verification is taking longer than expected. Please wait a moment and try again.');
+        } else {
+          setMessage(errorMessage);
+        }
       } finally {
         setLoading(false);
       }

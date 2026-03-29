@@ -1,0 +1,226 @@
+================================================================================
+                    DATABASE CONNECTION ERROR - IMMEDIATE FIX
+================================================================================
+
+ERROR: Can't reach database server at `localhost:5432`
+
+CAUSE: PostgreSQL is not running
+
+SOLUTION: Start PostgreSQL service
+
+================================================================================
+                            QUICK FIX (2 MINUTES)
+================================================================================
+
+OPTION 1: Run Automatic Fix Script
+────────────────────────────────────
+1. Double-click: FIX_DATABASE_CONNECTION.bat
+2. Wait for script to complete
+3. If successful, go to "NEXT STEPS" below
+
+OPTION 2: Manual Start (Windows)
+────────────────────────────────────
+1. Press: Windows Key + R
+2. Type: services.msc
+3. Press: Enter
+4. Find: "postgresql-x64-15" or "postgresql-x64-14"
+5. Right-click → Select "Start"
+6. Wait for status to change to "Running"
+
+OPTION 3: Command Line Start
+────────────────────────────────────
+1. Open Command Prompt (Admin)
+2. Run: net start postgresql-x64-15
+3. If error, try: net start postgresql-x64-14
+
+================================================================================
+                            VERIFY CONNECTION
+================================================================================
+
+After starting PostgreSQL, verify it's working:
+
+1. Open Command Prompt
+2. Run: psql -U postgres -h localhost -p 5432
+3. If successful, you'll see: postgres=#
+4. Type: \q (to exit)
+
+If you see "postgres=#" → PostgreSQL is running ✓
+If you see error → PostgreSQL is not running ✗
+
+================================================================================
+                            NEXT STEPS
+================================================================================
+
+STEP 1: Verify PostgreSQL is Running
+────────────────────────────────────
+Run: psql -U postgres -h localhost -p 5432
+Expected: postgres=#
+
+STEP 2: Start Backend Server
+────────────────────────────────────
+1. Open new Command Prompt
+2. Navigate: cd server
+3. Run: npm run dev
+4. Expected output: "Database connection established successfully via Prisma."
+
+STEP 3: Start Frontend Client
+────────────────────────────────────
+1. Open another Command Prompt
+2. Navigate: cd client
+3. Run: npm start
+4. Browser should open to http://localhost:3000
+
+STEP 4: Test Payment Flow
+────────────────────────────────────
+1. Login to dashboard
+2. Go to "My Interviews"
+3. Click "Start AI Interview"
+4. Payment modal should appear
+5. Click "Pay & Start Interview"
+6. Verify payment flow works
+
+================================================================================
+                            TROUBLESHOOTING
+================================================================================
+
+ISSUE: "Service not found" or "Service doesn't exist"
+──────────────────────────────────────────────────────
+SOLUTION:
+1. PostgreSQL may not be installed
+2. Download: https://www.postgresql.org/download/windows/
+3. Install with default settings
+4. Restart computer
+5. Try again
+
+ISSUE: "Access denied" when starting service
+──────────────────────────────────────────────
+SOLUTION:
+1. Open Command Prompt as Administrator
+2. Run: net start postgresql-x64-15
+3. Or use Services (services.msc) with admin rights
+
+ISSUE: "Port 5432 already in use"
+──────────────────────────────────
+SOLUTION:
+1. Another application is using port 5432
+2. Find what's using it: netstat -ano | findstr :5432
+3. Stop that application
+4. Or change PostgreSQL port in postgresql.conf
+
+ISSUE: "psql: command not found"
+────────────────────────────────
+SOLUTION:
+1. PostgreSQL bin directory not in PATH
+2. Add: C:\Program Files\PostgreSQL\15\bin to PATH
+3. Or use full path: "C:\Program Files\PostgreSQL\15\bin\psql.exe"
+
+ISSUE: Connection still fails after starting PostgreSQL
+───────────────────────────────────────────────────────
+SOLUTION:
+1. Check .env file: cat server/.env | findstr DATABASE_URL
+2. Verify credentials: postgres / MYlove8
+3. Verify host: localhost
+4. Verify port: 5432
+5. Verify database: simuai_db exists
+6. If database missing, create it:
+   psql -U postgres -h localhost -p 5432
+   CREATE DATABASE simuai_db;
+   \q
+
+================================================================================
+                            VERIFICATION CHECKLIST
+================================================================================
+
+Before starting server, verify:
+
+[ ] PostgreSQL service is running (check Services)
+[ ] Can connect with psql: psql -U postgres -h localhost -p 5432
+[ ] Database simuai_db exists
+[ ] .env file has correct DATABASE_URL
+[ ] Port 5432 is available (not blocked by firewall)
+[ ] Credentials are correct (postgres / MYlove8)
+
+If all checked, proceed to "NEXT STEPS" above.
+
+================================================================================
+                            QUICK COMMANDS
+================================================================================
+
+Start PostgreSQL:
+    net start postgresql-x64-15
+
+Stop PostgreSQL:
+    net stop postgresql-x64-15
+
+Check if running:
+    psql -U postgres -h localhost -p 5432
+
+Create database:
+    psql -U postgres -h localhost -p 5432
+    CREATE DATABASE simuai_db;
+    \q
+
+Start server:
+    cd server && npm run dev
+
+Start client:
+    cd client && npm start
+
+================================================================================
+                            EXPECTED OUTPUT
+================================================================================
+
+When PostgreSQL is running and server starts:
+
+✓ Database connection established successfully via Prisma.
+✓ Server listening on port 5000
+✓ No "Can't reach database server" errors
+✓ No "PrismaClientKnownRequestError" errors
+
+When client starts:
+
+✓ Browser opens to http://localhost:3000
+✓ Can login to dashboard
+✓ Can navigate pages
+✓ No connection errors in console
+
+================================================================================
+                            STILL HAVING ISSUES?
+================================================================================
+
+1. Check PostgreSQL logs:
+   C:\Program Files\PostgreSQL\15\data\pg_log\
+
+2. Check server logs:
+   server/logs/error.log
+
+3. Check browser console:
+   F12 → Console tab
+
+4. Read detailed guide:
+   ⚠️_DATABASE_NOT_RUNNING_FIX_NOW.md
+
+5. Contact support with:
+   - Error message
+   - PostgreSQL version
+   - Windows version
+   - .env DATABASE_URL
+
+================================================================================
+                            SUMMARY
+================================================================================
+
+ERROR: PostgreSQL not running
+FIX: Start PostgreSQL service
+TIME: 2-5 minutes
+NEXT: Start server and client
+
+ACTION: Run FIX_DATABASE_CONNECTION.bat NOW!
+
+================================================================================
+
+Last Updated: March 29, 2026
+Status: Database Connection Error
+Action Required: Start PostgreSQL Service
+
+================================================================================

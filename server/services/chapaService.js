@@ -6,10 +6,15 @@ const CHAPA_URL = 'https://api.chapa.co/v1';
 const CHAPA_API_KEY = process.env.CHAPA_API_KEY;
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 const WEBHOOK_URL = process.env.CHAPA_WEBHOOK_URL || 'https://yourdomain.com/api/payments/webhook';
+const USE_MOCK_CHAPA = process.env.USE_MOCK_CHAPA === 'true';
 
 // Validate Chapa configuration
 if (!CHAPA_SECRET_KEY || !CHAPA_API_KEY) {
   logger.warn('⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables');
+}
+
+if (USE_MOCK_CHAPA) {
+  logger.info('🧪 Using MOCK Chapa mode for testing');
 }
 
 class ChapaService {
@@ -32,15 +37,24 @@ class ChapaService {
         last_name: metadata.lastName || 'User',
         tx_ref: txRef,
         callback_url: WEBHOOK_URL,
-        return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment-success?tx_ref=${txRef}`,
+        return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/success?tx_ref=${txRef}`,
         customization: {
-          title: 'SimuAI - AI Interview Credits',
-          description: `Purchase ${metadata.creditAmount} credits`,
-          key: 'value'
-        },
-        meta: metadata
+          title: 'SimuAI Credits',
+          description: `Purchase ${metadata.creditAmount} credits`
+        }
       };
 
+      logger.info(`Chapa request payload: ${JSON.stringify(paymentData)}`);
+
+      // Mock mode for testing
+      if (USE_MOCK_CHAPA) {
+        logger.info('🧪 Using mock Chapa checkout URL');
+        return `https://checkout.chapa.co/checkout/payment/${txRef}`;
+      }
+
+      // Real Chapa API call
+      logger.info(`Calling Chapa API at ${CHAPA_URL}/transaction/initialize`);
+      
       const response = await axios.post(
         `${CHAPA_URL}/transaction/initialize`,
         paymentData,
@@ -49,11 +63,15 @@ class ChapaService {
             Authorization: `Bearer ${CHAPA_API_KEY}`,
             'Content-Type': 'application/json'
           },
-          timeout: 10000
+          timeout: 30000 // Increased from 15s to 30s
         }
       );
 
-      if (!response.data.data?.checkout_url) {
+      logger.info(`Chapa response status: ${response.status}`);
+      logger.info(`Chapa response data: ${JSON.stringify(response.data)}`);
+
+      if (!response.data?.data?.checkout_url) {
+        logger.error(`Invalid Chapa response: ${JSON.stringify(response.data)}`);
         throw new Error('No checkout URL returned from Chapa');
       }
 
@@ -61,6 +79,12 @@ class ChapaService {
       return response.data.data.checkout_url;
     } catch (error) {
       logger.error(`Chapa payment URL generation error: ${error.message}`);
+      if (error.response?.data) {
+        logger.error(`Chapa error response: ${JSON.stringify(error.response.data)}`);
+      }
+      if (error.response?.status) {
+        logger.error(`Chapa HTTP status: ${error.response.status}`);
+      }
       throw error;
     }
   }
@@ -110,7 +134,7 @@ class ChapaService {
           headers: {
             Authorization: `Bearer ${CHAPA_API_KEY}`
           },
-          timeout: 10000
+          timeout: 30000 // Increased from 10s to 30s
         }
       );
 
@@ -145,7 +169,7 @@ class ChapaService {
         headers: {
           Authorization: `Bearer ${CHAPA_API_KEY}`
         },
-        timeout: 10000
+        timeout: 30000 // Increased from 10s to 30s
       });
 
       logger.info(`Chapa banks fetched: ${response.data.data?.length} banks`);
@@ -175,7 +199,7 @@ class ChapaService {
             Authorization: `Bearer ${CHAPA_API_KEY}`,
             'Content-Type': 'application/json'
           },
-          timeout: 10000
+          timeout: 30000 // Increased from 10s to 30s
         }
       );
 
@@ -204,7 +228,7 @@ class ChapaService {
           headers: {
             Authorization: `Bearer ${CHAPA_API_KEY}`
           },
-          timeout: 10000
+          timeout: 30000 // Increased from 10s to 30s
         }
       );
 
@@ -231,7 +255,7 @@ class ChapaService {
         headers: {
           Authorization: `Bearer ${CHAPA_API_KEY}`
         },
-        timeout: 10000
+        timeout: 30000 // Increased from 10s to 30s
       });
 
       logger.info(`Chapa banks fetched: ${response.data.data?.length} banks`);

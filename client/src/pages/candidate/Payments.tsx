@@ -117,7 +117,9 @@ const CandidatePayments: React.FC = () => {
                           {payment.description || 'Premium Service Purchase'}
                         </h3>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 font-medium">
-                          <span className="text-xs font-mono text-gray-400 uppercase">#{payment.transactionRef.slice(-8)}</span>
+                          <span className="text-xs font-mono text-gray-400 uppercase">
+                            #{String(payment.transactionRef || payment.id || 'N/A').slice(-8)}
+                          </span>
                           <span className="text-xs text-gray-400 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {new Date(payment.createdAt).toLocaleDateString()}

@@ -1,15 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { analyticsAPI } from '../../utils/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { analyticsAPI, paymentAPI } from '../../utils/api';
 import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
-import SharedDashboardInfo from '../../components/SharedDashboardInfo';
 import { candidateMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
 import { 
-  Briefcase, 
+  Briefcase,
   Calendar, 
   Trophy, 
   RefreshCw, 
@@ -28,13 +27,11 @@ import {
 import api from '../../utils/api';
 
 const CandidateDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [billingOpen, setBillingOpen] = useState(false);
-  
-  // Billing state
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
@@ -43,6 +40,9 @@ const CandidateDashboard: React.FC = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [page, setPage] = useState(1);
+  const [pendingInterviewId, setPendingInterviewId] = useState<string | null>(null);
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   // Session monitoring
   useSessionMonitoring();
@@ -54,10 +54,8 @@ const CandidateDashboard: React.FC = () => {
     try {
       setRefreshing(true);
       setError(null);
-      
       const response = await analyticsAPI.getCandidateDashboard();
       const dashboardData = response.data.data;
-      
       setData(dashboardData);
     } catch (err: any) {
       console.error('Dashboard fetch error:', err);
@@ -72,12 +70,8 @@ const CandidateDashboard: React.FC = () => {
     try {
       setBillingLoading(true);
       setBillingError(null);
-
-      // Fetch wallet balance
       const walletRes = await api.get('/wallet/balance');
       setWallet(walletRes.data.data || walletRes.data);
-
-      // Fetch transaction history
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '5',
@@ -85,8 +79,6 @@ const CandidateDashboard: React.FC = () => {
       });
       const historyRes = await api.get(`/payments/history?${params}`);
       setTransactions(historyRes.data.data || []);
-
-      // Fetch analytics
       const analyticsRes = await api.get('/payments/analytics');
       setAnalytics(analyticsRes.data.data || analyticsRes.data);
     } catch (err: any) {
@@ -103,6 +95,18 @@ const CandidateDashboard: React.FC = () => {
     const interval = setInterval(fetchDashboardData, 60000);
     return () => clearInterval(interval);
   }, [fetchDashboardData, fetchBillingData]);
+
+  // Check for pending interview payment
+  useEffect(() => {
+    const interviewId = localStorage.getItem('pendingInterviewId');
+    const showBilling = localStorage.getItem('showBillingSection');
+    
+    if (interviewId && showBilling === 'true') {
+      setPendingInterviewId(interviewId);
+      setShowPaymentPrompt(true);
+      localStorage.removeItem('showBillingSection');
+    }
+  }, []);
 
   if (loading) return <Loading />;
 
@@ -301,6 +305,92 @@ const CandidateDashboard: React.FC = () => {
             btnText="View List"
           />
         </div>
+
+        {/* Interview Payment Prompt Modal */}
+        {showPaymentPrompt && pendingInterviewId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in zoom-in-95">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+                  <CreditCard className="w-8 h-8 text-indigo-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Start Your Interview</h2>
+                <p className="text-gray-600 font-medium">1 credit required to begin</p>
+              </div>
+
+              <div className="bg-indigo-50 rounded-xl p-4 mb-6 border border-indigo-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-700 font-medium">Cost</span>
+                  <span className="text-2xl font-bold text-indigo-600">5 ETB</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700 font-medium">Your Balance</span>
+                  <span className="text-lg font-bold text-gray-900">{wallet?.balance || 0} Credits</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {wallet?.balance >= 1 ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowPaymentPrompt(false);
+                        localStorage.removeItem('pendingInterviewId');
+                        navigate(`/candidate/interview/${pendingInterviewId}`);
+                      }}
+                      className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all"
+                    >
+                      Start Interview Now
+                    </button>
+                    <p className="text-xs text-center text-gray-500">You have enough credits</p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={async () => {
+                        try {
+                          setProcessingPayment(true);
+                          setBillingError(null);
+                          const response = await paymentAPI.initialize({
+                            amount: 5,
+                            creditAmount: 1,
+                            type: 'interview',
+                            description: 'Payment for AI Interview Session'
+                          });
+                          if (response.data?.data?.checkout_url) {
+                            localStorage.setItem('pendingInterviewId', pendingInterviewId || '');
+                            window.location.href = response.data.data.checkout_url;
+                          } else {
+                            setBillingError('Failed to initialize payment: No checkout URL received');
+                          }
+                        } catch (err: any) {
+                          const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to initialize payment';
+                          setBillingError(errorMessage);
+                        } finally {
+                          setProcessingPayment(false);
+                        }
+                      }}
+                      disabled={processingPayment}
+                      className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50"
+                    >
+                      {processingPayment ? 'Processing...' : 'Pay & Start Interview'}
+                    </button>
+                    <p className="text-xs text-center text-gray-500">Secure payment via Chapa</p>
+                  </>
+                )}
+                <button
+                  onClick={() => {
+                    setShowPaymentPrompt(false);
+                    localStorage.removeItem('pendingInterviewId');
+                  }}
+                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Billing & History Section */}
         <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">

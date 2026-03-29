@@ -527,3 +527,19 @@
 {"level":"error","message":"Chapa payment URL generation error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-28T19:33:23.508Z"}
 {"level":"error","message":"Payment initialization error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-28T19:33:23.723Z"}
 {"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-28T20:32:56.393Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-29T07:26:06.525Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-29T07:40:22.958Z"}
+{"level":"error","message":"Chapa payment URL generation error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-29T07:42:11.820Z"}
+{"level":"error","message":"Payment initialization error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-29T07:42:11.823Z"}
+{"level":"error","message":"Chapa payment URL generation error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-29T07:46:12.619Z"}
+{"level":"error","message":"Payment initialization error: Chapa API key is not configured","service":"simuai-api","timestamp":"2026-03-29T07:46:12.620Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-29T08:03:07.982Z"}
+{"level":"warn","message":"⚠️ CHAPA_SECRET_KEY or CHAPA_API_KEY is not configured in environment variables","service":"simuai-api","timestamp":"2026-03-29T08:21:00.921Z"}
+{"level":"error","message":"Chapa payment URL generation error: Request failed with status code 400","service":"simuai-api","timestamp":"2026-03-29T08:24:39.079Z"}
+{"level":"error","message":"Payment initialization error: Request failed with status code 400","service":"simuai-api","timestamp":"2026-03-29T08:24:39.104Z"}
+{"level":"error","message":"Chapa payment URL generation error: Request failed with status code 400","service":"simuai-api","timestamp":"2026-03-29T09:05:08.026Z"}
+{"level":"error","message":"Chapa error response: {\"message\":{\"customization.title\":[\"The customization.title must not exceed 16 characters.\"]},\"status\":\"failed\",\"data\":null}","service":"simuai-api","timestamp":"2026-03-29T09:05:08.027Z"}
+{"level":"error","message":"Chapa HTTP status: 400","service":"simuai-api","timestamp":"2026-03-29T09:05:08.028Z"}
+{"level":"error","message":"Chapa URL generation failed: Request failed with status code 400","service":"simuai-api","timestamp":"2026-03-29T09:05:08.028Z"}
+{"level":"error","message":"Payment verification error: timeout of 10000ms exceeded","service":"simuai-api","timestamp":"2026-03-29T15:20:40.106Z"}
+{"level":"warn","message":"Chapa verification failed: timeout of 10000ms exceeded","service":"simuai-api","timestamp":"2026-03-29T15:20:40.523Z"}
