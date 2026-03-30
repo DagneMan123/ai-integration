@@ -41,6 +41,11 @@ const PaymentHistory: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    
+    // Auto-refresh every 5 seconds to show new payments
+    const interval = setInterval(fetchData, 5000);
+    
+    return () => clearInterval(interval);
   }, [page, statusFilter]);
 
   const fetchData = async () => {
@@ -50,7 +55,8 @@ const PaymentHistory: React.FC = () => {
 
       // Fetch analytics
       const analyticsRes = await api.get('/payments/analytics');
-      setAnalytics(analyticsRes.data.data || analyticsRes.data);
+      const analyticsData = analyticsRes.data.data || analyticsRes.data;
+      setAnalytics(analyticsData);
 
       // Fetch transactions
       const params = new URLSearchParams({
@@ -60,7 +66,21 @@ const PaymentHistory: React.FC = () => {
       });
 
       const historyRes = await api.get(`/payments/history?${params}`);
-      setTransactions(historyRes.data.data || []);
+      const historyData = historyRes.data.data || [];
+      
+      // Map payment data to Transaction interface
+      const mappedTransactions = historyData.map((payment: any) => ({
+        id: payment.id,
+        txRef: payment.transactionId || payment.chapaReference || `#${payment.id}`,
+        amount: parseFloat(payment.amount),
+        creditAmount: payment.metadata?.creditAmount || 0,
+        status: payment.status,
+        paymentMethod: payment.paymentMethod || 'chapa',
+        paidAt: payment.paidAt || payment.createdAt,
+        createdAt: payment.createdAt
+      }));
+      
+      setTransactions(mappedTransactions);
       setTotalPages(historyRes.data.pagination?.totalPages || 1);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to load payment history');

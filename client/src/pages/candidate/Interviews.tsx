@@ -100,15 +100,18 @@ const CandidateInterviews: React.FC = () => {
     return jobsMap[id] || (typeof interview.job === 'object' ? interview.job : null);
   };
 
-  const handleStartInterview = async (interviewId: string) => {
+  const handleStartInterview = async (interviewId: string, jobId: string, applicationId: string) => {
     try {
       setCheckingPayment(interviewId);
       
-      // Store interview ID and redirect to dashboard billing section
+      // Store interview details for payment flow
       localStorage.setItem('pendingInterviewId', interviewId);
+      localStorage.setItem('pendingJobId', jobId);
+      localStorage.setItem('pendingApplicationId', applicationId);
       localStorage.setItem('showBillingSection', 'true');
+      localStorage.setItem('requirePaymentBeforeInterview', 'true');
       
-      // Redirect to dashboard where user can complete payment
+      // Redirect to dashboard where user MUST complete payment
       navigate('/candidate/dashboard');
     } catch (err: any) {
       console.error('Navigation error:', err);
@@ -195,7 +198,7 @@ const CandidateInterviews: React.FC = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleStartInterview(interviewId)}
+                          onClick={() => handleStartInterview(interviewId, String(interview.jobId || interview.job), String(interview.applicationId))}
                           disabled={checkingPayment === interviewId}
                           className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${
                             checkingPayment === interviewId

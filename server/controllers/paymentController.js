@@ -181,30 +181,34 @@ class PaymentController {
         try {
           const chapaStatus = await chapaService.verifyPaymentStatus(txRef);
           
-          if (chapaStatus.status === 'success') {
+          // Accept both 'success' and 'completed' status from Chapa
+          if (chapaStatus.status === 'success' || chapaStatus.status === 'completed') {
             // Update payment status
-            await paymentService.verifyAndProcessPayment(txRef, {
-              status: 'success',
+            const processResult = await paymentService.verifyAndProcessPayment(txRef, {
+              status: chapaStatus.status,
               amount: chapaStatus.amount,
               reference: chapaStatus.reference
             });
             
-            // Fetch updated payment
-            const updatedPayment = await paymentService.getPaymentByTxRef(txRef);
-            
-            return res.status(200).json({
-              success: true,
-              data: {
-                txRef: updatedPayment.transactionId || updatedPayment.chapaReference || txRef,
-                amount: updatedPayment.amount,
-                status: updatedPayment.status,
-                creditAmount: updatedPayment.metadata?.creditAmount || 0,
-                paidAt: updatedPayment.paidAt
-              }
-            });
+            if (processResult.success) {
+              // Fetch updated payment
+              const updatedPayment = await paymentService.getPaymentByTxRef(txRef);
+              
+              return res.status(200).json({
+                success: true,
+                data: {
+                  txRef: updatedPayment.transactionId || updatedPayment.chapaReference || txRef,
+                  amount: updatedPayment.amount,
+                  status: updatedPayment.status,
+                  creditAmount: updatedPayment.metadata?.creditAmount || 0,
+                  paidAt: updatedPayment.paidAt
+                }
+              });
+            }
           }
         } catch (chapaError) {
           logger.warn(`Chapa verification failed: ${chapaError.message}`);
+          // Continue to return current status if Chapa verification fails
         }
       }
 

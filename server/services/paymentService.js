@@ -1,5 +1,4 @@
 const prisma = require('../lib/prisma');
-const { v4: uuidv4 } = require('uuid');
 const { logger } = require('../utils/logger');
 
 class PaymentService {
@@ -17,7 +16,7 @@ class PaymentService {
       // If bundleId provided, fetch bundle details
       if (bundleId) {
         bundle = await prisma.creditBundle.findUnique({
-          where: { id: bundleId }
+          where: { id: parseInt(bundleId) }
         });
 
         if (!bundle || !bundle.isActive) {
@@ -35,7 +34,7 @@ class PaymentService {
       }
 
       // Generate unique tx_ref if not provided
-      const transactionRef = txRef || `tx_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+      const transactionRef = txRef || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
       // Create Payment record with PENDING status
       const payment = await prisma.payment.create({
@@ -99,8 +98,8 @@ class PaymentService {
         throw new Error('Payment amount mismatch');
       }
 
-      // Check payment status from Chapa
-      if (chapaData.status !== 'completed') {
+      // Check payment status from Chapa (Chapa returns 'success' not 'completed')
+      if (chapaData.status !== 'success' && chapaData.status !== 'completed') {
         // Update payment to FAILED
         await prisma.payment.update({
           where: { id: payment.id },

@@ -1,48 +1,51 @@
 @echo off
-REM Start PostgreSQL Service on Windows
+REM Start PostgreSQL Service
+REM This script starts the PostgreSQL database service on Windows
 
 echo.
-echo ========================================
-echo   Starting PostgreSQL Database
-echo ========================================
+echo ═══════════════════════════════════════════════════════════════════════════════
+echo                    Starting PostgreSQL Service...
+echo ═══════════════════════════════════════════════════════════════════════════════
 echo.
 
-REM Check if PostgreSQL is already running
-tasklist /FI "IMAGENAME eq postgres.exe" 2>NUL | find /I /N "postgres.exe">NUL
-if "%ERRORLEVEL%"=="0" (
-    echo ✓ PostgreSQL is already running
+REM Check if running as administrator
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo ERROR: This script must be run as Administrator!
+    echo.
+    echo Please:
+    echo 1. Right-click on this file
+    echo 2. Select "Run as administrator"
     echo.
     pause
-    exit /b 0
+    exit /b 1
 )
 
-REM Try to start PostgreSQL service
-echo Starting PostgreSQL service...
-net start postgresql-x64-15 >nul 2>&1
+REM Start PostgreSQL service
+echo Starting PostgreSQL service (postgresql-x64-15)...
+net start postgresql-x64-15
 
-if "%ERRORLEVEL%"=="0" (
-    echo ✓ PostgreSQL service started successfully
+if %errorLevel% equ 0 (
     echo.
-    echo Waiting for database to be ready...
-    timeout /t 3 /nobreak
+    echo ✅ PostgreSQL started successfully!
     echo.
-    echo ✓ PostgreSQL is now running on port 5432
+    echo The backend will automatically reconnect to the database.
     echo.
-    echo Next steps:
-    echo 1. Open a new terminal
-    echo 2. Run: cd server
-    echo 3. Run: npm run dev
+    echo Wait for: "Database connection established successfully via Prisma."
     echo.
-    pause
 ) else (
-    echo ✗ Failed to start PostgreSQL service
     echo.
-    echo Try these alternatives:
-    echo 1. Open Services (services.msc)
-    echo 2. Find "postgresql-x64-15" or similar
-    echo 3. Right-click and select "Start"
+    echo ⚠️ PostgreSQL may already be running or there was an error.
     echo.
-    echo Or use pgAdmin to start the service
+    echo Checking service status...
+    sc query postgresql-x64-15
     echo.
-    pause
 )
+
+echo.
+echo ═══════════════════════════════════════════════════════════════════════════════
+echo                    Done!
+echo ═══════════════════════════════════════════════════════════════════════════════
+echo.
+
+pause

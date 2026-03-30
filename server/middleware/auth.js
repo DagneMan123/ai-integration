@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { logActivity } = require('../utils/logger');
 
 const authenticateToken = async (req, res, next) => {
@@ -41,43 +40,56 @@ const authenticateToken = async (req, res, next) => {
       }
     }
     
-    // Prisma query (findByPk በ findUnique ተተክቷል)
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id || decoded.userId }, // JWT payloadህ ላይ ባለው ስም መሰረት
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        isActive: true, // ወደ camelCase ተቀይሯል
-        isLocked: true
+    try {
+      // Prisma query (findByPk በ findUnique ተተክቷል)
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id || decoded.userId }, // JWT payloadህ ላይ ባለው ስም መሰረት
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          isActive: true, // ወደ camelCase ተቀይሯል
+          isLocked: true
+        }
+      });
+
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token - user not found'
+        });
       }
-    });
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token - user not found'
-      });
+      // is_active የነበረው በ Prisma isActive ተብሏል
+      if (user.isActive === false) {
+        return res.status(401).json({
+          success: false,
+          message: 'Account is deactivated'
+        });
+      }
+
+      // isLocked() ፈንክሽን የነበረው አሁን ቀጥታ ዳታቤዝ ውስጥ ያለ boolean ነው
+      if (user.isLocked) {
+        return res.status(423).json({
+          success: false,
+          message: 'Account is temporarily locked'
+        });
+      }
+
+      req.user = user;
+      next();
+    } catch (dbError) {
+      // Handle database connection errors gracefully
+      if (dbError.message && dbError.message.includes('Can\'t reach database server')) {
+        console.error('Database connection error:', dbError.message);
+        return res.status(503).json({
+          success: false,
+          message: 'Database service temporarily unavailable. Please try again in a moment.',
+          error: 'DATABASE_UNAVAILABLE'
+        });
+      }
+      throw dbError;
     }
-
-    // is_active የነበረው በ Prisma isActive ተብሏል
-    if (user.isActive === false) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account is deactivated'
-      });
-    }
-
-    // isLocked() ፈንክሽን የነበረው አሁን ቀጥታ ዳታቤዝ ውስጥ ያለ boolean ነው
-    if (user.isLocked) {
-      return res.status(423).json({
-        success: false,
-        message: 'Account is temporarily locked'
-      });
-    }
-
-    req.user = user;
-    next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
@@ -147,18 +159,26 @@ const optionalAuth = async (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.id || decoded.userId }
-      });
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.id || decoded.userId }
+        });
 
-      if (user && user.isActive && !user.isLocked) {
-        req.user = user;
+        if (user && user.isActive && !user.isLocked) {
+          req.user = user;
+        }
+      } catch (error) {
+        // Silently fail for optional auth - don't block the request
+        if (error.message && error.message.includes('Can\'t reach database server')) {
+          console.warn('Database unavailable in optionalAuth');
+        }
       }
     }
 
     next();
   } catch (error) {
+    // Always continue for optional auth
     next();
   }
 };

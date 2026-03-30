@@ -1,0 +1,140 @@
+🎯 EXACT STEPS TO GET EVERYTHING WORKING
+
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: START POSTGRESQL (CRITICAL!)
+────────────────────────────────────
+
+Open PowerShell as Administrator and run:
+
+  Start-Service -Name "postgresql-x64-15"
+
+Wait 3-5 seconds for it to start.
+
+Verify it's running:
+  Get-Service postgresql-x64-15
+
+You should see: Status: Running
+
+
+STEP 2: START BACKEND SERVER
+────────────────────────────
+
+Open Command Prompt or PowerShell and run:
+
+  cd server
+  npm run dev
+
+You should see:
+  ✅ Prisma Client is ready
+  Database connection established successfully via Prisma.
+  Server running on port 5000
+
+
+STEP 3: START FRONTEND (in NEW terminal)
+────────────────────────────────────────
+
+Open another Command Prompt or PowerShell and run:
+
+  cd client
+  npm start
+
+You should see:
+  Compiled successfully!
+  On Your Network: http://192.168.x.x:3000
+
+
+STEP 4: TEST THE INTERVIEW FLOW
+───────────────────────────────
+
+1. Open browser: http://localhost:3000
+2. Login as candidate (or register)
+3. Go to Jobs page
+4. Apply for a job
+5. Go to Interviews page
+6. Click "Start AI Interview"
+7. You'll see payment prompt
+8. Click "Start Interview Now" (if you have credits)
+   OR
+   Click "Pay & Start Interview" (if you need to pay)
+9. Interview page should load
+10. Submit an answer
+11. ✅ Should work without "Interview not in progress" error
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING:
+────────────────
+
+ERROR: "Can't reach database server at `localhost:5432`"
+FIX: Start PostgreSQL (Step 1)
+
+ERROR: "Route.post() requires a callback function"
+FIX: This was from old code, should be fixed now. Restart backend.
+
+ERROR: "Interview not in progress"
+FIX: This is now fixed. Make sure you're using the latest code.
+
+ERROR: "Cannot find module './routes/conversationalInterview'"
+FIX: This was from old code, should be fixed now. Restart backend.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+QUICK REFERENCE:
+────────────────
+
+PostgreSQL Status:
+  Get-Service postgresql-x64-15
+
+Start PostgreSQL:
+  Start-Service -Name "postgresql-x64-15"
+
+Stop PostgreSQL:
+  Stop-Service -Name "postgresql-x64-15"
+
+Restart PostgreSQL:
+  Restart-Service -Name "postgresql-x64-15"
+
+Backend URL: http://localhost:5000
+Frontend URL: http://localhost:3000
+API Base: http://localhost:5000/api
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT WAS FIXED:
+────────────────
+
+✅ Interview creation flow
+   - Now calls /interviews/start before navigation
+   - Uses actual interview ID from API response
+   - Interview status properly set to IN_PROGRESS
+
+✅ Payment flow
+   - After payment, interview is created
+   - User redirected to interview with correct ID
+
+✅ Submit answer flow
+   - Interview status check now passes
+   - Answers can be submitted successfully
+
+✅ No more "Interview not in progress" errors
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+EXPECTED BEHAVIOR:
+──────────────────
+
+When you click "Start Interview Now":
+1. Loading spinner appears
+2. Backend creates interview
+3. Interview page loads
+4. Questions appear
+5. You can submit answers
+6. Next question appears
+7. Interview completes successfully
+
+═══════════════════════════════════════════════════════════════════════════════

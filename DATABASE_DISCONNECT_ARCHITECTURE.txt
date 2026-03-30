@@ -1,0 +1,247 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              DATABASE DISCONNECT DETECTION & RECOVERY SYSTEM               ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+SYSTEM ARCHITECTURE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                          ┌─────────────────────┐
+                          │   Express Server    │
+                          └──────────┬──────────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    │                │                │
+                    ▼                ▼                ▼
+            ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+            │ Auth Routes  │  │ Payment      │  │ Interview    │
+            │ (light check)│  │ Routes       │  │ Routes       │
+            │              │  │ (strict      │  │ (light check)│
+            │              │  │  check)      │  │              │
+            └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+                   │                 │                 │
+                   └─────────────────┼─────────────────┘
+                                     │
+                    ┌────────────────▼────────────────┐
+                    │  Connection Check Middleware    │
+                    │  ┌──────────────────────────┐   │
+                    │  │ lightConnectionCheck()   │   │
+                    │  │ - 2s timeout             │   │
+                    │  │ - Non-blocking           │   │
+                    │  │ - Logs warnings          │   │
+                    │  └──────────────────────────┘   │
+                    │  ┌──────────────────────────┐   │
+                    │  │ connectionCheck()        │   │
+                    │  │ - Blocks if unavailable  │   │
+                    │  │ - Returns 503 error      │   │
+                    │  │ - Critical endpoints     │   │
+                    │  └──────────────────────────┘   │
+                    └────────────────┬────────────────┘
+                                     │
+                    ┌────────────────▼────────────────┐
+                    │   Prisma Client Instance        │
+                    │   (server/lib/prisma.js)        │
+                    └────────────────┬────────────────┘
+                                     │
+        ┌────────────────────────────┼────────────────────────────┐
+        │                            │                            │
+        ▼                            ▼                            ▼
+┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
+│ Health Check     │      │ Event Listeners  │      │ Error Handlers   │
+│ (Every 30s)      │      │ (Real-time)      │      │ (Immediate)      │
+│                  │      │                  │      │                  │
+│ • SELECT 1       │      │ • Error events   │      │ • Connection     │
+│ • Detects        │      │ • Warn events    │      │   errors         │
+│   disconnection  │      │ • Info events    │      │ • Timeout errors │
+│ • Triggers       │      │ • Query events   │      │ • Triggers       │
+│   reconnection   │      │ • Triggers       │      │   reconnection   │
+│                  │      │   reconnection   │      │                  │
+└────────┬─────────┘      └────────┬─────────┘      └────────┬─────────┘
+         │                         │                         │
+         └─────────────────────────┼─────────────────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │  handleDisconnection()      │
+                    │  ┌────────────────────────┐ │
+                    │  │ 1. Log disconnection   │ │
+                    │  │ 2. Disconnect old      │ │
+                    │  │    Prisma client       │ │
+                    │  │ 3. Create new client   │ │
+                    │  │ 4. Setup listeners     │ │
+                    │  │ 5. Reconnect with      │ │
+                    │  │    retry logic         │ │
+                    │  │ 6. Log success/failure │ │
+                    │  │ 7. Schedule retry if   │ │
+                    │  │    failed (10s delay)  │ │
+                    │  └────────────────────────┘ │
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │  connectWithRetry()         │
+                    │  ┌────────────────────────┐ │
+                    │  │ Attempt 1: 1s delay    │ │
+                    │  │ Attempt 2: 2s delay    │ │
+                    │  │ Attempt 3: 4s delay    │ │
+                    │  │ Attempt 4: 8s delay    │ │
+                    │  │ Attempt 5: 16s delay   │ │
+                    │  │ (max 5 attempts)       │ │
+                    │  └────────────────────────┘ │
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │  PostgreSQL Database        │
+                    │  (Connection Restored)      │
+                    └─────────────────────────────┘
+
+
+DETECTION FLOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scenario 1: Health Check Detects Disconnection
+─────────────────────────────────────────────────
+  Every 30 seconds:
+    ┌─ Health Check Runs
+    │  └─ SELECT 1 query fails
+    │     └─ Connection error detected
+    │        └─ handleDisconnection() triggered
+    │           └─ Automatic reconnection begins
+    │              └─ System recovers
+    └─ Logs: "🚨 Health check detected database disconnection!"
+
+Scenario 2: Prisma Error Event Detected
+─────────────────────────────────────────
+  During normal operation:
+    ┌─ Prisma query fails
+    │  └─ Error event emitted
+    │     └─ Error listener catches it
+    │        └─ Checks if connection-related
+    │           └─ handleDisconnection() triggered
+    │              └─ Automatic reconnection begins
+    │                 └─ System recovers
+    └─ Logs: "❌ Prisma Error: Can't reach database server"
+
+Scenario 3: Request Arrives During Disconnection
+──────────────────────────────────────────────────
+  User makes API request:
+    ┌─ Request hits connection check middleware
+    │  └─ Health check runs
+    │     └─ Connection fails
+    │        └─ Returns 503 error
+    │           └─ User sees clear error message
+    │              └─ No silent failure
+    └─ Logs: "Database connection check failed"
+
+
+ERROR DETECTION PATTERNS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+System detects these connection errors:
+  ✓ "Can't reach database server"
+  ✓ "connection refused"
+  ✓ "ECONNREFUSED"
+  ✓ "ETIMEDOUT"
+  ✓ "socket hang up"
+
+When detected:
+  1. Error is logged with full details
+  2. handleDisconnection() is triggered immediately
+  3. Automatic reconnection begins
+  4. System attempts up to 5 reconnection tries
+  5. If successful, system resumes normal operation
+  6. If failed, retries again in 10 seconds
+
+
+MIDDLEWARE ROUTING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STRICT CHECK (connectionCheck):
+  ├─ /api/payments/*        ← Payment operations (CRITICAL)
+  └─ /api/wallet/*          ← Wallet operations (CRITICAL)
+     └─ Blocks if database unavailable
+     └─ Returns 503 error
+     └─ Prevents silent failures
+
+LIGHT CHECK (lightConnectionCheck):
+  ├─ /api/auth/*            ← Authentication
+  ├─ /api/users/*           ← User operations
+  ├─ /api/interviews/*      ← Interview operations
+  └─ /api/applications/*    ← Application operations
+     └─ 2-second timeout
+     └─ Doesn't block if slow
+     └─ Logs warnings
+     └─ Allows graceful degradation
+
+
+RECOVERY TIMELINE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+T+0s:   Database disconnects
+        └─ Prisma error event fires
+           └─ handleDisconnection() triggered
+
+T+0-1s: Attempt 1 to reconnect
+        └─ Fails (database still down)
+           └─ Wait 1 second
+
+T+1-3s: Attempt 2 to reconnect
+        └─ Fails (database still down)
+           └─ Wait 2 seconds
+
+T+3-7s: Attempt 3 to reconnect
+        └─ Fails (database still down)
+           └─ Wait 4 seconds
+
+T+7-15s: Attempt 4 to reconnect
+         └─ Fails (database still down)
+            └─ Wait 8 seconds
+
+T+15-31s: Attempt 5 to reconnect
+          └─ Fails (database still down)
+             └─ Schedule retry in 10 seconds
+
+T+31-41s: Retry attempt
+          └─ Succeeds (database back online)
+             └─ System fully recovered
+
+Total recovery time: ~40 seconds (worst case)
+
+
+LOGGING LEVELS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ERROR (🔴):
+  ❌ Database health check failed
+  ❌ Database connection check failed
+  ❌ Failed to reconnect to database
+
+WARNING (🟡):
+  ⚠️ Database connection failed (attempt X/5)
+  ⚠️ Reconnection already in progress
+  ⚠️ Light connection check warning
+
+INFO (🟢):
+  ✅ Database connection established successfully
+  ✅ Database reconnected successfully
+  🔄 Database disconnected! Attempting automatic reconnection...
+
+CRITICAL (🚨):
+  🚨 Health check detected database disconnection!
+
+
+CONFIGURATION OPTIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Health Check Interval (server/lib/prisma.js):
+  Current: 30000ms (30 seconds)
+  Modify: Change the interval value in startHealthCheck()
+
+Reconnection Retry Attempts (server/lib/prisma.js):
+  Current: 5 attempts
+  Modify: Change maxRetries parameter in handleDisconnection()
+
+Light Check Timeout (server/middleware/connectionCheck.js):
+  Current: 2000ms (2 seconds)
+  Modify: Change timeout value in lightConnectionCheck()
+
+Retry Delay After All Attempts Fail (server/lib/prisma.js):
+  Current: 10000ms (10 seconds)
+  Modify: Change setTimeout delay in handleDisconnection()

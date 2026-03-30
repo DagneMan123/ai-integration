@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { paymentAPI } from '../utils/api';
+import api from '../utils/api';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -24,6 +25,9 @@ const PaymentSuccess: React.FC = () => {
     const verifyPayment = async () => {
       let txRef = searchParams.get('tx_ref') || localStorage.getItem('pendingPaymentTxRef');
       const interviewId = localStorage.getItem('pendingInterviewId');
+      const jobId = localStorage.getItem('pendingJobId');
+      const applicationId = localStorage.getItem('pendingApplicationId');
+      const requirePayment = localStorage.getItem('requirePaymentBeforeInterview');
 
       if (!txRef) {
         setStatus('error');
@@ -49,10 +53,42 @@ const PaymentSuccess: React.FC = () => {
             setCountdown((prev) => {
               if (prev <= 1) {
                 clearInterval(timer);
-                // If interview ID exists, redirect to interview; otherwise go to subscription
-                if (interviewId) {
-                  localStorage.removeItem('pendingInterviewId');
-                  navigate(`/candidate/interview/${interviewId}`);
+                // If interview ID exists and payment was required, start the interview
+                if (interviewId && requirePayment === 'true') {
+                  // Start the interview first
+                  api.post('/interviews/start', {
+                    jobId: parseInt(jobId || '0'),
+                    applicationId: parseInt(applicationId || '0'),
+                    interviewMode: 'text',
+                    strictnessLevel: 'moderate'
+                  }).then((res) => {
+                    const actualInterviewId = res.data?.data?.interviewId;
+                    localStorage.removeItem('pendingInterviewId');
+                    localStorage.removeItem('pendingJobId');
+                    localStorage.removeItem('pendingApplicationId');
+                    localStorage.removeItem('requirePaymentBeforeInterview');
+                    // Redirect to interview with payment verification flag
+                    navigate(`/candidate/interview/${actualInterviewId || interviewId}?paymentVerified=true`);
+                  }).catch((err) => {
+                    console.error('Failed to start interview:', err);
+                    // Still navigate even if start fails, InterviewSession will handle it
+                    navigate(`/candidate/interview/${interviewId}?paymentVerified=true`);
+                  });
+                } else if (interviewId) {
+                  // Start the interview
+                  api.post('/interviews/start', {
+                    jobId: parseInt(jobId || '0'),
+                    applicationId: parseInt(applicationId || '0'),
+                    interviewMode: 'text',
+                    strictnessLevel: 'moderate'
+                  }).then((res) => {
+                    const actualInterviewId = res.data?.data?.interviewId;
+                    localStorage.removeItem('pendingInterviewId');
+                    navigate(`/candidate/interview/${actualInterviewId || interviewId}`);
+                  }).catch((err) => {
+                    console.error('Failed to start interview:', err);
+                    navigate(`/candidate/interview/${interviewId}`);
+                  });
                 } else {
                   navigate('/employer/subscription');
                 }

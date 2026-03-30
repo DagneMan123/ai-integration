@@ -22,7 +22,19 @@ exports.createApplication = async (req, res, next) => {
       return next(new AppError('Target job not found', 404));
     }
 
-    // Allow multiple applications for the same position
+    // Check if user already applied for this job
+    const existingApplication = await prisma.application.findUnique({
+      where: {
+        jobId_candidateId: {
+          jobId: jobIdInt,
+          candidateId: userId
+        }
+      }
+    });
+
+    if (existingApplication) {
+      return next(new AppError('You have already applied for this job', 400));
+    }
 
     // Transaction: Both records must be created together or not at all
     const result = await prisma.$transaction(async (tx) => {

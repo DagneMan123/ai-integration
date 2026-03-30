@@ -6,14 +6,23 @@ const rateLimit = require('express-rate-limit');
 const { testConnection, prisma } = require('./config/database'); 
 const { logger } = require('./utils/logger');
 const { errorHandler } = require('./middleware/errorHandler');
+const { connectWithRetry } = require('./lib/prisma');
+const { connectionCheck, lightConnectionCheck } = require('./middleware/connectionCheck');
 
 const app = express();
 
-// Database Connection
+// Database Connection with retry logic
 const startDB = async () => {
-  await testConnection();
-  
-  logger.info(' Prisma Client is ready');
+  try {
+    await connectWithRetry(5);
+    await testConnection();
+    logger.info('✅ Prisma Client is ready');
+  } catch (error) {
+    logger.error('❌ Failed to connect to database. Please ensure PostgreSQL is running.');
+    logger.error('Start PostgreSQL with: Start-Service -Name "postgresql-x64-15"');
+    // Don't exit - allow server to start but with limited functionality
+    logger.warn('⚠️ Server starting without database connection. Some features will be unavailable.');
+  }
 };
 startDB();
 
@@ -27,7 +36,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   message: { message: 'Too many requests from this IP' }
 });
 app.use('/api/', limiter);
@@ -38,6 +47,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files (for images, logos, etc.)
 app.use(express.static('public'));
+
+// Apply connection check to critical API routes
+app.use('/api/auth', lightConnectionCheck);
+app.use('/api/users', lightConnectionCheck);
+app.use('/api/payments', connectionCheck);
+app.use('/api/wallet', connectionCheck);
+app.use('/api/interviews', lightConnectionCheck);
+app.use('/api/applications', lightConnectionCheck);
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

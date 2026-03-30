@@ -43,6 +43,8 @@ const CandidateDashboard: React.FC = () => {
   const [pendingInterviewId, setPendingInterviewId] = useState<string | null>(null);
   const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [creditBundles, setCreditBundles] = useState<any[]>([]);
+  const [selectedBundleId, setSelectedBundleId] = useState<number | null>(null);
 
   // Session monitoring
   useSessionMonitoring();
@@ -73,7 +75,7 @@ const CandidateDashboard: React.FC = () => {
       const walletRes = await api.get('/wallet/balance');
       setWallet(walletRes.data.data || walletRes.data);
       const params = new URLSearchParams({
-        page: page.toString(),
+        page: '1',
         limit: '5',
         ...(statusFilter && { status: statusFilter })
       });
@@ -81,19 +83,39 @@ const CandidateDashboard: React.FC = () => {
       setTransactions(historyRes.data.data || []);
       const analyticsRes = await api.get('/payments/analytics');
       setAnalytics(analyticsRes.data.data || analyticsRes.data);
+      
+      // Fetch credit bundles
+      const bundlesRes = await api.get('/payments/bundles');
+      const bundles = bundlesRes.data.data || [];
+      setCreditBundles(bundles);
+      // Set default bundle (Starter Pack - usually first one)
+      if (bundles.length > 0 && !selectedBundleId) {
+        setSelectedBundleId(bundles[0].id);
+      }
     } catch (err: any) {
       setBillingError(err.response?.data?.error || 'Failed to load billing data');
       console.error('Error fetching billing data:', err);
     } finally {
       setBillingLoading(false);
     }
-  }, [page, statusFilter]);
+  }, [statusFilter, selectedBundleId]);
 
   useEffect(() => {
+    // Fetch dashboard data first
     fetchDashboardData();
-    fetchBillingData();
+    
+    // Fetch billing data after a small delay to avoid rate limiting
+    const billingTimer = setTimeout(() => {
+      fetchBillingData();
+    }, 500);
+    
+    // Set up interval for dashboard refresh (every 60 seconds)
     const interval = setInterval(fetchDashboardData, 60000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearTimeout(billingTimer);
+      clearInterval(interval);
+    };
   }, [fetchDashboardData, fetchBillingData]);
 
   // Check for pending interview payment
@@ -329,18 +351,70 @@ const CandidateDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {billingError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm font-medium">
+                  {billingError}
+                </div>
+              )}
+
               <div className="space-y-3">
                 {wallet?.balance >= 1 ? (
                   <>
                     <button
-                      onClick={() => {
-                        setShowPaymentPrompt(false);
-                        localStorage.removeItem('pendingInterviewId');
-                        navigate(`/candidate/interview/${pendingInterviewId}`);
+                      onClick={async () => {
+                        try {
+                          setProcessingPayment(true);
+                          setBillingError(null);
+                          
+                          // Get pending interview details from localStorage
+                          const jobId = localStorage.getItem('pendingJobId');
+                          const applicationId = localStorage.getItem('pendingApplicationId');
+                          
+                          if (!jobId || !applicationId) {
+                            setBillingError('Missing interview details. Please try again.');
+                            setProcessingPayment(false);
+                            return;
+                          }
+                          
+                          // Call /interviews/start to create the interview
+                          const startResponse = await api.post('/interviews/start', {
+                            jobId: parseInt(jobId),
+                            applicationId: parseInt(applicationId),
+                            interviewMode: 'text',
+                            strictnessLevel: 'moderate'
+                          });
+                          
+                          console.log('Interview started:', startResponse.data);
+                          
+                          // Get the actual interview ID from the response
+                          const actualInterviewId = startResponse.data?.data?.interviewId;
+                          
+                          if (!actualInterviewId) {
+                            setBillingError('Failed to create interview. Please try again.');
+                            setProcessingPayment(false);
+                            return;
+                          }
+                          
+                          // Clear localStorage
+                          setShowPaymentPrompt(false);
+                          localStorage.removeItem('pendingInterviewId');
+                          localStorage.removeItem('pendingJobId');
+                          localStorage.removeItem('pendingApplicationId');
+                          
+                          // Navigate to interview session with the actual ID
+                          navigate(`/candidate/interview/${actualInterviewId}`);
+                        } catch (err: any) {
+                          console.error('Interview start error:', err);
+                          const errorMessage = err.response?.data?.message || err.message || 'Failed to start interview';
+                          setBillingError(errorMessage);
+                        } finally {
+                          setProcessingPayment(false);
+                        }
                       }}
-                      className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all"
+                      disabled={processingPayment}
+                      className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all disabled:opacity-50"
                     >
-                      Start Interview Now
+                      {processingPayment ? 'Starting...' : 'Start Interview Now'}
                     </button>
                     <p className="text-xs text-center text-gray-500">You have enough credits</p>
                   </>
@@ -351,19 +425,38 @@ const CandidateDashboard: React.FC = () => {
                         try {
                           setProcessingPayment(true);
                           setBillingError(null);
+                          
+                          // Get selected bundle
+                          const selectedBundle = creditBundles.find(b => b.id === selectedBundleId);
+                          if (!selectedBundle) {
+                            setBillingError('Please select a credit bundle');
+                            setProcessingPayment(false);
+                            return;
+                          }
+                          
+                          console.log('Initializing payment with bundle:', selectedBundle);
                           const response = await paymentAPI.initialize({
-                            amount: 5,
-                            creditAmount: 1,
+                            bundleId: selectedBundle.id.toString(),
+                            amount: parseFloat(selectedBundle.priceETB),
+                            creditAmount: selectedBundle.creditAmount,
                             type: 'interview',
                             description: 'Payment for AI Interview Session'
                           });
-                          if (response.data?.data?.checkout_url) {
+                          
+                          console.log('Payment response:', response);
+                          
+                          const checkoutUrl = response.data?.data?.checkout_url;
+                          if (checkoutUrl) {
+                            console.log('Checkout URL:', checkoutUrl);
                             localStorage.setItem('pendingInterviewId', pendingInterviewId || '');
-                            window.location.href = response.data.data.checkout_url;
+                            localStorage.setItem('pendingPaymentTxRef', response.data?.data?.txRef || '');
+                            window.location.href = checkoutUrl;
                           } else {
+                            console.error('No checkout URL in response:', response.data);
                             setBillingError('Failed to initialize payment: No checkout URL received');
                           }
                         } catch (err: any) {
+                          console.error('Payment error:', err);
                           const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to initialize payment';
                           setBillingError(errorMessage);
                         } finally {

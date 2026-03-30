@@ -37,6 +37,7 @@ const CandidateProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'account'>('personal');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [formData, setFormData] = useState<ProfileFormData | null>(null);
 
   // ፕሮፋይሉ ምን ያህል እንደተሞላ ለመቁጠር (UX)
   const watchedFields = watch();
@@ -65,6 +66,15 @@ const CandidateProfile: React.FC = () => {
   }, [setValue]);
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+  // Real-time sync across all form fields
+  useEffect(() => {
+    const subscription = watch((data) => {
+      setFormData(data as ProfileFormData);
+      setHasChanges(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const onSubmit = async (data: ProfileFormData) => {
     setSaving(true);
@@ -199,22 +209,22 @@ const CandidateProfile: React.FC = () => {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <InputField label="First Name" error={errors.firstName?.message}>
-                      <input {...register('firstName', { required: 'Required', onChange: () => setHasChanges(true) })} className="form-input-pro" placeholder="John" />
+                      <input {...register('firstName', { required: 'Required' })} onChange={() => setHasChanges(true)} className="form-input-pro" placeholder="John" />
                     </InputField>
                     <InputField label="Last Name" error={errors.lastName?.message}>
-                      <input {...register('lastName', { required: 'Required', onChange: () => setHasChanges(true) })} className="form-input-pro" placeholder="Doe" />
+                      <input {...register('lastName', { required: 'Required' })} onChange={() => setHasChanges(true)} className="form-input-pro" placeholder="Doe" />
                     </InputField>
                   </div>
 
                   <InputField label="Phone Number">
                     <div className="relative">
                       <Phone className="absolute left-4 top-3.5 w-4 h-4 text-gray-400" />
-                      <input {...register('phone', { onChange: () => setHasChanges(true) })} className="form-input-pro pl-12" placeholder="+251 9..." />
+                      <input {...register('phone')} onChange={() => setHasChanges(true)} className="form-input-pro pl-12" placeholder="+251 9..." />
                     </div>
                   </InputField>
 
                   <InputField label="About / Bio">
-                    <textarea {...register('bio', { onChange: () => setHasChanges(true) })} rows={4} className="form-input-pro resize-none" placeholder="Tell us about yourself..." />
+                    <textarea {...register('bio')} onChange={() => setHasChanges(true)} rows={4} className="form-input-pro resize-none" placeholder="Tell us about yourself..." />
                   </InputField>
                 </div>
               )}
@@ -224,21 +234,21 @@ const CandidateProfile: React.FC = () => {
                   <InputField label="Core Skills" subLabel="Separate with commas">
                     <div className="relative">
                       <Code className="absolute left-4 top-3.5 w-4 h-4 text-gray-400" />
-                      <input {...register('skills', { onChange: () => setHasChanges(true) })} className="form-input-pro pl-12" placeholder="React, Node.js, Python..." />
+                      <input {...register('skills')} onChange={() => setHasChanges(true)} className="form-input-pro pl-12" placeholder="React, Node.js, Python..." />
                     </div>
                   </InputField>
 
                   <InputField label="Work Experience">
                     <div className="relative">
                       <Briefcase className="absolute left-4 top-4 w-4 h-4 text-gray-400" />
-                      <textarea {...register('experience', { onChange: () => setHasChanges(true) })} rows={5} className="form-input-pro pl-12 resize-none" placeholder="Detail your past roles..." />
+                      <textarea {...register('experience')} onChange={() => setHasChanges(true)} rows={5} className="form-input-pro pl-12 resize-none" placeholder="Detail your past roles..." />
                     </div>
                   </InputField>
 
                   <InputField label="Education">
                     <div className="relative">
                       <GraduationCap className="absolute left-4 top-4 w-4 h-4 text-gray-400" />
-                      <textarea {...register('education', { onChange: () => setHasChanges(true) })} rows={3} className="form-input-pro pl-12 resize-none" placeholder="Degrees and certifications..." />
+                      <textarea {...register('education')} onChange={() => setHasChanges(true)} rows={3} className="form-input-pro pl-12 resize-none" placeholder="Degrees and certifications..." />
                     </div>
                   </InputField>
                 </div>

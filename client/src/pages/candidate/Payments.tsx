@@ -96,11 +96,11 @@ const CandidatePayments: React.FC = () => {
           </div>
 
           {payments.length > 0 ? (
-            payments.map((payment) => {
+            payments.map((payment, index) => {
               const { color, icon, label } = getStatusConfig(payment.status);
               return (
                 <div 
-                  key={payment._id} 
+                  key={payment._id || payment.id || index} 
                   className="group bg-white rounded-[2rem] border border-gray-100 p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

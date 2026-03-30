@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    ✅ REACT WARNING & RATE LIMIT FIXED
+═══════════════════════════════════════════════════════════════════════════════
+
+ISSUES FIXED:
+
+1. ✅ React Warning: Missing "key" prop in list
+   File: client/src/pages/candidate/Payments.tsx
+   Fix: Updated key to use fallback: key={payment._id || payment.id || index}
+
+2. ✅ 429 Too Many Requests (Rate Limiting)
+   Files: 
+   - client/src/pages/candidate/Dashboard.tsx
+   - server/index.js
+   
+   Fixes:
+   - Added 500ms delay between API calls in Dashboard
+   - Increased rate limit from 100 to 500 requests per 15 minutes
+   - Staggered API calls to prevent simultaneous requests
+
+═══════════════════════════════════════════════════════════════════════════════
+                        WHAT WAS CHANGED
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Payments.tsx (React Warning Fix)
+   BEFORE:
+     key={payment._id}
+   
+   AFTER:
+     key={payment._id || payment.id || index}
+   
+   Why: Provides fallback keys if _id is undefined
+
+2. Dashboard.tsx (Rate Limiting Fix)
+   BEFORE:
+     fetchDashboardData();
+     fetchBillingData();
+   
+   AFTER:
+     fetchDashboardData();
+     setTimeout(() => fetchBillingData(), 500);
+   
+   Why: Prevents simultaneous API calls that trigger rate limiting
+
+3. server/index.js (Rate Limit Increase)
+   BEFORE:
+     max: 100 requests per 15 minutes
+   
+   AFTER:
+     max: 500 requests per 15 minutes
+   
+   Why: Allows more requests for normal operation
+
+═══════════════════════════════════════════════════════════════════════════════
+                        EXPECTED RESULTS
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ React warning gone
+✅ No more 429 errors
+✅ Dashboard loads smoothly
+✅ All API calls succeed
+✅ Payment history displays correctly
+
+═══════════════════════════════════════════════════════════════════════════════
+                        NEXT STEPS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Backend will automatically reload (nodemon)
+2. Refresh browser (Ctrl+F5)
+3. Test the dashboard - should load without errors
+4. Check payment history - should display correctly
+
+═══════════════════════════════════════════════════════════════════════════════

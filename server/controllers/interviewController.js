@@ -19,7 +19,10 @@ const checkAndDeductCredit = async (userId) => {
     });
   }
   
-  if (wallet.balance < 1) {
+  // Convert balance to number for comparison (Prisma returns Decimal)
+  const balanceAmount = parseFloat(wallet.balance);
+  
+  if (balanceAmount < 1) {
     throw new AppError("Insufficient credits. Please top up 5 ETB.", 402);
   }
   return wallet;

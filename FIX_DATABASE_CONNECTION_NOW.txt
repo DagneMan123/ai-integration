@@ -1,145 +1,120 @@
-╔════════════════════════════════════════════════════════════════════════════╗
-║                  FIX DATABASE CONNECTION ERROR                            ║
-║                                                                            ║
-║  Error: Can't reach database server at `localhost:5432`                   ║
-╚════════════════════════════════════════════════════════════════════════════╝
+================================================================================
+                    FIX DATABASE CONNECTION - IMMEDIATE ACTION
+================================================================================
 
-PROBLEM: PostgreSQL service is NOT running
+YOUR ERROR:
+  "Can't reach database server at `localhost:5432`"
 
-SOLUTION: Start PostgreSQL immediately
+REASON:
+  PostgreSQL is not running
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMMEDIATE FIX:
+  Start PostgreSQL service
 
-OPTION 1: AUTOMATIC (RECOMMENDED)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
+                          DO THIS NOW (Copy & Paste)
+================================================================================
 
-1. Right-click: START_EVERYTHING.bat
-2. Select: "Run as Administrator"
-3. Wait for it to complete
-4. Server will start automatically
+STEP 1: Open PowerShell as Administrator
+  - Press: Windows Key
+  - Type: PowerShell
+  - Right-click: Windows PowerShell
+  - Select: Run as Administrator
 
-This script will:
-✓ Start PostgreSQL service
-✓ Test database connection
-✓ Start your server
+STEP 2: Copy and paste this command:
+  Start-Service -Name "postgresql-x64-15"
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: Wait 5 seconds
 
-OPTION 2: MANUAL (If script doesn't work)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: Verify it's running:
+  Get-Service -Name "postgresql-x64-15"
 
-Step 1: Open Command Prompt as Administrator
-   - Press: Windows Key + R
-   - Type: cmd
-   - Press: Ctrl + Shift + Enter (to run as admin)
+STEP 5: Should show:
+  Status   Name
+  ------   ----
+  Running  postgresql-x64-15
 
-Step 2: Start PostgreSQL Service
-   Copy and paste ONE of these commands:
+STEP 6: Go back to your backend terminal
 
-   net start postgresql-x64-16
+STEP 7: Press Ctrl+C to stop the server
 
-   If that fails, try:
-   net start postgresql-x64-15
-   net start postgresql-x64-14
-   net start postgresql-x64-13
+STEP 8: Run: npm run dev
 
-Step 3: Verify PostgreSQL Started
-   You should see: "The PostgreSQL-x64-XX service is starting..."
-   Then: "The PostgreSQL-x64-XX service has been started successfully."
+STEP 9: Should see:
+  ✅ Database connection established successfully via Prisma.
+  ✅ Server running on port 5000
 
-Step 4: Start Your Server
-   In the SAME Command Prompt, run:
-   
-   cd server
-   npm run dev
+================================================================================
+                          ALTERNATIVE: Windows Services
+================================================================================
 
-Step 5: Open Another Command Prompt
-   In a NEW Command Prompt (not as admin), run:
-   
+If PowerShell doesn't work:
+
+STEP 1: Press Windows Key + R
+
+STEP 2: Type: services.msc
+
+STEP 3: Press Enter
+
+STEP 4: Find: postgresql-x64-15
+
+STEP 5: Right-click on it
+
+STEP 6: Select: Start
+
+STEP 7: Wait 5 seconds
+
+STEP 8: Go back to backend terminal
+
+STEP 9: Press Ctrl+C
+
+STEP 10: Run: npm run dev
+
+================================================================================
+                          VERIFY CONNECTION
+================================================================================
+
+After restarting backend, you should see:
+
+✅ Database connection established successfully via Prisma.
+✅ Server running on port 5000
+
+If you still see errors:
+  1. Check PostgreSQL is running:
+     Get-Service -Name "postgresql-x64-15"
+  2. If stopped, start it again
+  3. Wait 10 seconds
+  4. Restart backend
+
+================================================================================
+                          THEN TEST THE FLOW
+================================================================================
+
+1. Open new terminal:
    cd client
    npm start
 
-Step 6: Open Browser
-   Go to: http://localhost:3000
+2. Open browser:
+   http://localhost:3000
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. Login with test credentials
 
-WHAT IF IT STILL DOESN'T WORK?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. Navigate to Interviews
 
-❌ "The specified service does not exist"
-   → PostgreSQL might not be installed
-   → Check: C:\Program Files\PostgreSQL\
-   → If not there, install PostgreSQL from: https://www.postgresql.org/download/windows/
+5. Click "Start AI Interview"
 
-❌ "Access Denied"
-   → You MUST run Command Prompt as Administrator
-   → Right-click cmd.exe → "Run as Administrator"
+6. Complete payment flow
 
-❌ "Service is already running"
-   → That's good! PostgreSQL is already running
-   → Just run: cd server && npm run dev
+7. Verify interview starts
 
-❌ "Connection refused"
-   → PostgreSQL service didn't start properly
-   → Try restarting your computer
-   → Then run the startup script again
+================================================================================
+                          THAT'S IT!
+================================================================================
 
-❌ "Database 'simuai_db' does not exist"
-   → Run these commands in Command Prompt:
-   
-   psql -U postgres
-   (enter password: MYlove8)
-   
-   CREATE DATABASE simuai_db;
-   \q
-   
-   Then try again
+PostgreSQL is now running.
+Backend can connect to database.
+You can test the interview payment flow.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Good luck! 🚀
 
-QUICK CHECKLIST
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-☐ PostgreSQL is installed
-☐ PostgreSQL service is running (net start postgresql-x64-16)
-☐ Database 'simuai_db' exists
-☐ server/.env has correct DATABASE_URL
-☐ Server can connect to database
-☐ Server is running on port 5000
-☐ Client is running on port 3000
-☐ Browser is open to http://localhost:3000
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-CURRENT DATABASE SETTINGS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Host:     localhost
-Port:     5432
-Database: simuai_db
-User:     postgres
-Password: MYlove8
-
-(These are in server/.env - change if needed)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-NEXT STEPS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. Run: START_EVERYTHING.bat (as Administrator)
-   OR
-   Manually start PostgreSQL and run: npm run dev
-
-2. Wait for server to show: "Server running on port 5000"
-
-3. In another terminal: cd client && npm start
-
-4. Open: http://localhost:3000
-
-5. Login with test credentials:
-   Email: test@example.com
-   Password: Test@123
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================

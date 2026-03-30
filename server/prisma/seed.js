@@ -227,7 +227,51 @@ async function main() {
     ],
   });
 
-  console.log('✅ Activity logs created');
+  console.log(' Activity logs created');
+
+  // Create credit bundles
+  const bundles = [
+    {
+      name: 'Starter Pack',
+      creditAmount: 5,
+      priceETB: 25.00,
+      isActive: true
+    },
+    {
+      name: 'Professional Pack',
+      creditAmount: 10,
+      priceETB: 45.00,
+      isActive: true
+    },
+    {
+      name: 'Enterprise Pack',
+      creditAmount: 25,
+      priceETB: 100.00,
+      isActive: true
+    }
+  ];
+
+  for (const bundleData of bundles) {
+    const bundle = await prisma.creditBundle.upsert({
+      where: { id: bundles.indexOf(bundleData) + 1 },
+      update: {},
+      create: bundleData
+    });
+    console.log(`✅ Credit bundle created: ${bundle.name} (${bundle.creditAmount} credits for ${bundle.priceETB} ETB)`);
+  }
+
+  // Initialize wallet for candidate with 5 credits for testing
+  const candidateWallet = await prisma.wallet.upsert({
+    where: { userId: candidate.id },
+    update: {},
+    create: {
+      userId: candidate.id,
+      balance: 5,
+      currency: 'ETB'
+    }
+  });
+
+  console.log('✅ Candidate wallet initialized with 5 credits');
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Sample Accounts Created:');

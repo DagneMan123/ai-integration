@@ -46,8 +46,8 @@ const InterviewReport: React.FC = () => {
     </div>
   );
 
-  const { interview } = report;
-  const evalData = interview.aiEvaluation;
+  const interview = report?.interview || report;
+  const evalData = interview?.aiEvaluation || interview?.evaluation || {};
   const overallScore = evalData?.overallScore || 0;
 
   return (

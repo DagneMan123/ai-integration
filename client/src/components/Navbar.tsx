@@ -54,7 +54,7 @@ const Navbar: React.FC = () => {
               <LayoutDashboard size={20} />
             </div>
             <span className="text-2xl font-black text-slate-900 tracking-tight">
-              SimuAI
+              
             </span>
           </Link>
 

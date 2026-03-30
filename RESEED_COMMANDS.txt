@@ -1,0 +1,51 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    EXACT COMMANDS TO RESEED DATABASE
+═══════════════════════════════════════════════════════════════════════════════
+
+TERMINAL 1: Start PostgreSQL
+═══════════════════════════════════════════════════════════════════════════════
+
+START_POSTGRESQL_WINDOWS.bat
+
+Wait for: "Database connection established successfully via Prisma."
+
+
+TERMINAL 2: Reseed Database
+═══════════════════════════════════════════════════════════════════════════════
+
+cd server
+npx prisma db seed
+
+Wait for: "🎉 Database seeding completed successfully!"
+
+
+TERMINAL 1: Restart Backend Server
+═══════════════════════════════════════════════════════════════════════════════
+
+npm run dev
+
+Wait for: "Database connection established successfully via Prisma."
+
+
+BROWSER: Test the System
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Go to: http://localhost:3000
+2. Login:
+   Email: candidate@example.com
+   Password: candidate123
+3. Check dashboard - wallet should show 5 credits
+4. Click "Explore Jobs"
+5. Select a job and click "Apply"
+6. Click "Start Interview"
+7. Modal should show "Start Interview Now" button (GREEN)
+8. Click to start interview
+
+═══════════════════════════════════════════════════════════════════════════════
+                            THAT'S IT!
+═══════════════════════════════════════════════════════════════════════════════
+
+If you see "Start Interview Now" button (GREEN) instead of "Pay & Start Interview" 
+(BLUE), then the reseeding was successful!
+
+═══════════════════════════════════════════════════════════════════════════════
