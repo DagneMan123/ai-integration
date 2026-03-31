@@ -23,7 +23,7 @@ interface AccountDashboardProps {
 const AccountDashboard: React.FC<AccountDashboardProps> = ({ isOpen, onClose, role }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { sendMessage, broadcastAlert } = useDashboardCommunication(role);
+  const { notifyStatusChange } = useDashboardCommunication(role);
   const [activeTab, setActiveTab] = useState<'profile' | 'settings' | 'security'>('profile');
   const [editMode, setEditMode] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -36,10 +36,7 @@ const AccountDashboard: React.FC<AccountDashboardProps> = ({ isOpen, onClose, ro
 
   const handleLogout = () => {
     // Notify other dashboards of logout
-    sendMessage('all', 'notification', 'User Logged Out', `${user?.firstName} ${user?.lastName} has logged out`);
-    
-    // Broadcast logout alert
-    broadcastAlert('User Session Ended', `${user?.firstName} has ended their session`, 'info');
+    notifyStatusChange('logged_out', { user: user?.id });
     
     // Perform logout
     logout();
@@ -49,7 +46,7 @@ const AccountDashboard: React.FC<AccountDashboardProps> = ({ isOpen, onClose, ro
 
   const handleSaveProfile = () => {
     // Notify other dashboards of profile update
-    sendMessage('all', 'data-update', 'Profile Updated', `${profileData.firstName} ${profileData.lastName} updated their profile`);
+    notifyStatusChange('profile_updated', { firstName: profileData.firstName, lastName: profileData.lastName });
     setEditMode(false);
   };
 

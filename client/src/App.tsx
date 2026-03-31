@@ -40,6 +40,18 @@ const CandidatePayments = lazy(() => import('./pages/candidate/Payments'));
 // const PaymentHistory = lazy(() => import('./pages/candidate/PaymentHistory'));
 const InterviewInsights = lazy(() => import('./pages/candidate/InterviewInsights'));
 const HelpCenter = lazy(() => import('./pages/candidate/HelpCenter'));
+const SavedJobs = lazy(() => import('./pages/candidate/SavedJobs'));
+const JobAlerts = lazy(() => import('./pages/candidate/JobAlerts'));
+const Resume = lazy(() => import('./pages/candidate/Resume'));
+const Invitations = lazy(() => import('./pages/candidate/Invitations'));
+const Practice = lazy(() => import('./pages/candidate/Practice'));
+const SystemCheck = lazy(() => import('./pages/candidate/SystemCheck'));
+const InterviewHistory = lazy(() => import('./pages/candidate/InterviewHistory'));
+const CandidateMessages = lazy(() => import('./pages/candidate/Messages'));
+const AccountSettings = lazy(() => import('./pages/candidate/AccountSettings'));
+const GettingStarted = lazy(() => import('./pages/candidate/GettingStarted'));
+const InterviewTips = lazy(() => import('./pages/candidate/InterviewTips'));
+const Troubleshooting = lazy(() => import('./pages/candidate/Troubleshooting'));
 
 const EmployerDashboard = lazy(() => import('./pages/employer/Dashboard'));
 const EmployerProfile = lazy(() => import('./pages/employer/Profile'));
@@ -263,6 +275,126 @@ const App: React.FC = () => {
                 <PrivateRoute role="candidate">
                   <Suspense fallback={<Loading />}>
                     <HelpCenter />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/saved-jobs" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <SavedJobs />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/job-alerts" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <JobAlerts />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/resume" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <Resume />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/invitations" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <Invitations />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/practice" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <Practice />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/system-check" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <SystemCheck />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/interview-history" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewHistory />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/messages" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateMessages />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/account-settings" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <AccountSettings />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/getting-started" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <GettingStarted />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/interview-tips" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewTips />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/troubleshooting" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <Troubleshooting />
                   </Suspense>
                 </PrivateRoute>
               } 

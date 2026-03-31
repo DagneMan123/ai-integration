@@ -11,6 +11,9 @@ interface SidebarContextType {
   // General settings
   settingsOpen: boolean;
   setSettingsOpen: (open: boolean) => void;
+  // Help center
+  helpCenterOpen: boolean;
+  setHelpCenterOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -20,6 +23,7 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [globalSettingsOpen, setGlobalSettingsOpen] = useState(false);
   const [supportTicketsOpen, setSupportTicketsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpCenterOpen, setHelpCenterOpen] = useState(false);
 
   return (
     <SidebarContext.Provider
@@ -32,6 +36,8 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
         setSupportTicketsOpen,
         settingsOpen,
         setSettingsOpen,
+        helpCenterOpen,
+        setHelpCenterOpen,
       }}
     >
       {children}

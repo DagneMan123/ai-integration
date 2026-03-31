@@ -384,3 +384,59 @@ enum PaymentStatus {
   CANCELLED
   REFUNDED
 }
+
+// Dashboard Communication Tables
+model DashboardMessage {
+  id            Int       @id @default(autoincrement())
+  fromDashboard String    // 'candidate', 'employer', 'admin'
+  toDashboard   String?   // null means broadcast to all
+  eventType     String    // 'APPLICATION_UPDATE', 'INTERVIEW_UPDATE', 'SYSTEM_UPDATE', etc.
+  data          String    // JSON stringified data
+  timestamp     DateTime  @default(now())
+  read          Boolean   @default(false)
+  
+  @@map("dashboard_messages")
+}
+
+model ApplicationActivity {
+  id            Int       @id @default(autoincrement())
+  applicationId Int
+  action        String    // 'STATUS_CHANGED', 'CREATED', 'REJECTED', etc.
+  details       String    // JSON stringified details
+  timestamp     DateTime  @default(now())
+  
+  @@map("application_activities")
+}
+
+model InterviewActivity {
+  id            Int       @id @default(autoincrement())
+  interviewId   Int
+  action        String    // 'STATUS_CHANGED', 'CREATED', 'COMPLETED', etc.
+  details       String    // JSON stringified details
+  timestamp     DateTime  @default(now())
+  
+  @@map("interview_activities")
+}
+
+model SystemUpdate {
+  id            Int       @id @default(autoincrement())
+  adminId       Int
+  updateType    String    // 'USER_MANAGEMENT', 'COMPANY_VERIFICATION', 'SYSTEM_ALERT', etc.
+  details       String    // JSON stringified details
+  timestamp     DateTime  @default(now())
+  
+  @@map("system_updates")
+}
+
+model DashboardNotification {
+  id            Int       @id @default(autoincrement())
+  dashboard     String    // 'candidate', 'employer', 'admin'
+  title         String
+  message       String
+  type          String    // 'info', 'success', 'warning', 'error'
+  data          String?   // JSON stringified data
+  read          Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  
+  @@map("dashboard_notifications")
+}

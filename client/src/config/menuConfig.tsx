@@ -4,7 +4,6 @@ import {
   UserCircle, 
   FileCheck, 
   Video, 
-  Wallet, 
   Building2, 
   Briefcase, 
   BarChart3, 
@@ -17,34 +16,81 @@ import {
   Calendar,
   MessageSquare,
   HelpCircle,
-  Star
+  Star,
+  Wallet,
+  Search,
+  Bookmark,
+  Bell,
+  FileText,
+  CheckCircle,
+  LogOut
 } from 'lucide-react';
 
 export interface MenuItem {
-  path: string;
+  path?: string;
   label: string;
   icon: React.ReactNode;
   badge?: number;
+  submenu?: MenuItem[];
+  isSection?: boolean;
 }
 
-// --- Candidate Menu (Enhanced) ---
+// --- Candidate Menu (Professional Hierarchical Structure) ---
 export const candidateMenu: MenuItem[] = [
-  { path: '/candidate/dashboard', label: 'Overview', icon: <LayoutDashboard size={20} /> },
-  { path: '/candidate/profile', label: 'Profile Settings', icon: <UserCircle size={20} /> },
-  { path: '/candidate/applications', label: 'My Applications', icon: <FileCheck size={20} /> },
-  { 
-    path: '/candidate/interviews', 
-    label: 'AI Interviews', 
-    icon: <Video size={20} />, 
-    badge: 2 
+  // 1. Dashboard
+  { path: '/candidate/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+  
+  // 2. Jobs Section
+  {
+    label: 'Jobs',
+    icon: <Briefcase size={20} />,
+    isSection: true,
+    submenu: [
+      { path: '/jobs', label: 'Find Jobs', icon: <Search size={18} /> },
+      { path: '/candidate/saved-jobs', label: 'Saved Jobs', icon: <Bookmark size={18} /> },
+      { path: '/candidate/job-alerts', label: 'Job Alerts', icon: <Bell size={18} /> },
+    ]
   },
-  { 
-    path: '/candidate/results', // Added: Important for AI feedback
-    label: 'Interview Insights', 
-    icon: <Star size={20} /> 
+  
+  // 3. My Career Section
+  {
+    label: 'My Career',
+    icon: <UserCircle size={20} />,
+    isSection: true,
+    submenu: [
+      { path: '/candidate/profile', label: 'My Profile', icon: <UserCircle size={18} /> },
+      { path: '/candidate/resume', label: 'Resume & Documents', icon: <FileText size={18} /> },
+      { path: '/candidate/applications', label: 'My Applications', icon: <FileCheck size={18} /> },
+    ]
   },
-  { path: '/candidate/payments', label: 'Billing & History', icon: <Wallet size={20} /> },
-  { path: '/candidate/support', label: 'Help Center', icon: <HelpCircle size={20} /> },
+  
+  // 4. AI Interviews Section
+  {
+    label: 'AI Interviews',
+    icon: <Video size={20} />,
+    isSection: true,
+    submenu: [
+      { path: '/candidate/invitations', label: 'Official Invitations', icon: <CheckCircle size={18} /> },
+      { path: '/candidate/practice', label: 'Practice Mode', icon: <Star size={18} /> },
+      { path: '/candidate/system-check', label: 'System Check', icon: <Settings size={18} /> },
+      { path: '/candidate/interview-history', label: 'Interview History', icon: <ClipboardList size={18} /> },
+    ]
+  },
+  
+  // 5. Messages
+  { path: '/candidate/messages', label: 'Messages', icon: <MessageSquare size={20} />, badge: 0 },
+  
+  // 6. Settings & Support Section
+  {
+    label: 'Settings & Support',
+    icon: <Settings size={20} />,
+    isSection: true,
+    submenu: [
+      { path: '/candidate/account-settings', label: 'Account Settings', icon: <Settings size={18} /> },
+      { path: '/candidate/help-center', label: 'Help Center', icon: <HelpCircle size={18} /> },
+      { path: '/logout', label: 'Logout', icon: <LogOut size={18} /> },
+    ]
+  },
 ];
 
 // --- Employer Menu (Enhanced) ---

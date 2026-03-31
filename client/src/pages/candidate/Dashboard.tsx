@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { analyticsAPI, paymentAPI } from '../../utils/api';
+import { Link } from 'react-router-dom';
+import { analyticsAPI } from '../../utils/api';
 import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
+import { useDashboardSync } from '../../hooks/useDashboardSync';
 import { 
   Briefcase,
   Calendar, 
@@ -17,34 +18,16 @@ import {
   UserCircle,
   Clock,
   TrendingUp,
-  AlertCircle,
-  CreditCard,
-  Download,
-  CheckCircle,
-  Filter,
-  ChevronDown
+  AlertCircle
 } from 'lucide-react';
-import api from '../../utils/api';
+
+import { dashboardDataService } from '../../services/dashboardDataService';
 
 const CandidateDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [wallet, setWallet] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [billingLoading, setBillingLoading] = useState(false);
-  const [billingError, setBillingError] = useState<string | null>(null);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [page, setPage] = useState(1);
-  const [pendingInterviewId, setPendingInterviewId] = useState<string | null>(null);
-  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
-  const [processingPayment, setProcessingPayment] = useState(false);
-  const [creditBundles, setCreditBundles] = useState<any[]>([]);
-  const [selectedBundleId, setSelectedBundleId] = useState<number | null>(null);
 
   // Session monitoring
   useSessionMonitoring();
@@ -52,12 +35,35 @@ const CandidateDashboard: React.FC = () => {
   // Dashboard communication
   useDashboardCommunication('candidate');
 
+  // Dashboard sync
+  useDashboardSync(
+    'candidate',
+    (event) => {
+      if (event.dashboard !== 'candidate') {
+        console.log('Received update from', event.dashboard, event.data);
+        if (event.type === 'refresh') {
+          fetchDashboardData();
+        }
+      }
+    },
+    (event) => {
+      if (event.dashboard !== 'candidate') {
+        fetchDashboardData();
+      }
+    },
+    (event) => {
+      if (event.data?.message) {
+        console.log('Notification from', event.dashboard, ':', event.data.message);
+      }
+    }
+  );
+
   const fetchDashboardData = useCallback(async () => {
     try {
       setRefreshing(true);
       setError(null);
-      const response = await analyticsAPI.getCandidateDashboard();
-      const dashboardData = response.data.data;
+      const response = await dashboardDataService.getCandidateDashboard();
+      const dashboardData = response.data;
       setData(dashboardData);
     } catch (err: any) {
       console.error('Dashboard fetch error:', err);
@@ -68,68 +74,16 @@ const CandidateDashboard: React.FC = () => {
     }
   }, []);
 
-  const fetchBillingData = useCallback(async () => {
-    try {
-      setBillingLoading(true);
-      setBillingError(null);
-      const walletRes = await api.get('/wallet/balance');
-      setWallet(walletRes.data.data || walletRes.data);
-      const params = new URLSearchParams({
-        page: '1',
-        limit: '5',
-        ...(statusFilter && { status: statusFilter })
-      });
-      const historyRes = await api.get(`/payments/history?${params}`);
-      setTransactions(historyRes.data.data || []);
-      const analyticsRes = await api.get('/payments/analytics');
-      setAnalytics(analyticsRes.data.data || analyticsRes.data);
-      
-      // Fetch credit bundles
-      const bundlesRes = await api.get('/payments/bundles');
-      const bundles = bundlesRes.data.data || [];
-      setCreditBundles(bundles);
-      // Set default bundle (Starter Pack - usually first one)
-      if (bundles.length > 0 && !selectedBundleId) {
-        setSelectedBundleId(bundles[0].id);
-      }
-    } catch (err: any) {
-      setBillingError(err.response?.data?.error || 'Failed to load billing data');
-      console.error('Error fetching billing data:', err);
-    } finally {
-      setBillingLoading(false);
-    }
-  }, [statusFilter, selectedBundleId]);
-
   useEffect(() => {
-    // Fetch dashboard data first
     fetchDashboardData();
-    
-    // Fetch billing data after a small delay to avoid rate limiting
-    const billingTimer = setTimeout(() => {
-      fetchBillingData();
-    }, 500);
-    
-    // Set up interval for dashboard refresh (every 60 seconds)
     const interval = setInterval(fetchDashboardData, 60000);
-    
     return () => {
-      clearTimeout(billingTimer);
       clearInterval(interval);
     };
-  }, [fetchDashboardData, fetchBillingData]);
+  }, [fetchDashboardData]);
 
-  // Check for pending interview payment
-  useEffect(() => {
-    const interviewId = localStorage.getItem('pendingInterviewId');
-    const showBilling = localStorage.getItem('showBillingSection');
-    
-    if (interviewId && showBilling === 'true') {
-      setPendingInterviewId(interviewId);
-      setShowPaymentPrompt(true);
-      localStorage.removeItem('showBillingSection');
-    }
-  }, []);
-
+  // Check for pending interview payment - REMOVED: All interviews are free
+  
   if (loading) return <Loading />;
 
   // Helper to ensure we show the correct count (handles both number and array responses)
@@ -138,61 +92,10 @@ const CandidateDashboard: React.FC = () => {
     return val || 0;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ET', {
-      style: 'currency',
-      currency: 'ETB',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-ET', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'COMPLETED':
-      case 'SUCCESS':
-        return 'text-emerald-600 bg-emerald-50';
-      case 'FAILED':
-        return 'text-red-600 bg-red-50';
-      case 'PENDING':
-        return 'text-yellow-600 bg-yellow-50';
-      default:
-        return 'text-slate-600 bg-slate-50';
-    }
-  };
-
-  const handleExport = async () => {
-    try {
-      const response = await api.get('/payments/export?format=csv', {
-        responseType: 'blob'
-      });
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `billing_history_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-    } catch (err) {
-      setBillingError('Failed to export transaction history');
-      console.error('Error exporting:', err);
-    }
-  };
-
   return (
     <DashboardLayout menuItems={candidateMenu} role="candidate">
-      <div className="max-w-6xl mx-auto space-y-10 pb-10">
-        
+      <div className="min-h-screen bg-white">
+        <div className="max-w-6xl mx-auto space-y-10 pb-10">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -328,333 +231,11 @@ const CandidateDashboard: React.FC = () => {
           />
         </div>
 
-        {/* Interview Payment Prompt Modal */}
-        {showPaymentPrompt && pendingInterviewId && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in zoom-in-95">
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-                  <CreditCard className="w-8 h-8 text-indigo-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Start Your Interview</h2>
-                <p className="text-gray-600 font-medium">1 credit required to begin</p>
-              </div>
+        {/* Interview Payment Prompt Modal - REMOVED: All interviews are now free for candidates */}
 
-              <div className="bg-indigo-50 rounded-xl p-4 mb-6 border border-indigo-200">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-700 font-medium">Cost</span>
-                  <span className="text-2xl font-bold text-indigo-600">5 ETB</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-700 font-medium">Your Balance</span>
-                  <span className="text-lg font-bold text-gray-900">{wallet?.balance || 0} Credits</span>
-                </div>
-              </div>
-
-              {billingError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4 text-sm font-medium">
-                  {billingError}
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {wallet?.balance >= 1 ? (
-                  <>
-                    <button
-                      onClick={async () => {
-                        try {
-                          setProcessingPayment(true);
-                          setBillingError(null);
-                          
-                          // Get pending interview details from localStorage
-                          const jobId = localStorage.getItem('pendingJobId');
-                          const applicationId = localStorage.getItem('pendingApplicationId');
-                          
-                          if (!jobId || !applicationId) {
-                            setBillingError('Missing interview details. Please try again.');
-                            setProcessingPayment(false);
-                            return;
-                          }
-                          
-                          // Call /interviews/start to create the interview
-                          const startResponse = await api.post('/interviews/start', {
-                            jobId: parseInt(jobId),
-                            applicationId: parseInt(applicationId),
-                            interviewMode: 'text',
-                            strictnessLevel: 'moderate'
-                          });
-                          
-                          console.log('Interview started:', startResponse.data);
-                          
-                          // Get the actual interview ID from the response
-                          const actualInterviewId = startResponse.data?.data?.interviewId;
-                          
-                          if (!actualInterviewId) {
-                            setBillingError('Failed to create interview. Please try again.');
-                            setProcessingPayment(false);
-                            return;
-                          }
-                          
-                          // Clear localStorage
-                          setShowPaymentPrompt(false);
-                          localStorage.removeItem('pendingInterviewId');
-                          localStorage.removeItem('pendingJobId');
-                          localStorage.removeItem('pendingApplicationId');
-                          
-                          // Navigate to interview session with the actual ID
-                          navigate(`/candidate/interview/${actualInterviewId}`);
-                        } catch (err: any) {
-                          console.error('Interview start error:', err);
-                          const errorMessage = err.response?.data?.message || err.message || 'Failed to start interview';
-                          setBillingError(errorMessage);
-                        } finally {
-                          setProcessingPayment(false);
-                        }
-                      }}
-                      disabled={processingPayment}
-                      className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all disabled:opacity-50"
-                    >
-                      {processingPayment ? 'Starting...' : 'Start Interview Now'}
-                    </button>
-                    <p className="text-xs text-center text-gray-500">You have enough credits</p>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={async () => {
-                        try {
-                          setProcessingPayment(true);
-                          setBillingError(null);
-                          
-                          // Get selected bundle
-                          const selectedBundle = creditBundles.find(b => b.id === selectedBundleId);
-                          if (!selectedBundle) {
-                            setBillingError('Please select a credit bundle');
-                            setProcessingPayment(false);
-                            return;
-                          }
-                          
-                          console.log('Initializing payment with bundle:', selectedBundle);
-                          const response = await paymentAPI.initialize({
-                            bundleId: selectedBundle.id.toString(),
-                            amount: parseFloat(selectedBundle.priceETB),
-                            creditAmount: selectedBundle.creditAmount,
-                            type: 'interview',
-                            description: 'Payment for AI Interview Session'
-                          });
-                          
-                          console.log('Payment response:', response);
-                          
-                          const checkoutUrl = response.data?.data?.checkout_url;
-                          if (checkoutUrl) {
-                            console.log('Checkout URL:', checkoutUrl);
-                            localStorage.setItem('pendingInterviewId', pendingInterviewId || '');
-                            localStorage.setItem('pendingPaymentTxRef', response.data?.data?.txRef || '');
-                            window.location.href = checkoutUrl;
-                          } else {
-                            console.error('No checkout URL in response:', response.data);
-                            setBillingError('Failed to initialize payment: No checkout URL received');
-                          }
-                        } catch (err: any) {
-                          console.error('Payment error:', err);
-                          const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to initialize payment';
-                          setBillingError(errorMessage);
-                        } finally {
-                          setProcessingPayment(false);
-                        }
-                      }}
-                      disabled={processingPayment}
-                      className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50"
-                    >
-                      {processingPayment ? 'Processing...' : 'Pay & Start Interview'}
-                    </button>
-                    <p className="text-xs text-center text-gray-500">Secure payment via Chapa</p>
-                  </>
-                )}
-                <button
-                  onClick={() => {
-                    setShowPaymentPrompt(false);
-                    localStorage.removeItem('pendingInterviewId');
-                  }}
-                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Billing & History Section */}
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-gray-50 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <CreditCard className="w-6 h-6 text-indigo-600" />
-                Billing & History
-              </h2>
-              <p className="text-sm text-gray-500 font-medium">Manage your credits and payment history</p>
-            </div>
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
-            >
-              <Download size={16} />
-              Export CSV
-            </button>
-          </div>
-
-          <div className="p-8">
-            {billingLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin">
-                  <CreditCard className="w-8 h-8 text-indigo-600" />
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Wallet Balance & Analytics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                  {/* Current Balance */}
-                  <div className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-200">
-                    <p className="text-xs font-medium text-slate-600 mb-2">Current Balance</p>
-                    <p className="text-2xl font-bold text-indigo-600">
-                      {wallet?.balance || 0}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">Credits available</p>
-                  </div>
-
-                  {/* Total Spent */}
-                  {analytics && (
-                    <>
-                      <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
-                        <p className="text-xs font-medium text-slate-600 mb-2">Total Spent</p>
-                        <p className="text-2xl font-bold text-emerald-600">
-                          {formatCurrency(analytics.totalSpent)}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">All payments</p>
-                      </div>
-
-                      {/* Successful Transactions */}
-                      <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                        <p className="text-xs font-medium text-slate-600 mb-2">Successful</p>
-                        <p className="text-2xl font-bold text-blue-600">
-                          {analytics.successfulTransactions}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">Transactions</p>
-                      </div>
-
-                      {/* Average Value */}
-                      <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
-                        <p className="text-xs font-medium text-slate-600 mb-2">Average</p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {formatCurrency(analytics.averageValue)}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">Per transaction</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Transaction History */}
-                <div className="border-t border-gray-100 pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Recent Transactions</h3>
-                    <div className="relative">
-                      <button
-                        onClick={() => setFilterOpen(!filterOpen)}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                      >
-                        <Filter size={16} />
-                        Filter
-                        <ChevronDown size={16} className={`transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      {filterOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                          <button
-                            onClick={() => {
-                              setStatusFilter('');
-                              setFilterOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 text-sm ${
-                              statusFilter === '' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            All
-                          </button>
-                          <button
-                            onClick={() => {
-                              setStatusFilter('COMPLETED');
-                              setFilterOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 text-sm ${
-                              statusFilter === 'COMPLETED' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            Completed
-                          </button>
-                          <button
-                            onClick={() => {
-                              setStatusFilter('FAILED');
-                              setFilterOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 text-sm ${
-                              statusFilter === 'FAILED' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            Failed
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {transactions.length > 0 ? (
-                    <div className="space-y-2">
-                      {transactions.map((tx) => (
-                        <div
-                          key={tx.id}
-                          className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle size={16} className="text-gray-400" />
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {tx.creditAmount} Credits
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {formatDate(tx.paidAt || tx.createdAt)}
-                                </p>
-                              </div>
-                            </div>
-                            <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                                tx.status
-                              )}`}
-                            >
-                              {tx.status}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-gray-600">
-                            <span>{tx.paymentMethod}</span>
-                            <span className="font-medium">{formatCurrency(tx.amount)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-gray-600 py-8">No transactions yet</p>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+      {/* Billing & History Section - REMOVED: Not needed for free interviews */}
         </div>
       </div>
-
-      {/* Billing Sidebar - Removed */}
     </DashboardLayout>
   );
 };

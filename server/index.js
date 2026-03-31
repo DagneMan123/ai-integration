@@ -68,10 +68,13 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/dashboard-data', require('./routes/dashboardData'));
+app.use('/api/dashboard-communication', require('./routes/dashboardCommunication'));
 app.use('/api/subscription', require('./routes/subscription'));
 app.use('/api/wallet', require('./routes/wallet'));
 app.use('/api/practice', require('./routes/practice'));
 app.use('/api/webhook', require('./routes/chapaWebhook'));
+app.use('/api/help-center', require('./routes/helpCenter'));
 app.use('/api', require('./routes/interviewPersona'));
 
 // Messages route - only enable if migration has been run

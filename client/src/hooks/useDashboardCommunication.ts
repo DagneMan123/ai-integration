@@ -1,84 +1,186 @@
 import { useEffect, useState, useCallback } from 'react';
-import { dashboardCommunicationService, DashboardMessage, DashboardStats, DashboardRole } from '../services/dashboardCommunicationService';
+import { dashboardCommunicationService } from '../services/dashboardCommunicationService';
 
-export const useDashboardCommunication = (role: DashboardRole) => {
-  const [messages, setMessages] = useState<DashboardMessage[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [stats, setStats] = useState<DashboardStats>(dashboardCommunicationService.getStats());
+interface Message {
+  id: number;
+  fromDashboard: string;
+  toDashboard?: string;
+  eventType: string;
+  data: any;
+  timestamp: Date;
+}
 
-  // Load initial messages
+interface Notification {
+  id: number;
+  dashboard: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  data?: any;
+  read: boolean;
+  createdAt: Date;
+}
+
+interface Stats {
+  totalUsers: number;
+  totalJobs: number;
+  totalApplications: number;
+  totalInterviews: number;
+  activeInterviews: number;
+  pendingApplications: number;
+  recentMessages: number;
+  timestamp: Date;
+}
+
+/**
+ * Hook for dashboard communication
+ * Manages real-time communication between all 3 dashboards
+ */
+export const useDashboardCommunication = (dashboard: 'candidate' | 'employer' | 'admin') => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch messages
+  const fetchMessages = useCallback(async () => {
+    try {
+      const response = await dashboardCommunicationService.getMessages(dashboard);
+      setMessages(response.data || []);
+    } catch (err: any) {
+      console.error('Error fetching messages:', err);
+      setError(err.message);
+    }
+  }, [dashboard]);
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await dashboardCommunicationService.getNotifications(dashboard, false);
+      setNotifications(response.data || []);
+    } catch (err: any) {
+      console.error('Error fetching notifications:', err);
+      setError(err.message);
+    }
+  }, [dashboard]);
+
+  // Fetch stats
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await dashboardCommunicationService.getStats();
+      setStats(response.data);
+    } catch (err: any) {
+      console.error('Error fetching stats:', err);
+      setError(err.message);
+    }
+  }, []);
+
+  // Initial load
   useEffect(() => {
-    const initialMessages = dashboardCommunicationService.getMessages(role);
-    setMessages(initialMessages);
-    setUnreadCount(dashboardCommunicationService.getUnreadCount(role));
-  }, [role]);
-
-  // Subscribe to message events
-  useEffect(() => {
-    const unsubscribeMessage = dashboardCommunicationService.subscribe('message-received', (message: DashboardMessage) => {
-      if (message.to === role || message.to === 'all') {
-        setMessages(prev => [...prev, message]);
-        setUnreadCount(prev => prev + 1);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([fetchMessages(), fetchNotifications(), fetchStats()]);
+      } finally {
+        setLoading(false);
       }
-    });
-
-    const unsubscribeRead = dashboardCommunicationService.subscribe('message-read', () => {
-      setUnreadCount(dashboardCommunicationService.getUnreadCount(role));
-    });
-
-    const unsubscribeStats = dashboardCommunicationService.subscribe('stats-updated', (newStats: DashboardStats) => {
-      setStats(newStats);
-    });
-
-    return () => {
-      unsubscribeMessage();
-      unsubscribeRead();
-      unsubscribeStats();
     };
-  }, [role]);
 
-  // Send message
-  const sendMessage = useCallback(
-    (to: DashboardRole | 'all', type: DashboardMessage['type'], title: string, content: string, data?: any) => {
-      return dashboardCommunicationService.sendMessage(role, to, type, title, content, data);
-    },
-    [role]
-  );
+    loadData();
 
-  // Mark message as read
-  const markAsRead = useCallback((messageId: string) => {
-    dashboardCommunicationService.markAsRead(messageId);
+    // Poll for updates every 5 seconds
+    const interval = setInterval(() => {
+      fetchMessages();
+      fetchNotifications();
+      fetchStats();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [fetchMessages, fetchNotifications, fetchStats]);
+
+  // Mark notification as read
+  const markNotificationAsRead = useCallback(async (notificationId: number) => {
+    try {
+      await dashboardCommunicationService.markNotificationAsRead(notificationId);
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
+      );
+    } catch (err: any) {
+      console.error('Error marking notification as read:', err);
+    }
   }, []);
 
-  // Request data from another dashboard
-  const requestData = useCallback(
-    (to: DashboardRole, dataType: string) => {
-      return dashboardCommunicationService.requestData(role, to, dataType);
+  // Notify application update (candidate only)
+  const notifyApplicationUpdate = useCallback(
+    async (applicationId: number, status: string) => {
+      if (dashboard !== 'candidate') {
+        console.warn('Only candidates can notify application updates');
+        return;
+      }
+      try {
+        await dashboardCommunicationService.notifyApplicationUpdate(applicationId, status);
+        await fetchMessages();
+      } catch (err: any) {
+        console.error('Error notifying application update:', err);
+        throw err;
+      }
     },
-    [role]
+    [dashboard, fetchMessages]
   );
 
-  // Broadcast alert
-  const broadcastAlert = useCallback(
-    (title: string, content: string, severity: 'info' | 'warning' | 'error' = 'info') => {
-      dashboardCommunicationService.broadcastAlert(role, title, content, severity);
+  // Notify interview update (employer only)
+  const notifyInterviewUpdate = useCallback(
+    async (interviewId: number, status: string) => {
+      if (dashboard !== 'employer') {
+        console.warn('Only employers can notify interview updates');
+        return;
+      }
+      try {
+        await dashboardCommunicationService.notifyInterviewUpdate(interviewId, status);
+        await fetchMessages();
+      } catch (err: any) {
+        console.error('Error notifying interview update:', err);
+        throw err;
+      }
     },
-    [role]
+    [dashboard, fetchMessages]
   );
 
-  // Update stats
-  const updateStats = useCallback((updates: Partial<DashboardStats>) => {
-    dashboardCommunicationService.updateStats(updates);
-  }, []);
+  // Notify system update (admin only)
+  const notifySystemUpdate = useCallback(
+    async (updateType: string, data: any) => {
+      if (dashboard !== 'admin') {
+        console.warn('Only admins can notify system updates');
+        return;
+      }
+      try {
+        await dashboardCommunicationService.notifySystemUpdate(updateType, data);
+        await fetchMessages();
+      } catch (err: any) {
+        console.error('Error notifying system update:', err);
+        throw err;
+      }
+    },
+    [dashboard, fetchMessages]
+  );
+
+  // Get unread notification count
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return {
     messages,
-    unreadCount,
+    notifications,
     stats,
-    sendMessage,
-    markAsRead,
-    requestData,
-    broadcastAlert,
-    updateStats
+    loading,
+    error,
+    unreadCount,
+    fetchMessages,
+    fetchNotifications,
+    fetchStats,
+    markNotificationAsRead,
+    notifyApplicationUpdate,
+    notifyInterviewUpdate,
+    notifySystemUpdate
   };
 };

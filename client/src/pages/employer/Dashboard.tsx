@@ -7,6 +7,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { employerMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
+import { useDashboardSync } from '../../hooks/useDashboardSync';
 import { 
   Plus, 
   RefreshCw, 
@@ -22,8 +23,10 @@ import {
   UserCircle
 } from 'lucide-react';
 
+import { dashboardDataService } from '../../services/dashboardDataService';
+
 const EmployerDashboard: React.FC = () => {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -33,20 +36,36 @@ const EmployerDashboard: React.FC = () => {
   // Dashboard communication
   useDashboardCommunication('employer');
 
+  // Dashboard sync
+  const { emitUpdate, emitRefresh, emitNotify } = useDashboardSync(
+    'employer',
+    (event) => {
+      if (event.dashboard !== 'employer') {
+        console.log('Received update from', event.dashboard, event.data);
+        if (event.type === 'refresh') {
+          fetchDashboardData();
+        }
+      }
+    },
+    (event) => {
+      if (event.dashboard !== 'employer') {
+        fetchDashboardData();
+      }
+    },
+    (event) => {
+      if (event.data?.message) {
+        console.log('Notification from', event.dashboard, ':', event.data.message);
+      }
+    }
+  );
+
   const fetchDashboardData = useCallback(async () => {
     try {
-      // Add timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      const response = await analyticsAPI.getEmployerDashboard();
-      clearTimeout(timeoutId);
-      
-      const dashboardData = response.data.data || null;
+      const response = await dashboardDataService.getEmployerDashboard();
+      const dashboardData = response.data || null;
       setData(dashboardData);
     } catch (error) {
       console.error('Dashboard fetch error:', error);
-      // Don't show error toast, just set empty data
       setData(null);
     } finally {
       setLoading(false);
@@ -56,7 +75,6 @@ const EmployerDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    // Increase refresh interval from 30s to 60s
     const interval = setInterval(fetchDashboardData, 60000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);

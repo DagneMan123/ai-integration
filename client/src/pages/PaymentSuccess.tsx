@@ -122,7 +122,7 @@ const PaymentSuccess: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
         <div className="relative mb-8">
            <div className="absolute inset-0 bg-blue-100 rounded-full blur-2xl animate-pulse"></div>
            <Loader2 className="w-16 h-16 text-blue-600 animate-spin relative z-10" />
@@ -134,7 +134,7 @@ const PaymentSuccess: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full">
         
         {/* Success Card */}

@@ -8,6 +8,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { adminMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
+import { useDashboardSync } from '../../hooks/useDashboardSync';
 import { 
   Users, 
   Briefcase, 
@@ -23,8 +24,10 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
+import { dashboardDataService } from '../../services/dashboardDataService';
+
 const AdminDashboard: React.FC = () => {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -32,37 +35,59 @@ const AdminDashboard: React.FC = () => {
   useSessionMonitoring();
 
   // Dashboard communication
-  const { sendMessage, broadcastAlert, updateStats } = useDashboardCommunication('admin');
+  const { notifySystemUpdate, sendNotification } = useDashboardCommunication('admin');
+
+  // Dashboard sync
+  const { emitUpdate, emitRefresh, emitNotify } = useDashboardSync(
+    'admin',
+    (event) => {
+      if (event.dashboard !== 'admin') {
+        console.log('Received update from', event.dashboard, event.data);
+        if (event.type === 'refresh') {
+          fetchDashboardData();
+        }
+      }
+    },
+    (event) => {
+      if (event.dashboard !== 'admin') {
+        fetchDashboardData();
+      }
+    },
+    (event) => {
+      if (event.data?.message) {
+        console.log('Notification from', event.dashboard, ':', event.data.message);
+      }
+    }
+  );
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const response = await analyticsAPI.getAdminDashboard();
-      const dashboardData = response.data.data || null;
+      const response = await dashboardDataService.getAdminDashboard();
+      const dashboardData = response.data || null;
       setData(dashboardData);
       
       if (dashboardData) {
-        // Update shared stats across dashboards
-        updateStats({
-          totalUsers: dashboardData.totalUsers || 0,
-          activeJobs: dashboardData.totalJobs || 0,
-          completedInterviews: dashboardData.totalInterviews || 0
+        notifySystemUpdate('dashboard_refresh', {
+          totalUsers: dashboardData.stats?.totalUsers || 0,
+          activeJobs: dashboardData.stats?.activeJobs || 0,
+          completedInterviews: dashboardData.stats?.completedInterviews || 0,
+          timestamp: new Date()
         });
         
-        // Notify other dashboards of system update
-        sendMessage('all', 'data-update', 'System Update', 'Admin dashboard data refreshed', { timestamp: new Date() });
+        sendNotification('Admin dashboard data refreshed', 'success');
       }
     } catch (error) {
-      toast.error('System synchronization failed');
-      broadcastAlert('System Error', 'Failed to sync admin dashboard', 'error');
+      console.error('Dashboard fetch error:', error);
+      sendNotification('Failed to sync admin dashboard', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [updateStats, sendMessage, broadcastAlert]);
+  }, [notifySystemUpdate, sendNotification]);
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 60000); // 1 minute sync
+    const interval = setInterval(fetchDashboardData, 60000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 

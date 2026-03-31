@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { interviewAPI, jobAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
 import toast from 'react-hot-toast';
@@ -14,14 +14,12 @@ import {
   Building2,
   MapPin,
   Briefcase,
-  DollarSign,
-  Lock
+  DollarSign
 } from 'lucide-react';
 
 const InterviewSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [interview, setInterview] = useState<any>(null);
   const [job, setJob] = useState<any>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any>(null);
@@ -30,26 +28,12 @@ const InterviewSession: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
-  const [paymentVerified, setPaymentVerified] = useState(false);
-  const [accessDenied, setAccessDenied] = useState(false);
 
   const fetchInterview = useCallback(async () => {
     try {
-      // Check if payment was verified or if interview is already in progress
-      const paymentVerifiedParam = searchParams.get('paymentVerified') === 'true';
-      const requirePayment = localStorage.getItem('requirePaymentBeforeInterview') === 'true';
-      
       const response = await interviewAPI.getInterviewReport(id!);
       const data = response.data.data as any;
       
-      // If payment is required but not verified, and interview is not already in progress, deny access
-      if (requirePayment && !paymentVerifiedParam && data?.status !== 'IN_PROGRESS') {
-        setAccessDenied(true);
-        setLoading(false);
-        return;
-      }
-      
-      setPaymentVerified(true);
       setInterview(data);
       
       // Fetch job details if jobId exists
@@ -75,7 +59,7 @@ const InterviewSession: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, navigate, searchParams]);
+  }, [id, navigate]);
 
   useEffect(() => {
     fetchInterview();
@@ -127,40 +111,10 @@ const InterviewSession: React.FC = () => {
 
   if (loading) return <Loading />;
 
-  // Access denied if payment was required but not verified
-  if (accessDenied) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl shadow-rose-900/5 border border-gray-100 p-8 text-center">
-          <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-rose-50/50">
-            <Lock className="w-12 h-12 text-rose-500" />
-          </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Payment Required</h2>
-          <p className="text-gray-500 font-medium mb-8">You must complete payment before starting this interview.</p>
-          
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate('/candidate/interviews')}
-              className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all"
-            >
-              Back to Interviews
-            </button>
-            <button
-              onClick={() => navigate('/candidate/dashboard')}
-              className="w-full bg-white border border-gray-200 text-gray-700 py-4 rounded-2xl font-bold hover:bg-gray-50 transition-all"
-            >
-              Go to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const progress = interview?.questions?.length ? ((currentQuestionIndex + 1) / interview.questions.length) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Top Professional Header */}
       <nav className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

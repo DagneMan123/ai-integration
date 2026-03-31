@@ -5,6 +5,7 @@ import SettingsSidebar from './SettingsSidebar';
 import AdminSessionMonitoring from './AdminSessionMonitoring';
 import AdminGlobalSettings from './AdminGlobalSettings';
 import SupportTickets from './SupportTickets';
+import HelpCenterSidebar from './HelpCenterSidebar';
 
 const GlobalSidebars: React.FC = () => {
   const { user } = useAuthStore();
@@ -17,12 +18,17 @@ const GlobalSidebars: React.FC = () => {
     setSupportTicketsOpen,
     settingsOpen,
     setSettingsOpen,
+    helpCenterOpen,
+    setHelpCenterOpen,
   } = useSidebar();
 
   return (
     <>
       {/* General Settings Sidebar - For all users */}
       <SettingsSidebar isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {/* Help Center Sidebar - For all users */}
+      <HelpCenterSidebar isOpen={helpCenterOpen} onClose={() => setHelpCenterOpen(false)} />
 
       {/* Admin Sidebars - Only for admin users */}
       {user?.role === 'admin' && (

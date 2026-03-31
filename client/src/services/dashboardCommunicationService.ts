@@ -1,177 +1,137 @@
-// Cross-Dashboard Communication Service
-// Enables real-time data sharing between Admin, Employer, and Candidate dashboards
+import api from '../utils/api';
 
-type DashboardRole = 'admin' | 'employer' | 'candidate';
+/**
+ * Frontend Dashboard Communication Service
+ * Handles all communication between 3 dashboards
+ */
 
-interface DashboardMessage {
-  id: string;
-  from: DashboardRole;
-  to: DashboardRole | 'all';
-  type: 'notification' | 'data-update' | 'alert' | 'request';
-  title: string;
-  content: string;
-  data?: any;
-  timestamp: Date;
-  read: boolean;
-}
+export const dashboardCommunicationService = {
+  // Get message history
+  getMessages: async (dashboard: string, limit: number = 50) => {
+    try {
+      const response = await api.get(`/dashboard-communication/messages/${dashboard}`, {
+        params: { limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
+    }
+  },
 
-interface DashboardStats {
-  totalUsers: number;
-  activeJobs: number;
-  pendingApplications: number;
-  completedInterviews: number;
-  platformRevenue: string;
-  lastUpdated: Date;
-}
+  // Get real-time stats
+  getStats: async () => {
+    try {
+      const response = await api.get('/dashboard-communication/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      throw error;
+    }
+  },
 
-class DashboardCommunicationService {
-  private messages: DashboardMessage[] = [];
-  private stats: DashboardStats = {
-    totalUsers: 2847,
-    activeJobs: 156,
-    pendingApplications: 342,
-    completedInterviews: 1234,
-    platformRevenue: '$45,230',
-    lastUpdated: new Date()
-  };
-  private listeners: Map<string, Function[]> = new Map();
+  // Candidate: Notify application update
+  notifyApplicationUpdate: async (applicationId: number, status: string) => {
+    try {
+      const response = await api.post('/dashboard-communication/notify/application-update', {
+        applicationId,
+        status
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error notifying application update:', error);
+      throw error;
+    }
+  },
 
-  // Send message between dashboards
-  sendMessage(
-    from: DashboardRole,
-    to: DashboardRole | 'all',
-    type: DashboardMessage['type'],
-    title: string,
-    content: string,
-    data?: any
-  ): DashboardMessage {
-    const message: DashboardMessage = {
-      id: `msg-${Date.now()}`,
-      from,
-      to,
-      type,
-      title,
-      content,
-      data,
-      timestamp: new Date(),
-      read: false
-    };
+  // Employer: Notify interview update
+  notifyInterviewUpdate: async (interviewId: number, status: string) => {
+    try {
+      const response = await api.post('/dashboard-communication/notify/interview-update', {
+        interviewId,
+        status
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error notifying interview update:', error);
+      throw error;
+    }
+  },
 
-    this.messages.push(message);
-    this.notifyListeners('message-received', message);
-    return message;
-  }
+  // Admin: Notify system update
+  notifySystemUpdate: async (updateType: string, data: any) => {
+    try {
+      const response = await api.post('/dashboard-communication/notify/system-update', {
+        updateType,
+        data
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error notifying system update:', error);
+      throw error;
+    }
+  },
 
-  // Get messages for a specific dashboard
-  getMessages(role: DashboardRole, unreadOnly: boolean = false): DashboardMessage[] {
-    return this.messages.filter(msg => {
-      const isForRole = msg.to === role || msg.to === 'all';
-      if (unreadOnly) {
-        return isForRole && !msg.read;
-      }
-      return isForRole;
-    });
-  }
+  // Get notifications
+  getNotifications: async (dashboard: string, unreadOnly: boolean = false) => {
+    try {
+      const response = await api.get(`/dashboard-communication/notifications/${dashboard}`, {
+        params: { unreadOnly }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  },
 
-  // Mark message as read
-  markAsRead(messageId: string): void {
-    const message = this.messages.find(m => m.id === messageId);
-    if (message) {
-      message.read = true;
-      this.notifyListeners('message-read', message);
+  // Mark notification as read
+  markNotificationAsRead: async (notificationId: number) => {
+    try {
+      const response = await api.put(
+        `/dashboard-communication/notifications/${notificationId}/read`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  },
+
+  // Get application activity log
+  getApplicationActivity: async (applicationId: number) => {
+    try {
+      const response = await api.get(
+        `/dashboard-communication/activity/application/${applicationId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching application activity:', error);
+      throw error;
+    }
+  },
+
+  // Get interview activity log
+  getInterviewActivity: async (interviewId: number) => {
+    try {
+      const response = await api.get(
+        `/dashboard-communication/activity/interview/${interviewId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching interview activity:', error);
+      throw error;
+    }
+  },
+
+  // Get system updates (admin only)
+  getSystemUpdates: async () => {
+    try {
+      const response = await api.get('/dashboard-communication/system-updates');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching system updates:', error);
+      throw error;
     }
   }
-
-  // Update shared statistics
-  updateStats(updates: Partial<DashboardStats>): void {
-    this.stats = {
-      ...this.stats,
-      ...updates,
-      lastUpdated: new Date()
-    };
-    this.notifyListeners('stats-updated', this.stats);
-  }
-
-  // Get current statistics
-  getStats(): DashboardStats {
-    return { ...this.stats };
-  }
-
-  // Broadcast alert to all dashboards
-  broadcastAlert(from: DashboardRole, title: string, content: string, severity: 'info' | 'warning' | 'error'): void {
-    this.sendMessage(from, 'all', 'alert', title, content, { severity });
-    this.notifyListeners('alert-broadcast', { title, content, severity });
-  }
-
-  // Request data from another dashboard
-  requestData(from: DashboardRole, to: DashboardRole, dataType: string): Promise<any> {
-    return new Promise((resolve) => {
-      const requestId = `req-${Date.now()}`;
-      this.sendMessage(from, to, 'request', `Data Request: ${dataType}`, `Requesting ${dataType}`, { requestId, dataType });
-      
-      // Simulate response after 500ms
-      setTimeout(() => {
-        const responseData = this.getDataByType(dataType);
-        resolve(responseData);
-      }, 500);
-    });
-  }
-
-  // Get data by type
-  private getDataByType(dataType: string): any {
-    switch (dataType) {
-      case 'job-stats':
-        return { activeJobs: this.stats.activeJobs, totalJobs: 245 };
-      case 'candidate-stats':
-        return { totalCandidates: this.stats.totalUsers, activeApplications: this.stats.pendingApplications };
-      case 'interview-stats':
-        return { completedInterviews: this.stats.completedInterviews, scheduledInterviews: 89 };
-      case 'revenue-stats':
-        return { platformRevenue: this.stats.platformRevenue, monthlyGrowth: '+18.7%' };
-      default:
-        return this.stats;
-    }
-  }
-
-  // Subscribe to events
-  subscribe(event: string, callback: Function): () => void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
-    }
-    this.listeners.get(event)!.push(callback);
-
-    // Return unsubscribe function
-    return () => {
-      const callbacks = this.listeners.get(event);
-      if (callbacks) {
-        const index = callbacks.indexOf(callback);
-        if (index > -1) {
-          callbacks.splice(index, 1);
-        }
-      }
-    };
-  }
-
-  // Notify all listeners
-  private notifyListeners(event: string, data: any): void {
-    const callbacks = this.listeners.get(event);
-    if (callbacks) {
-      callbacks.forEach(callback => callback(data));
-    }
-  }
-
-  // Get unread message count
-  getUnreadCount(role: DashboardRole): number {
-    return this.messages.filter(msg => (msg.to === role || msg.to === 'all') && !msg.read).length;
-  }
-
-  // Clear old messages (older than 24 hours)
-  clearOldMessages(): void {
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    this.messages = this.messages.filter(msg => msg.timestamp > oneDayAgo);
-  }
-}
-
-// Export singleton instance
-export const dashboardCommunicationService = new DashboardCommunicationService();
-export type { DashboardMessage, DashboardStats, DashboardRole };
+};

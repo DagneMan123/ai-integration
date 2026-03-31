@@ -14,13 +14,8 @@ import {
   FileText, 
   Calendar,
   Building2,
-  Mic,
-  Video,
-  Type,
   Trophy,
-  MapPin,
-  Briefcase,
-  CreditCard
+  MapPin
 } from 'lucide-react';
 
 const CandidateInterviews: React.FC = () => {
@@ -87,35 +82,32 @@ const CandidateInterviews: React.FC = () => {
     return configs[normalized] || { color: 'bg-gray-50 text-gray-700 border-gray-100', icon: <Clock className="w-4 h-4" />, label: status };
   };
 
-  const getModeIcon = (mode: string) => {
-    switch (mode?.toLowerCase()) {
-      case 'audio': return <Mic className="w-4 h-4" />;
-      case 'video': return <Video className="w-4 h-4" />;
-      default: return <Type className="w-4 h-4" />;
-    }
-  };
-
   const getJobData = (interview: any) => {
-    const id = interview.jobId || interview.job;
-    return jobsMap[id] || (typeof interview.job === 'object' ? interview.job : null);
+    const jobId = interview.jobId || interview.job;
+    return jobsMap[jobId] || (typeof interview.job === 'object' ? interview.job : null);
   };
 
   const handleStartInterview = async (interviewId: string, jobId: string, applicationId: string) => {
     try {
       setCheckingPayment(interviewId);
       
-      // Store interview details for payment flow
-      localStorage.setItem('pendingInterviewId', interviewId);
-      localStorage.setItem('pendingJobId', jobId);
-      localStorage.setItem('pendingApplicationId', applicationId);
-      localStorage.setItem('showBillingSection', 'true');
-      localStorage.setItem('requirePaymentBeforeInterview', 'true');
+      // Interviews are now free for candidates - start directly
+      const startResponse = await api.post('/interviews/start', {
+        jobId: parseInt(jobId),
+        applicationId: parseInt(applicationId),
+        interviewMode: 'text',
+        strictnessLevel: 'moderate'
+      });
       
-      // Redirect to dashboard where user MUST complete payment
-      navigate('/candidate/dashboard');
+      const actualInterviewId = startResponse.data?.data?.interviewId;
+      if (actualInterviewId) {
+        navigate(`/candidate/interview/${actualInterviewId}`);
+      } else {
+        toast.error('Failed to start interview');
+      }
     } catch (err: any) {
-      console.error('Navigation error:', err);
-      toast.error('Failed to start interview');
+      console.error('Interview start error:', err);
+      toast.error(err.response?.data?.message || 'Failed to start interview');
     } finally {
       setCheckingPayment(null);
     }
@@ -124,7 +116,7 @@ const CandidateInterviews: React.FC = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
+    <div className="min-h-screen bg-white py-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto">
         
         <div className="mb-10">

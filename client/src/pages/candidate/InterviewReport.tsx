@@ -51,7 +51,7 @@ const InterviewReport: React.FC = () => {
   const overallScore = evalData?.overallScore || 0;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
+    <div className="min-h-screen bg-white py-10 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
         
         {/* Navigation & Actions */}

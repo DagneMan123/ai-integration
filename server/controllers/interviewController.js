@@ -35,32 +35,28 @@ exports.startInterview = async (req, res, next) => {
     const userId = req.user.id;
     const { interviewMode = 'text', strictnessLevel = 'moderate' } = req.body;
     
-    await checkAndDeductCredit(userId);
+    // No payment required for candidates - interviews are free
     
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) return next(new AppError('Job not found', 404));
     
     const questions = await enhancedAI.generateInterviewQuestions(job, strictnessLevel, 10);
     
-    // Execute transaction properly
-    const result = await prisma.$transaction([
-      prisma.wallet.update({ where: { userId }, data: { balance: { decrement: 1 } } }),
-      prisma.interview.create({
-        data: {
-          jobId, 
-          candidateId: userId, 
-          applicationId, 
-          status: 'IN_PROGRESS',
-          startedAt: new Date(), 
-          interviewMode, 
-          strictnessLevel, 
-          questions: questions,
-          antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] }
-        }
-      })
-    ]);
+    // Create interview without credit deduction
+    const interview = await prisma.interview.create({
+      data: {
+        jobId, 
+        candidateId: userId, 
+        applicationId, 
+        status: 'IN_PROGRESS',
+        startedAt: new Date(), 
+        interviewMode, 
+        strictnessLevel, 
+        questions: questions,
+        antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] }
+      }
+    });
     
-    const interview = result[1];
     antiCheatService.initializeSession(applicationId, userId);
     
     res.status(201).json({ 
@@ -208,7 +204,7 @@ exports.getIntegrityReport = async (req, res, next) => {
 exports.getEmployerInterviews = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const interviews = await fetchInterviewsWithJob({ job: { createdBy: userId } }, { orderBy: { startedAt: 'desc' } });
+    const interviews = await fetchInterviewsWithJob({ job: { createdById: userId } }, { orderBy: { startedAt: 'desc' } });
     res.json({ success: true, data: interviews });
   } catch (error) { next(error); }
 };

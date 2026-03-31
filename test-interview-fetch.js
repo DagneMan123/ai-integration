@@ -13,15 +13,15 @@ async function testInterviewFetch() {
     console.log('🔍 Testing Interview Data Fetch...\n');
 
     // 1. Login
-    console.log('1️⃣ Logging in...');
+    console.log('Logging in...');
     const loginRes = await axios.post(`${API_URL}/auth/login`, testUser);
     const token = loginRes.data.data.token;
     const userId = loginRes.data.data.user.id;
-    console.log(`✅ Logged in as: ${loginRes.data.data.user.email}`);
+    console.log(` Logged in as: ${loginRes.data.data.user.email}`);
     console.log(`   User ID: ${userId}\n`);
 
     // 2. Fetch candidate interviews
-    console.log('2️⃣ Fetching candidate interviews...');
+    console.log(' Fetching candidate interviews...');
     const interviewRes = await axios.get(`${API_URL}/interviews/candidate/my-interviews`, {
       headers: { Authorization: `Bearer ${token}` }
     });

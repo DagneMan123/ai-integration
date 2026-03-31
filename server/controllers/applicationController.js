@@ -37,33 +37,39 @@ exports.createApplication = async (req, res, next) => {
     }
 
     // Transaction: Both records must be created together or not at all
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Create the Application record
-      const application = await tx.application.create({
-        data: {
-          jobId: jobIdInt,
-          candidateId: userId,
-          coverLetter: coverLetter || "",
-          status: 'PENDING',
-          appliedAt: new Date()
-        }
-      });
+    // Increased timeout to 30 seconds to handle slow database operations
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // 1. Create the Application record
+        const application = await tx.application.create({
+          data: {
+            jobId: jobIdInt,
+            candidateId: userId,
+            coverLetter: coverLetter || "",
+            status: 'PENDING',
+            appliedAt: new Date()
+          }
+        });
 
-      // 2. Create the Interview record (Status: IN_PROGRESS so it's ready to use)
-      const interview = await tx.interview.create({
-        data: {
-          jobId: jobIdInt,
-          candidateId: userId,
-          applicationId: application.id,
-          status: 'IN_PROGRESS',
-          interviewMode: 'text',
-          questions: null,
-          startedAt: new Date()
-        }
-      });
+        // 2. Create the Interview record (Status: IN_PROGRESS so it's ready to use)
+        const interview = await tx.interview.create({
+          data: {
+            jobId: jobIdInt,
+            candidateId: userId,
+            applicationId: application.id,
+            status: 'IN_PROGRESS',
+            interviewMode: 'text',
+            questions: null,
+            startedAt: new Date()
+          }
+        });
 
-      return { application, interview };
-    });
+        return { application, interview };
+      },
+      {
+        timeout: 30000 // 30 seconds timeout
+      }
+    );
 
     logger.info(`Auto-Flow Success: App ${result.application.id} and Interview ${result.interview.id} created for User ${userId}`);
 

@@ -13,14 +13,17 @@ import {
   Search,
   Settings,
   Activity,
-  MessageSquare
+  MessageSquare,
+  HelpCircle
 } from 'lucide-react';
 
 interface MenuItem {
-  path: string;
+  path?: string;
   label: string;
-  icon: React.ReactNode; // Changed to ReactNode for professional icons
+  icon: React.ReactNode;
   badge?: number;
+  submenu?: MenuItem[];
+  isSection?: boolean;
 }
 
 interface DashboardLayoutProps {
@@ -31,6 +34,8 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, role }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [communicationPanelOpen, setCommunicationPanelOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -39,6 +44,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
     setGlobalSettingsOpen,
     setSupportTicketsOpen,
     setSettingsOpen,
+    setHelpCenterOpen,
   } = useSidebar();
   useSessionMonitoring();
 
@@ -48,6 +54,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
   };
 
   const isActive = (path: string) => location.pathname === path;
+
+  const toggleSection = (label: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(label)) {
+      newExpanded.delete(label);
+    } else {
+      newExpanded.add(label);
+    }
+    setExpandedSections(newExpanded);
+  };
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
@@ -93,11 +109,84 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
         {/* Navigation */}
         <nav className="flex-1 px-3 space-y-1 mt-4 overflow-y-auto">
           {menuItems.map((item) => {
-            const active = isActive(item.path);
+            // Handle section items with submenu
+            if (item.isSection && item.submenu) {
+              const isExpanded = expandedSections.has(item.label);
+              return (
+                <div key={item.label}>
+                  <button
+                    onClick={() => toggleSection(item.label)}
+                    className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group hover:bg-slate-800 hover:text-slate-100"
+                  >
+                    <span className="flex-shrink-0 text-slate-400 group-hover:text-slate-200 transition-colors">
+                      {item.icon}
+                    </span>
+                    {sidebarOpen && (
+                      <div className="flex-1 flex items-center justify-between ml-3 min-w-0">
+                        <span className="text-sm font-medium truncate">{item.label}</span>
+                        <ChevronRight 
+                          size={16} 
+                          className={`transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+                        />
+                      </div>
+                    )}
+                  </button>
+                  
+                  {/* Submenu items */}
+                  {isExpanded && sidebarOpen && (
+                    <div className="ml-2 space-y-1 border-l border-slate-700 pl-2 mt-1">
+                      {item.submenu.map((subitem) => {
+                        const active = subitem.path ? isActive(subitem.path) : false;
+                        return (
+                          <Link
+                            key={subitem.path || subitem.label}
+                            to={subitem.path || '#'}
+                            onClick={(e) => {
+                              if (!subitem.path) {
+                                e.preventDefault();
+                                if (subitem.label === 'Logout') {
+                                  handleLogout();
+                                }
+                              }
+                            }}
+                            className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 group text-sm whitespace-nowrap ${
+                              active 
+                                ? 'bg-indigo-600/10 text-white' 
+                                : 'hover:bg-slate-800 hover:text-slate-100 text-slate-400'
+                            }`}
+                          >
+                            <span className={`flex-shrink-0 ${active ? 'text-indigo-500' : 'text-slate-400 group-hover:text-slate-200'} transition-colors`}>
+                              {subitem.icon}
+                            </span>
+                            <span className="ml-2 truncate">{subitem.label}</span>
+                            {subitem.badge ? (
+                              <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-[#0f172a] flex-shrink-0 ml-auto">
+                                {subitem.badge}
+                              </span>
+                            ) : null}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            
+            // Handle regular menu items
+            const active = item.path ? isActive(item.path) : false;
             return (
               <Link
-                key={item.path}
-                to={item.path}
+                key={item.path || item.label}
+                to={item.path || '#'}
+                onClick={(e) => {
+                  if (!item.path) {
+                    e.preventDefault();
+                    if (item.label === 'Logout') {
+                      handleLogout();
+                    }
+                  }
+                }}
                 className={`flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative whitespace-nowrap ${
                   active 
                     ? 'bg-indigo-600/10 text-white' 
@@ -206,6 +295,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
                 <Settings size={20} />
               </button>
             )}
+
+            {/* Help Center Button - For all users */}
+            <button
+              onClick={() => setHelpCenterOpen(true)}
+              className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0 hover:text-slate-600"
+              title="Help Center"
+            >
+              <HelpCircle size={20} />
+            </button>
             
             {/* Divider */}
             <div className="h-6 w-px bg-slate-200 flex-shrink-0"></div>

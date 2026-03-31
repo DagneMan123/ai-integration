@@ -141,7 +141,7 @@ const CandidateProfile: React.FC = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
+    <div className="min-h-screen bg-white py-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto">
         
         {/* Header with Progress */}

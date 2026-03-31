@@ -1,282 +1,314 @@
-# SimuAI - Quick Start Guide
+# SimuAI Platform - Quick Start Guide
 
-## ✅ Project Status: 100% COMPLETE
+## 🚀 Get Started in 5 Minutes
 
-All 31 frontend pages created with TypeScript + Tailwind CSS
-All backend APIs implemented and tested
-Three role-based dashboards fully functional
+### Prerequisites
+- Node.js 16+
+- PostgreSQL 12+
+- npm or yarn
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
-
-### Step 1: Install Dependencies (2 min)
+## 1️⃣ Database Setup
 
 ```bash
-# Install all dependencies at once
-npm install
-cd server && npm install
-cd ../client && npm install
-cd ..
+# Start PostgreSQL (Windows)
+Start-Service -Name "postgresql-x64-15"
+
+# Or on Mac
+brew services start postgresql
+
+# Or on Linux
+sudo systemctl start postgresql
 ```
 
-### Step 2: Setup Environment (1 min)
+---
 
-**Backend** - Create `server/.env`:
-```env
-NODE_ENV=development
-PORT=5000
-CLIENT_URL=http://localhost:3000
-MONGODB_URI=mongodb://localhost:27017/simuai
-JWT_SECRET=your_super_secret_jwt_key_min_32_characters_long
-JWT_EXPIRE=7d
-JWT_REFRESH_SECRET=your_refresh_secret_key_min_32_characters
-JWT_REFRESH_EXPIRE=30d
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASSWORD=your_gmail_app_password
-EMAIL_FROM=noreply@simuai.com
-CHAPA_URL=https://api.chapa.co/v1
-CHAPA_SECRET_KEY=your_chapa_secret_key
-AI_API_KEY=your_openai_api_key
-AI_API_URL=https://api.openai.com/v1
-```
-
-**Frontend** - Create `client/.env`:
-```env
-REACT_APP_API_URL=http://localhost:5000/api
-```
-
-### Step 3: Start MongoDB (30 sec)
+## 2️⃣ Backend Setup
 
 ```bash
-# Windows
-net start MongoDB
-
-# macOS/Linux
-sudo systemctl start mongod
-
-# Docker
-docker run -d -p 27017:27017 --name mongodb mongo:latest
-```
-
-### Step 4: Run Application (30 sec)
-
-```bash
-# From root directory - runs both servers
-npm run dev
-```
-
-**OR run separately:**
-
-Terminal 1:
-```bash
+# Navigate to server directory
 cd server
-npm run dev
-```
 
-Terminal 2:
-```bash
-cd client
-npm start
-```
-
-### Step 5: Access Application
-
-- **Frontend**: http://localhost:3000
-- **Backend**: http://localhost:5000
-- **Health Check**: http://localhost:5000/health
-
----
-
-## 👥 Test Accounts
-
-### Create Admin Account
-1. Register at http://localhost:3000/register
-2. Choose role: "Admin"
-3. Verify email (check console logs for token)
-4. Login at http://localhost:3000/login
-
-### Create Employer Account
-1. Register with role: "Employer"
-2. Complete company profile
-3. Post jobs and manage candidates
-
-### Create Candidate Account
-1. Register with role: "Candidate"
-2. Complete profile
-3. Browse jobs and apply
-
----
-
-## 📱 Dashboard Access
-
-After login, you'll be redirected based on your role:
-
-- **Candidate** → `/candidate/dashboard`
-- **Employer** → `/employer/dashboard`
-- **Admin** → `/admin/dashboard`
-
----
-
-## 🎯 Key Features to Test
-
-### Candidate Dashboard
-✅ View and apply for jobs
-✅ Take AI-powered interviews
-✅ View interview reports
-✅ Track application status
-✅ Manage profile
-✅ View payment history
-
-### Employer Dashboard
-✅ Post and manage jobs
-✅ Review candidate applications
-✅ View interview results
-✅ Access analytics
-✅ Manage subscription
-✅ Configure AI interviews
-
-### Admin Dashboard
-✅ Manage all users
-✅ Verify companies
-✅ Moderate job postings
-✅ Monitor payments
-✅ View platform analytics
-✅ Access activity logs
-
----
-
-## 🛠️ Technology Stack
-
-### Frontend
-- React 18 + TypeScript
-- Tailwind CSS
-- React Router v6
-- Zustand (State Management)
-- Axios + React Hook Form
-- React Hot Toast
-
-### Backend
-- Node.js + Express
-- MongoDB + Mongoose
-- JWT Authentication
-- Chapa Payment Integration
-- AI Service Integration
-- Email Service (Nodemailer)
-
----
-
-## 📊 Project Statistics
-
-- **Total Pages**: 31
-- **Authentication Pages**: 5
-- **Public Pages**: 4
-- **Candidate Pages**: 7
-- **Employer Pages**: 8
-- **Admin Pages**: 7
-- **Components**: 4
-- **API Endpoints**: 50+
-- **Database Models**: 8
-
----
-
-## 🔧 Common Commands
-
-```bash
 # Install dependencies
 npm install
 
-# Run both servers
-npm run dev
+# Create .env file
+cp .env.example .env
 
-# Run backend only
-cd server && npm run dev
+# Update DATABASE_URL in .env
+# Example: DATABASE_URL=postgresql://postgres:password@localhost:5432/simuai
 
-# Run frontend only
-cd client && npm start
+# Run migrations
+npx prisma migrate deploy
 
-# Build frontend for production
-cd client && npm run build
+# Generate Prisma client
+npx prisma generate
 
-# Run tests
-npm test
+# Start server
+npm start
+```
 
-# Kill ports if busy
-npx kill-port 3000
-npx kill-port 5000
+Server will run on `http://localhost:5000`
+
+---
+
+## 3️⃣ Frontend Setup
+
+```bash
+# Navigate to client directory
+cd client
+
+# Install dependencies
+npm install
+
+# Create .env file
+cp .env.example .env
+
+# Update REACT_APP_API_URL in .env
+# Example: REACT_APP_API_URL=http://localhost:5000/api
+
+# Start development server
+npm start
+```
+
+Frontend will run on `http://localhost:3000`
+
+---
+
+## 4️⃣ Test the Application
+
+### Create Test Accounts
+
+**Candidate Account**
+- Email: candidate@test.com
+- Password: Test@123456
+- Role: candidate
+
+**Employer Account**
+- Email: employer@test.com
+- Password: Test@123456
+- Role: employer
+
+**Admin Account**
+- Email: admin@test.com
+- Password: Test@123456
+- Role: admin
+
+### Access Dashboards
+
+1. **Candidate Dashboard**: http://localhost:3000/candidate/dashboard
+2. **Employer Dashboard**: http://localhost:3000/employer/dashboard
+3. **Admin Dashboard**: http://localhost:3000/admin/dashboard
+
+---
+
+## 5️⃣ Verify Everything Works
+
+### Checklist
+- [ ] Backend server running on port 5000
+- [ ] Frontend running on port 3000
+- [ ] Can login with test accounts
+- [ ] Dashboard loads data from database
+- [ ] Cross-dashboard communication works
+- [ ] Help center displays correctly
+
+---
+
+## 📊 Database Structure
+
+The application uses these main tables:
+
+```
+users
+├── id (primary key)
+├── email (unique)
+├── name
+├── role (candidate, employer, admin)
+├── password (hashed)
+└── createdAt
+
+jobs
+├── id (primary key)
+├── title
+├── description
+├── createdById (foreign key to users)
+├── companyId (foreign key to companies)
+└── status (ACTIVE, PENDING, CLOSED)
+
+applications
+├── id (primary key)
+├── candidateId (foreign key to users)
+├── jobId (foreign key to jobs)
+├── status (APPLIED, SHORTLISTED, REJECTED, ACCEPTED)
+└── createdAt
+
+interviews
+├── id (primary key)
+├── candidateId (foreign key to users)
+├── jobId (foreign key to jobs)
+├── status (SCHEDULED, IN_PROGRESS, COMPLETED)
+├── aiEvaluation (JSON with scores)
+└── createdAt
 ```
 
 ---
 
-## 🐛 Quick Troubleshooting
+## 🔄 Dashboard Communication
+
+All three dashboards communicate in real-time:
+
+1. **Candidate Dashboard** fetches:
+   - User applications
+   - Interview history
+   - Performance scores
+   - Saved jobs
+
+2. **Employer Dashboard** fetches:
+   - Posted jobs
+   - Received applications
+   - Scheduled interviews
+   - Hiring analytics
+
+3. **Admin Dashboard** fetches:
+   - Platform statistics
+   - User counts by role
+   - Job and interview counts
+   - Revenue data
+
+---
+
+## 🔐 Authentication Flow
+
+```
+1. User enters credentials
+   ↓
+2. Backend validates and creates JWT token
+   ↓
+3. Frontend stores token in localStorage
+   ↓
+4. All API requests include token in Authorization header
+   ↓
+5. Backend verifies token and checks user role
+   ↓
+6. Return role-specific data
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Database Connection Error
+```
+Error: connect ECONNREFUSED 127.0.0.1:5432
+
+Solution:
+1. Ensure PostgreSQL is running
+2. Check DATABASE_URL in .env
+3. Verify database exists
+```
 
 ### Port Already in Use
-```bash
-npx kill-port 3000
-npx kill-port 5000
+```
+Error: listen EADDRINUSE: address already in use :::5000
+
+Solution:
+1. Kill process on port 5000: lsof -ti:5000 | xargs kill -9
+2. Or change PORT in .env
 ```
 
-### MongoDB Not Running
-```bash
-# Windows
-net start MongoDB
-
-# macOS/Linux
-sudo systemctl start mongod
+### CORS Error
 ```
+Error: Access to XMLHttpRequest blocked by CORS policy
 
-### TypeScript Errors in Frontend
-```bash
-cd client
-rm -rf node_modules package-lock.json
-npm install
+Solution:
+1. Verify REACT_APP_API_URL in frontend .env
+2. Verify CLIENT_URL in backend .env
+3. Restart both servers
 ```
-
-### Backend Connection Issues
-- Check MongoDB is running
-- Verify `.env` file exists in `server/` directory
-- Check `MONGODB_URI` is correct
 
 ---
 
-## 📚 Documentation Files
+## 📚 API Documentation
 
-- `README.md` - Main documentation
-- `COMPLETE_SETUP.md` - Detailed setup guide
-- `COMPLETE_FRONTEND_GUIDE.md` - Frontend documentation
-- `DASHBOARD_ROLES_GUIDE.md` - Dashboard roles explanation
-- `FINAL_SETUP_INSTRUCTIONS.md` - Final setup steps
-- `QUICK_START.md` - This file
+### Get Candidate Dashboard
+```bash
+GET /api/dashboard-data/candidate
+Authorization: Bearer {token}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "user": { ... },
+    "applications": [ ... ],
+    "interviews": [ ... ],
+    "stats": { ... }
+  }
+}
+```
+
+### Get Employer Dashboard
+```bash
+GET /api/dashboard-data/employer
+Authorization: Bearer {token}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "user": { ... },
+    "jobs": [ ... ],
+    "recentApplications": [ ... ],
+    "stats": { ... }
+  }
+}
+```
+
+### Get Admin Dashboard
+```bash
+GET /api/dashboard-data/admin
+Authorization: Bearer {token}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "user": { ... },
+    "stats": { ... },
+    "recentActivity": [ ... ],
+    "systemHealth": { ... }
+  }
+}
+```
 
 ---
 
-## 🎉 You're Ready!
+## 🎯 Next Steps
 
-The platform is 100% complete and ready to use. All pages are implemented with:
-- ✅ Professional TypeScript code
-- ✅ Clean Tailwind CSS styling
-- ✅ Full backend integration
+1. **Customize branding**: Update logo and colors in `client/src/index.css`
+2. **Configure Chapa payments**: Add API keys to `.env`
+3. **Set up email notifications**: Configure email service
+4. **Deploy to production**: Use Docker or cloud platform
+5. **Monitor performance**: Set up logging and analytics
+
+---
+
+## 📞 Support
+
+- Check logs: `server/logs/error.log`
+- Review database: `npx prisma studio`
+- Test API: Use Postman or curl
+
+---
+
+## ✅ You're Ready!
+
+Your SimuAI platform is now running with:
+- ✅ Complete database integration
 - ✅ Role-based access control
-- ✅ Error handling
-- ✅ Loading states
-- ✅ Form validation
+- ✅ 3-dashboard communication
+- ✅ Real-time data synchronization
+- ✅ Production-ready security
 
-Start the servers and explore the platform!
-
----
-
-## 📞 Need Help?
-
-1. Check the documentation files
-2. Verify environment variables
-3. Ensure MongoDB is running
-4. Check browser console for errors
-5. Check server logs for backend issues
-
----
-
-Made with ❤️ by SimuAI Team
-
-**Status: PRODUCTION READY** 🚀
+**Happy coding! 🚀**
