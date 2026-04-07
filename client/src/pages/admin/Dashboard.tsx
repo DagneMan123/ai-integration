@@ -1,14 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { analyticsAPI } from '../../utils/api';
-import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { adminMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
-import { useDashboardSync } from '../../hooks/useDashboardSync';
 import { 
   Users, 
   Briefcase, 
@@ -35,55 +31,20 @@ const AdminDashboard: React.FC = () => {
   useSessionMonitoring();
 
   // Dashboard communication
-  const { notifySystemUpdate, sendNotification } = useDashboardCommunication('admin');
-
-  // Dashboard sync
-  const { emitUpdate, emitRefresh, emitNotify } = useDashboardSync(
-    'admin',
-    (event) => {
-      if (event.dashboard !== 'admin') {
-        console.log('Received update from', event.dashboard, event.data);
-        if (event.type === 'refresh') {
-          fetchDashboardData();
-        }
-      }
-    },
-    (event) => {
-      if (event.dashboard !== 'admin') {
-        fetchDashboardData();
-      }
-    },
-    (event) => {
-      if (event.data?.message) {
-        console.log('Notification from', event.dashboard, ':', event.data.message);
-      }
-    }
-  );
+  useDashboardCommunication('admin');
 
   const fetchDashboardData = useCallback(async () => {
     try {
       const response = await dashboardDataService.getAdminDashboard();
       const dashboardData = response.data || null;
       setData(dashboardData);
-      
-      if (dashboardData) {
-        notifySystemUpdate('dashboard_refresh', {
-          totalUsers: dashboardData.stats?.totalUsers || 0,
-          activeJobs: dashboardData.stats?.activeJobs || 0,
-          completedInterviews: dashboardData.stats?.completedInterviews || 0,
-          timestamp: new Date()
-        });
-        
-        sendNotification('Admin dashboard data refreshed', 'success');
-      }
     } catch (error) {
       console.error('Dashboard fetch error:', error);
-      sendNotification('Failed to sync admin dashboard', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [notifySystemUpdate, sendNotification]);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();

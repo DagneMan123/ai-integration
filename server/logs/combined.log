@@ -798,3 +798,25 @@
 {"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-01T07:33:38.376Z"}
 {"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-01T07:33:38.377Z"}
 {"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-01T07:33:38.377Z"}
+{"level":"warn","message":"Database connection failed (attempt 4/5). Retrying in 8000ms...","service":"simuai-api","timestamp":"2026-04-07T15:52:55.302Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-07T15:53:02.507Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-07T15:53:02.508Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-07T15:53:02.511Z"}
+{"level":"error","message":"Failed to connect to database after 5 attempts:","service":"simuai-api","timestamp":"2026-04-07T15:53:07.530Z"}
+{"level":"error","message":"❌ Failed to connect to database after 5 attempts.","service":"simuai-api","timestamp":"2026-04-07T15:53:07.531Z"}
+{"level":"error","message":"Please ensure PostgreSQL is running: Start-Service -Name \"postgresql-x64-15\"","service":"simuai-api","timestamp":"2026-04-07T15:53:07.532Z"}
+{"level":"warn","message":"⚠️ Server starting with limited functionality.","service":"simuai-api","timestamp":"2026-04-07T15:53:07.532Z"}
+{"level":"warn","message":"Database connection failed (attempt 4/5). Retrying in 8000ms...","service":"simuai-api","timestamp":"2026-04-07T15:53:29.570Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-07T15:53:29.572Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-07T15:53:29.573Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-07T15:53:29.573Z"}
+{"level":"error","message":"Failed to connect to database after 5 attempts:","service":"simuai-api","timestamp":"2026-04-07T15:53:42.594Z"}
+{"level":"error","message":"❌ Failed to reconnect to database:","service":"simuai-api","timestamp":"2026-04-07T15:53:42.598Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-07T15:53:52.605Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-07T15:53:57.638Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-07T15:53:57.640Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-07T15:53:57.640Z"}
+{"level":"warn","message":"Database connection failed (attempt 4/5). Retrying in 8000ms...","service":"simuai-api","timestamp":"2026-04-07T15:54:19.749Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-07T16:49:06.724Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-07T16:49:20.485Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-07T16:49:20.583Z"}

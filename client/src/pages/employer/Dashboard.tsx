@@ -1,13 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { analyticsAPI } from '../../utils/api';
-import { DashboardData } from '../../types';
 import Loading from '../../components/Loading';
 import DashboardLayout from '../../components/DashboardLayout';
 import { employerMenu } from '../../config/menuConfig';
 import { useDashboardCommunication } from '../../hooks/useDashboardCommunication';
 import { useSessionMonitoring } from '../../hooks/useSessionMonitoring';
-import { useDashboardSync } from '../../hooks/useDashboardSync';
 import { 
   Plus, 
   RefreshCw, 
@@ -35,29 +32,6 @@ const EmployerDashboard: React.FC = () => {
 
   // Dashboard communication
   useDashboardCommunication('employer');
-
-  // Dashboard sync
-  const { emitUpdate, emitRefresh, emitNotify } = useDashboardSync(
-    'employer',
-    (event) => {
-      if (event.dashboard !== 'employer') {
-        console.log('Received update from', event.dashboard, event.data);
-        if (event.type === 'refresh') {
-          fetchDashboardData();
-        }
-      }
-    },
-    (event) => {
-      if (event.dashboard !== 'employer') {
-        fetchDashboardData();
-      }
-    },
-    (event) => {
-      if (event.data?.message) {
-        console.log('Notification from', event.dashboard, ':', event.data.message);
-      }
-    }
-  );
 
   const fetchDashboardData = useCallback(async () => {
     try {
