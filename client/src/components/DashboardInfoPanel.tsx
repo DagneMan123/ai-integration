@@ -71,7 +71,7 @@ const DashboardInfoPanel: React.FC<DashboardInfoPanelProps> = ({ stats, role, on
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Shared Data</h3>
             <span className="text-xs text-slate-500">
-              Updated: {new Date(displayStats.lastUpdated).toLocaleTimeString()}
+              Updated: {displayStats.lastUpdated ? new Date(displayStats.lastUpdated).toLocaleTimeString() : 'N/A'}
             </span>
           </div>
 

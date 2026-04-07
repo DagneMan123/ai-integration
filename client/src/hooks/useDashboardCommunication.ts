@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { dashboardCommunicationService } from '../services/dashboardCommunicationService';
 
-interface Message {
+export interface Message {
   id: number;
   fromDashboard: string;
   toDashboard?: string;
@@ -10,7 +10,7 @@ interface Message {
   timestamp: Date;
 }
 
-interface Notification {
+export interface Notification {
   id: number;
   dashboard: string;
   title: string;
@@ -21,7 +21,7 @@ interface Notification {
   createdAt: Date;
 }
 
-interface Stats {
+export interface Stats {
   totalUsers: number;
   totalJobs: number;
   totalApplications: number;
@@ -32,11 +32,13 @@ interface Stats {
   timestamp: Date;
 }
 
+export type DashboardRole = 'candidate' | 'employer' | 'admin';
+
 /**
  * Hook for dashboard communication
  * Manages real-time communication between all 3 dashboards
  */
-export const useDashboardCommunication = (dashboard: 'candidate' | 'employer' | 'admin') => {
+export const useDashboardCommunication = (dashboard: DashboardRole) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -165,6 +167,39 @@ export const useDashboardCommunication = (dashboard: 'candidate' | 'employer' | 
     [dashboard, fetchMessages]
   );
 
+  // Notify status change (generic for all dashboards)
+  const notifyStatusChange = useCallback(
+    async (status: string, details: any = {}) => {
+      try {
+        if (dashboard === 'candidate') {
+          await dashboardCommunicationService.notifyApplicationUpdate(details.id, status);
+        } else if (dashboard === 'employer') {
+          await dashboardCommunicationService.notifyInterviewUpdate(details.id, status);
+        } else if (dashboard === 'admin') {
+          await dashboardCommunicationService.notifySystemUpdate(status, details);
+        }
+        await fetchMessages();
+      } catch (err: any) {
+        console.error('Error notifying status change:', err);
+      }
+    },
+    [dashboard, fetchMessages]
+  );
+
+  // Send notification (generic for all dashboards)
+  const sendNotification = useCallback(
+    async (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+      try {
+        // This would typically call an API to create a notification
+        // For now, just log it
+        console.log(`[${type.toUpperCase()}] ${message}`);
+      } catch (err: any) {
+        console.error('Error sending notification:', err);
+      }
+    },
+    []
+  );
+
   // Get unread notification count
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -181,6 +216,8 @@ export const useDashboardCommunication = (dashboard: 'candidate' | 'employer' | 
     markNotificationAsRead,
     notifyApplicationUpdate,
     notifyInterviewUpdate,
-    notifySystemUpdate
+    notifySystemUpdate,
+    notifyStatusChange,
+    sendNotification
   };
 };

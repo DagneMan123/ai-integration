@@ -3,10 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { testConnection, prisma } = require('./config/database'); 
 const { logger } = require('./utils/logger');
 const { errorHandler } = require('./middleware/errorHandler');
-const { connectWithRetry } = require('./lib/prisma');
+const prisma = require('./lib/prisma');
+const { initDatabase } = require('./lib/initDatabase');
 const { connectionCheck, lightConnectionCheck } = require('./middleware/connectionCheck');
 
 const app = express();
@@ -14,17 +14,25 @@ const app = express();
 // Database Connection with retry logic
 const startDB = async () => {
   try {
-    await connectWithRetry(5);
-    await testConnection();
-    logger.info('✅ Prisma Client is ready');
+    await prisma.connectWithRetry(5);
+    logger.info('✅ Database connection established successfully');
+    
+    // Initialize database tables - pass the prisma instance
+    await initDatabase(prisma);
+    return true;
   } catch (error) {
-    logger.error('❌ Failed to connect to database. Please ensure PostgreSQL is running.');
-    logger.error('Start PostgreSQL with: Start-Service -Name "postgresql-x64-15"');
-    // Don't exit - allow server to start but with limited functionality
-    logger.warn('⚠️ Server starting without database connection. Some features will be unavailable.');
+    logger.error('❌ Failed to connect to database after 5 attempts.');
+    logger.error('Please ensure PostgreSQL is running: Start-Service -Name "postgresql-x64-15"');
+    logger.warn('⚠️ Server starting with limited functionality.');
+    return false;
   }
 };
-startDB();
+
+// Start database and then start server
+let dbReady = false;
+startDB().then(ready => {
+  dbReady = ready;
+});
 
 // Security middleware
 app.use(helmet());
@@ -104,7 +112,11 @@ try {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date(),
+    database: dbReady ? 'connected' : 'connecting'
+  });
 });
 
 // Error handler
@@ -112,7 +124,10 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
+  logger.info(`🚀 Server running on port ${PORT}`);
+  logger.info(`📊 Database status: ${dbReady ? '✅ Connected' : '⏳ Connecting...'}`);
+  logger.info(`🌐 API available at http://localhost:${PORT}`);
+  logger.info(`💻 Frontend available at http://localhost:3000`);
 });
 
 module.exports = app;

@@ -44,7 +44,10 @@ async function connectWithRetry(maxRetries = 5) {
       const delay = Math.min(1000 * Math.pow(2, retries - 1), 10000);
       
       if (retries < maxRetries) {
-        logger.warn(`Database connection failed (attempt ${retries}/${maxRetries}). Retrying in ${delay}ms...`);
+        // Only log on last retry attempt to reduce noise
+        if (retries === maxRetries - 1) {
+          logger.warn(`Database connection failed (attempt ${retries}/${maxRetries}). Retrying in ${delay}ms...`);
+        }
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -199,6 +202,8 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
+// Export prisma client with methods attached
+prisma.connectWithRetry = connectWithRetry;
+prisma.checkConnectionHealth = checkConnectionHealth;
+
 module.exports = prisma;
-module.exports.connectWithRetry = connectWithRetry;
-module.exports.checkConnectionHealth = checkConnectionHealth;

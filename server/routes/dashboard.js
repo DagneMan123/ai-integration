@@ -3,9 +3,39 @@ const router = express.Router();
 const prisma = require('../lib/prisma');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
+const { getCandidateDashboard, getEmployerDashboard, getAdminDashboard } = require('../controllers/dashboardController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Middleware to ensure user is authenticated
 router.use(authenticateToken);
+
+// ROLE-SPECIFIC DASHBOARD ENDPOINTS
+// Get candidate dashboard
+router.get('/candidate', authorizeRoles('candidate'), asyncHandler(async (req, res) => {
+  const data = await getCandidateDashboard(req.user.id);
+  res.json({
+    success: true,
+    data
+  });
+}));
+
+// Get employer dashboard
+router.get('/employer', authorizeRoles('employer'), asyncHandler(async (req, res) => {
+  const data = await getEmployerDashboard(req.user.id);
+  res.json({
+    success: true,
+    data
+  });
+}));
+
+// Get admin dashboard
+router.get('/admin', authorizeRoles('admin'), asyncHandler(async (req, res) => {
+  const data = await getAdminDashboard(req.user.id);
+  res.json({
+    success: true,
+    data
+  });
+}));
 
 // Get dashboard statistics (accessible to all authenticated users)
 router.get('/stats', async (req, res, next) => {

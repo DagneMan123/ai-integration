@@ -10,7 +10,7 @@ const getCandidateDashboard = async (userId) => {
     // Get candidate user data
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { profile: true }
+      include: { candidateProfile: true }
     });
 
     if (!user) throw new Error('User not found');
@@ -23,7 +23,7 @@ const getCandidateDashboard = async (userId) => {
           include: { company: true }
         }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { appliedAt: 'desc' },
       take: 10
     });
 
@@ -35,25 +35,20 @@ const getCandidateDashboard = async (userId) => {
           include: { company: true }
         }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { startedAt: 'desc' },
       take: 10
     });
 
     // Calculate average score
     const completedInterviews = interviews.filter(i => i.status === 'COMPLETED');
     const averageScore = completedInterviews.length > 0
-      ? completedInterviews.reduce((sum, i) => sum + (i.aiEvaluation?.overallScore || 0), 0) / completedInterviews.length
+      ? completedInterviews.reduce((sum, i) => sum + (i.overallScore || 0), 0) / completedInterviews.length
       : 0;
-
-    // Get saved jobs count
-    const savedJobs = await prisma.savedJob.count({
-      where: { candidateId: userId }
-    });
 
     return {
       user: {
         id: user.id,
-        name: user.name,
+        name: `${user.firstName} ${user.lastName}`,
         email: user.email,
         role: user.role
       },
@@ -62,23 +57,29 @@ const getCandidateDashboard = async (userId) => {
         jobTitle: app.job?.title,
         companyName: app.job?.company?.name,
         status: app.status,
-        appliedAt: app.createdAt
+        appliedAt: app.appliedAt
       })),
       interviews: interviews.map(int => ({
         id: int.id,
         jobTitle: int.job?.title,
         companyName: int.job?.company?.name,
         status: int.status,
-        score: int.aiEvaluation?.overallScore,
-        date: int.createdAt
+        score: int.overallScore,
+        date: int.startedAt
       })),
-      recentInterviews: interviews.slice(0, 5),
+      recentInterviews: interviews.slice(0, 5).map(int => ({
+        id: int.id,
+        jobTitle: int.job?.title,
+        companyName: int.job?.company?.name,
+        status: int.status,
+        score: int.overallScore,
+        date: int.startedAt
+      })),
       stats: {
         totalApplications: applications.length,
         totalInterviews: interviews.length,
         completedInterviews: completedInterviews.length,
-        averageScore: Math.round(averageScore),
-        savedJobs
+        averageScore: Math.round(averageScore)
       }
     };
   } catch (error) {
@@ -92,8 +93,7 @@ const getEmployerDashboard = async (userId) => {
   try {
     // Get employer user data
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { company: true }
+      where: { id: userId }
     });
 
     if (!user) throw new Error('User not found');
@@ -101,7 +101,6 @@ const getEmployerDashboard = async (userId) => {
     // Get employer jobs
     const jobs = await prisma.job.findMany({
       where: { createdById: userId },
-      include: { applications: true },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -116,7 +115,7 @@ const getEmployerDashboard = async (userId) => {
         job: true,
         candidate: true
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { appliedAt: 'desc' },
       take: 10
     });
 
@@ -131,7 +130,7 @@ const getEmployerDashboard = async (userId) => {
         job: true,
         candidate: true
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { startedAt: 'desc' }
     });
 
     // Calculate stats
@@ -142,25 +141,23 @@ const getEmployerDashboard = async (userId) => {
     return {
       user: {
         id: user.id,
-        name: user.name,
+        name: `${user.firstName} ${user.lastName}`,
         email: user.email,
-        role: user.role,
-        company: user.company?.name
+        role: user.role
       },
       jobs: jobs.map(job => ({
         id: job.id,
         title: job.title,
         status: job.status,
-        applicationsCount: job.applications?.length || 0,
         createdAt: job.createdAt
       })),
       recentApplications: applications.slice(0, 5).map(app => ({
         id: app.id,
-        candidateName: app.candidate?.name,
+        candidateName: `${app.candidate?.firstName} ${app.candidate?.lastName}`,
         candidateEmail: app.candidate?.email,
         jobTitle: app.job?.title,
         status: app.status,
-        appliedAt: app.createdAt
+        appliedAt: app.appliedAt
       })),
       stats: {
         jobs: jobs.length,
@@ -187,9 +184,9 @@ const getAdminDashboard = async (userId) => {
 
     // Get all users count by role
     const totalUsers = await prisma.user.count();
-    const candidateCount = await prisma.user.count({ where: { role: 'candidate' } });
-    const employerCount = await prisma.user.count({ where: { role: 'employer' } });
-    const adminCount = await prisma.user.count({ where: { role: 'admin' } });
+    const candidateCount = await prisma.user.count({ where: { role: 'CANDIDATE' } });
+    const employerCount = await prisma.user.count({ where: { role: 'EMPLOYER' } });
+    const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
 
     // Get all jobs
     const totalJobs = await prisma.job.count();
@@ -201,11 +198,10 @@ const getAdminDashboard = async (userId) => {
 
     // Get all companies
     const totalCompanies = await prisma.company.count();
-    const verifiedCompanies = await prisma.company.count({ where: { verified: true } });
 
     // Get recent activity
     const recentActivity = await prisma.interview.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { startedAt: 'desc' },
       take: 10,
       include: {
         candidate: true,
@@ -214,19 +210,19 @@ const getAdminDashboard = async (userId) => {
     });
 
     // Get pending items
-    const pendingCompanies = await prisma.company.count({ where: { verified: false } });
-    const pendingJobs = await prisma.job.count({ where: { status: 'PENDING' } });
+    const pendingCompanies = await prisma.company.count({ where: { isVerified: false } });
+    const pendingJobs = await prisma.job.count({ where: { status: 'DRAFT' } });
 
     // Calculate total revenue (from payments)
     const payments = await prisma.payment.findMany({
       where: { status: 'COMPLETED' }
     });
-    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalRevenue = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
     return {
       user: {
         id: user.id,
-        name: user.name,
+        name: `${user.firstName} ${user.lastName}`,
         email: user.email,
         role: user.role
       },
@@ -240,16 +236,15 @@ const getAdminDashboard = async (userId) => {
         totalInterviews,
         completedInterviews,
         totalCompanies,
-        verifiedCompanies,
         totalRevenue,
         pendingCompanies,
         pendingJobs
       },
       recentActivity: recentActivity.map(activity => ({
         id: activity.id,
-        action: `Interview with ${activity.candidate?.name}`,
-        description: `${activity.candidate?.name} completed interview for ${activity.job?.title}`,
-        timestamp: activity.createdAt,
+        action: `Interview with ${activity.candidate?.firstName} ${activity.candidate?.lastName}`,
+        description: `${activity.candidate?.firstName} ${activity.candidate?.lastName} completed interview for ${activity.job?.title}`,
+        timestamp: activity.startedAt,
         type: 'interview'
       })),
       systemHealth: {

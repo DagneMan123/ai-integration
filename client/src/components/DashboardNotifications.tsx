@@ -5,7 +5,7 @@ import { DashboardMessage, DashboardRole } from '../services/dashboardCommunicat
 interface DashboardNotificationsProps {
   messages: DashboardMessage[];
   role: DashboardRole;
-  onMarkAsRead: (messageId: string) => void;
+  onMarkAsRead: (messageId: string | number) => void;
 }
 
 const DashboardNotifications: React.FC<DashboardNotificationsProps> = ({ messages, role, onMarkAsRead }) => {
@@ -42,7 +42,8 @@ const DashboardNotifications: React.FC<DashboardNotificationsProps> = ({ message
     }
   };
 
-  const getRoleLabel = (role: DashboardRole) => {
+  const getRoleLabel = (role: DashboardRole | undefined) => {
+    if (!role) return 'Unknown';
     return role.charAt(0).toUpperCase() + role.slice(1);
   };
 

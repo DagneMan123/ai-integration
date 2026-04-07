@@ -5,7 +5,76 @@ import api from '../utils/api';
  * Handles all communication between 3 dashboards
  */
 
+export type DashboardRole = 'candidate' | 'employer' | 'admin';
+
+export interface DashboardMessage {
+  id: string | number;
+  fromDashboard?: string;
+  toDashboard?: string;
+  eventType?: string;
+  data?: any;
+  timestamp: Date;
+  type: 'alert' | 'notification' | 'data-update' | 'request';
+  title: string;
+  content: string;
+  from: DashboardRole;
+  read: boolean;
+}
+
+export interface DashboardStats {
+  totalUsers: number;
+  totalJobs: number;
+  totalApplications: number;
+  totalInterviews: number;
+  activeInterviews: number;
+  pendingApplications: number;
+  recentMessages: number;
+  timestamp: Date;
+  activeJobs: number;
+  completedInterviews: number;
+  platformRevenue: number;
+  lastUpdated: Date;
+}
+
+export interface DashboardNotification {
+  id: number;
+  dashboard: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  data?: any;
+  read: boolean;
+  createdAt: Date;
+}
+
+// Event listeners for real-time updates
+const listeners: Map<string, Set<(data: any) => void>> = new Map();
+
 export const dashboardCommunicationService = {
+  // Subscribe to events
+  subscribe: (eventType: string, callback: (data: any) => void) => {
+    if (!listeners.has(eventType)) {
+      listeners.set(eventType, new Set());
+    }
+    listeners.get(eventType)?.add(callback);
+
+    // Return unsubscribe function
+    return () => {
+      listeners.get(eventType)?.delete(callback);
+    };
+  },
+
+  // Emit event to all listeners
+  emit: (eventType: string, data: any) => {
+    listeners.get(eventType)?.forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error('Error in event listener:', error);
+      }
+    });
+  },
+
   // Get message history
   getMessages: async (dashboard: string, limit: number = 50) => {
     try {

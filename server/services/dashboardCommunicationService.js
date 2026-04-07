@@ -35,6 +35,12 @@ class DashboardCommunicationService {
    */
   async broadcast(fromDashboard, eventType, data) {
     try {
+      // Check if table exists
+      if (!prisma.dashboardMessage) {
+        console.warn('DashboardMessage table not available - run migrations');
+        return null;
+      }
+
       // Save to database
       const message = await prisma.dashboardMessage.create({
         data: {
@@ -43,6 +49,9 @@ class DashboardCommunicationService {
           data: JSON.stringify(data),
           timestamp: new Date()
         }
+      }).catch(err => {
+        console.warn('Failed to save message to database:', err.message);
+        return null;
       });
 
       // Notify all subscribers
@@ -51,11 +60,11 @@ class DashboardCommunicationService {
           callbacks.forEach(callback => {
             try {
               callback({
-                id: message.id,
+                id: message?.id,
                 fromDashboard,
                 eventType,
                 data,
-                timestamp: message.timestamp
+                timestamp: message?.timestamp || new Date()
               });
             } catch (error) {
               console.error('Error in callback:', error);
@@ -67,7 +76,8 @@ class DashboardCommunicationService {
       return message;
     } catch (error) {
       console.error('Error broadcasting message:', error);
-      throw error;
+      // Don't throw - allow app to continue
+      return null;
     }
   }
 
@@ -117,6 +127,12 @@ class DashboardCommunicationService {
    */
   async getMessageHistory(dashboard, limit = 50) {
     try {
+      // Check if table exists
+      if (!prisma.dashboardMessage) {
+        console.warn('DashboardMessage table not available - run migrations');
+        return [];
+      }
+
       const messages = await prisma.dashboardMessage.findMany({
         where: {
           OR: [
@@ -139,7 +155,8 @@ class DashboardCommunicationService {
       }));
     } catch (error) {
       console.error('Error fetching message history:', error);
-      throw error;
+      // Return empty array instead of throwing to prevent app crash
+      return [];
     }
   }
 
@@ -273,30 +290,40 @@ class DashboardCommunicationService {
   async getRealTimeStats() {
     try {
       const stats = {
-        totalUsers: await prisma.user.count(),
-        totalJobs: await prisma.job.count(),
-        totalApplications: await prisma.application.count(),
-        totalInterviews: await prisma.interview.count(),
+        totalUsers: await prisma.user.count().catch(() => 0),
+        totalJobs: await prisma.job.count().catch(() => 0),
+        totalApplications: await prisma.application.count().catch(() => 0),
+        totalInterviews: await prisma.interview.count().catch(() => 0),
         activeInterviews: await prisma.interview.count({
           where: { status: 'IN_PROGRESS' }
-        }),
+        }).catch(() => 0),
         pendingApplications: await prisma.application.count({
-          where: { status: 'APPLIED' }
-        }),
-        recentMessages: await prisma.dashboardMessage.count({
+          where: { status: 'PENDING' }
+        }).catch(() => 0),
+        recentMessages: prisma.dashboardMessage ? await prisma.dashboardMessage.count({
           where: {
             timestamp: {
               gte: new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
             }
           }
-        }),
+        }).catch(() => 0) : 0,
         timestamp: new Date()
       };
 
       return stats;
     } catch (error) {
       console.error('Error getting real-time stats:', error);
-      throw error;
+      // Return default stats instead of throwing
+      return {
+        totalUsers: 0,
+        totalJobs: 0,
+        totalApplications: 0,
+        totalInterviews: 0,
+        activeInterviews: 0,
+        pendingApplications: 0,
+        recentMessages: 0,
+        timestamp: new Date()
+      };
     }
   }
 
