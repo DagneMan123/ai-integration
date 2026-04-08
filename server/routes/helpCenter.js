@@ -1,57 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const { prisma } = require('../lib/prisma');
+const { sendResponse, sendError } = require('../utils/apiResponse');
 
 // Get help center articles
 router.get('/articles', authenticateToken, async (req, res) => {
   try {
     const { category, search } = req.query;
     
-    // Mock data - in production, fetch from database
-    const articles = [
-      {
-        id: 'art-1',
-        title: 'How to Create an Account',
-        category: 'account',
-        content: 'To create an account, click on the Register button...',
-        views: 1250,
-        helpful: 890,
-        createdAt: new Date('2026-01-15')
-      },
-      {
-        id: 'art-2',
-        title: 'How to Apply for a Job',
-        category: 'jobs',
-        content: 'Browse available jobs on the Jobs page...',
-        views: 2100,
-        helpful: 1850,
-        createdAt: new Date('2026-01-20')
-      },
-      {
-        id: 'art-3',
-        title: 'Interview Preparation Guide',
-        category: 'interviews',
-        content: 'Prepare for your AI interview with these tips...',
-        views: 3400,
-        helpful: 3100,
-        createdAt: new Date('2026-02-01')
-      }
-    ];
-
-    let filtered = articles;
+    const where = {};
     if (category && category !== 'all') {
-      filtered = filtered.filter(a => a.category === category);
+      where.category = category;
     }
     if (search) {
-      filtered = filtered.filter(a => 
-        a.title.toLowerCase().includes(search.toLowerCase()) ||
-        a.content.toLowerCase().includes(search.toLowerCase())
-      );
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } }
+      ];
     }
 
-    res.json({ success: true, data: filtered });
+    const articles = await prisma.helpCenterArticle.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    });
+
+    sendResponse(res, 200, articles, 'Articles fetched successfully');
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
@@ -60,20 +36,17 @@ router.get('/articles/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Mock data
-    const article = {
-      id,
-      title: 'Sample Article',
-      category: 'interviews',
-      content: 'Full article content here...',
-      views: 1500,
-      helpful: 1200,
-      relatedArticles: []
-    };
+    const article = await prisma.helpCenterArticle.findUnique({
+      where: { id: parseInt(id) }
+    });
 
-    res.json({ success: true, data: article });
+    if (!article) {
+      return sendError(res, 404, 'Article not found');
+    }
+
+    sendResponse(res, 200, article, 'Article fetched successfully');
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
@@ -83,30 +56,39 @@ router.post('/articles/:id/helpful', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { helpful } = req.body;
 
-    // In production, update database
-    res.json({ 
-      success: true, 
-      message: `Article marked as ${helpful ? 'helpful' : 'not helpful'}`,
-      data: { articleId: id, helpful }
+    const article = await prisma.helpCenterArticle.update({
+      where: { id: parseInt(id) },
+      data: {
+        helpful: helpful ? { increment: 1 } : { decrement: 1 }
+      }
     });
+
+    sendResponse(res, 200, article, `Article marked as ${helpful ? 'helpful' : 'not helpful'}`);
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
 // Get FAQ categories
 router.get('/categories', authenticateToken, async (req, res) => {
   try {
-    const categories = [
-      { id: 'account', name: 'Account & Profile', count: 12 },
-      { id: 'jobs', name: 'Jobs & Applications', count: 18 },
-      { id: 'interviews', name: 'Interviews & Practice', count: 25 },
-      { id: 'support', name: 'Support & Contact', count: 8 }
-    ];
+    const categories = await prisma.helpCenterCategory.findMany({
+      include: {
+        _count: {
+          select: { articles: true }
+        }
+      }
+    });
 
-    res.json({ success: true, data: categories });
+    const formatted = categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      count: cat._count.articles
+    }));
+
+    sendResponse(res, 200, formatted, 'Categories fetched successfully');
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
@@ -116,25 +98,19 @@ router.post('/support-ticket', authenticateToken, async (req, res) => {
     const { subject, message, category } = req.body;
     const userId = req.user.id;
 
-    // In production, save to database
-    const ticket = {
-      id: `ticket-${Date.now()}`,
-      userId,
-      subject,
-      message,
-      category,
-      status: 'open',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    res.json({ 
-      success: true, 
-      message: 'Support ticket created successfully',
-      data: ticket
+    const ticket = await prisma.supportTicket.create({
+      data: {
+        userId,
+        subject,
+        message,
+        category,
+        status: 'open'
+      }
     });
+
+    sendResponse(res, 201, ticket, 'Support ticket created successfully');
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 

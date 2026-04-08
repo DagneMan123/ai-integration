@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, MessageSquare, AlertCircle, CheckCircle2, Clock, ChevronRight } from 'lucide-react';
+import api from '../utils/api';
 
 interface SupportTicketsProps {
   isOpen: boolean;
@@ -17,66 +18,41 @@ interface Ticket {
   assignee?: string;
 }
 
-const MOCK_TICKETS: Ticket[] = [
-  {
-    id: 'TKT-001',
-    title: 'Login page not loading',
-    description: 'Users unable to access login page on mobile devices',
-    status: 'open',
-    priority: 'high',
-    createdAt: '2 hours ago',
-    updatedAt: '1 hour ago',
-    assignee: 'John Support'
-  },
-  {
-    id: 'TKT-002',
-    title: 'Payment processing error',
-    description: 'Payment gateway returning timeout errors',
-    status: 'in-progress',
-    priority: 'critical',
-    createdAt: '4 hours ago',
-    updatedAt: '30 minutes ago',
-    assignee: 'Sarah Tech'
-  },
-  {
-    id: 'TKT-003',
-    title: 'Profile picture upload issue',
-    description: 'Unable to upload profile pictures larger than 2MB',
-    status: 'resolved',
-    priority: 'medium',
-    createdAt: '1 day ago',
-    updatedAt: '2 hours ago',
-    assignee: 'Mike Dev'
-  },
-  {
-    id: 'TKT-004',
-    title: 'Email notifications not sending',
-    description: 'Users not receiving email notifications for new messages',
-    status: 'open',
-    priority: 'high',
-    createdAt: '6 hours ago',
-    updatedAt: '5 hours ago'
-  },
-  {
-    id: 'TKT-005',
-    title: 'Dashboard performance slow',
-    description: 'Admin dashboard taking 10+ seconds to load',
-    status: 'in-progress',
-    priority: 'medium',
-    createdAt: '8 hours ago',
-    updatedAt: '2 hours ago',
-    assignee: 'Emma Performance'
-  }
-];
-
 const SupportTickets: React.FC<SupportTicketsProps> = ({ isOpen, onClose }) => {
-  const [tickets] = useState<Ticket[]>(MOCK_TICKETS);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      // Simulate loading with mock data
-      setLoading(false);
+      const fetchTickets = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const response = await api.get('/support-tickets');
+          const data = response.data?.data || [];
+          
+          const formattedTickets = data.map((ticket: any) => ({
+            id: ticket.id,
+            title: ticket.subject,
+            description: ticket.message,
+            status: ticket.status || 'open',
+            priority: ticket.priority || 'medium',
+            createdAt: new Date(ticket.createdAt).toLocaleString(),
+            updatedAt: new Date(ticket.updatedAt).toLocaleString(),
+            assignee: ticket.assignee?.name
+          }));
+          
+          setTickets(formattedTickets);
+        } catch (err: any) {
+          console.error('Error fetching tickets:', err);
+          setError('Failed to load support tickets');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchTickets();
     }
   }, [isOpen]);
 
@@ -146,6 +122,12 @@ const SupportTickets: React.FC<SupportTicketsProps> = ({ isOpen, onClose }) => {
 
         {/* Content */}
         <div className="p-6 space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Summary Stats */}
           <div className="grid grid-cols-2 gap-3 mb-6">
             <div className="bg-red-50 rounded-lg p-3 text-center">

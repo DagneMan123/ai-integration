@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Activity, Clock, AlertCircle } from 'lucide-react';
+import api from '../utils/api';
 
 interface AdminSessionMonitoringProps {
   isOpen: boolean;
@@ -16,62 +17,40 @@ interface SessionInfo {
   sessionDuration: string;
 }
 
-const MOCK_SESSIONS: SessionInfo[] = [
-  {
-    userId: 'USR-001',
-    userName: 'John Candidate',
-    loginTime: '09:30 AM',
-    lastActivity: '2 minutes ago',
-    status: 'active',
-    currentPage: '/interviews',
-    sessionDuration: '2h 15m'
-  },
-  {
-    userId: 'USR-002',
-    userName: 'Sarah Employer',
-    loginTime: '08:45 AM',
-    lastActivity: '5 minutes ago',
-    status: 'active',
-    currentPage: '/jobs',
-    sessionDuration: '3h 30m'
-  },
-  {
-    userId: 'USR-003',
-    userName: 'Mike Admin',
-    loginTime: '07:00 AM',
-    lastActivity: '15 minutes ago',
-    status: 'idle',
-    currentPage: '/dashboard',
-    sessionDuration: '5h 45m'
-  },
-  {
-    userId: 'USR-004',
-    userName: 'Emma Support',
-    loginTime: '10:00 AM',
-    lastActivity: '1 minute ago',
-    status: 'active',
-    currentPage: '/support-tickets',
-    sessionDuration: '1h 20m'
-  },
-  {
-    userId: 'USR-005',
-    userName: 'David Candidate',
-    loginTime: 'Yesterday 3:00 PM',
-    lastActivity: '2 hours ago',
-    status: 'offline',
-    currentPage: '/profile',
-    sessionDuration: '45m'
-  }
-];
-
 const AdminSessionMonitoring: React.FC<AdminSessionMonitoringProps> = ({ isOpen, onClose }) => {
-  const [sessions] = useState<SessionInfo[]>(MOCK_SESSIONS);
+  const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      // Simulate loading with mock data
-      setLoading(false);
+      const fetchSessions = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const response = await api.get('/admin/sessions');
+          const data = response.data?.data || [];
+          
+          const formattedSessions = data.map((session: any) => ({
+            userId: session.userId,
+            userName: session.user?.firstName + ' ' + session.user?.lastName || 'Unknown',
+            loginTime: new Date(session.loginTime).toLocaleTimeString(),
+            lastActivity: new Date(session.lastActivity).toLocaleString(),
+            status: session.status || 'offline',
+            currentPage: session.currentPage || 'N/A',
+            sessionDuration: session.sessionDuration || '0m'
+          }));
+          
+          setSessions(formattedSessions);
+        } catch (err: any) {
+          console.error('Error fetching sessions:', err);
+          setError('Failed to load sessions');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchSessions();
     }
   }, [isOpen]);
 

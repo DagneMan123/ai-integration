@@ -1,7 +1,37 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middleware/errorHandler');
-const { uploadToCloud } = require('../utils/cloudStorage');
+const { logger } = require('../utils/logger');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Simple file upload helper
+const uploadFile = (file, folder = 'avatars') => {
+  try {
+    const folderPath = path.join(uploadsDir, folder);
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const ext = path.extname(file.originalname);
+    const filename = `${timestamp}-${randomStr}${ext}`;
+    const filepath = path.join(folderPath, filename);
+
+    fs.writeFileSync(filepath, file.buffer);
+    return `/uploads/${folder}/${filename}`;
+  } catch (error) {
+    logger.error('Error uploading file:', error);
+    throw error;
+  }
+};
 
 // Get user profile
 exports.getProfile = async (req, res, next) => {
@@ -138,7 +168,7 @@ exports.uploadAvatar = async (req, res, next) => {
       return next(new AppError('Please upload a file', 400));
     }
 
-    const avatarUrl = await uploadToCloud(req.file, 'avatars');
+    const avatarUrl = uploadFile(req.file, 'avatars');
 
     await prisma.user.update({
       where: { id: req.user.id },

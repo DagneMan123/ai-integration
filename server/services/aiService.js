@@ -1,5 +1,5 @@
 const OpenAI = require('openai');
-const { logAI } = require('../utils/logger');
+const { logAI, logger } = require('../utils/logger');
 
 /**
  * SimuAI AI Service Logic
@@ -16,7 +16,7 @@ if (process.env.GROQ_API_KEY) {
     baseURL: "https://api.groq.com/openai/v1"
   });
 } else {
-  console.error('CRITICAL ERROR: GROQ_API_KEY is missing in environment variables.');
+  logger.error('CRITICAL ERROR: GROQ_API_KEY is missing in environment variables.');
 }
 
 const AI_MODEL = "llama-3.1-8b-instant";// Updated from deprecated llama3-8b-8192

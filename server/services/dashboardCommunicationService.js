@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { logger } = require('../utils/logger');
 
 /**
  * Dashboard Communication Service
@@ -37,7 +38,7 @@ class DashboardCommunicationService {
     try {
       // Check if table exists
       if (!prisma.dashboardMessage) {
-        console.warn('DashboardMessage table not available - run migrations');
+        logger.warn('DashboardMessage table not available - run migrations');
         return null;
       }
 
@@ -50,7 +51,7 @@ class DashboardCommunicationService {
           timestamp: new Date()
         }
       }).catch(err => {
-        console.warn('Failed to save message to database:', err.message);
+        logger.warn('Failed to save message to database:', err.message);
         return null;
       });
 
@@ -67,7 +68,7 @@ class DashboardCommunicationService {
                 timestamp: message?.timestamp || new Date()
               });
             } catch (error) {
-              console.error('Error in callback:', error);
+              logger.error('Error in callback:', error);
             }
           });
         }
@@ -75,7 +76,7 @@ class DashboardCommunicationService {
 
       return message;
     } catch (error) {
-      console.error('Error broadcasting message:', error);
+      logger.error('Error broadcasting message:', error);
       // Don't throw - allow app to continue
       return null;
     }
@@ -110,14 +111,14 @@ class DashboardCommunicationService {
               timestamp: message.timestamp
             });
           } catch (error) {
-            console.error('Error in callback:', error);
+            logger.error('Error in callback:', error);
           }
         });
       }
 
       return message;
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
       throw error;
     }
   }
@@ -129,7 +130,7 @@ class DashboardCommunicationService {
     try {
       // Check if table exists
       if (!prisma.dashboardMessage) {
-        console.warn('DashboardMessage table not available - run migrations');
+        logger.warn('DashboardMessage table not available - run migrations');
         return [];
       }
 
@@ -154,7 +155,7 @@ class DashboardCommunicationService {
         timestamp: msg.timestamp
       }));
     } catch (error) {
-      console.error('Error fetching message history:', error);
+      logger.error('Error fetching message history:', error);
       // Return empty array instead of throwing to prevent app crash
       return [];
     }
@@ -202,7 +203,7 @@ class DashboardCommunicationService {
 
       return data;
     } catch (error) {
-      console.error('Error notifying application update:', error);
+      logger.error('Error notifying application update:', error);
       throw error;
     }
   }
@@ -247,7 +248,7 @@ class DashboardCommunicationService {
 
       return data;
     } catch (error) {
-      console.error('Error notifying interview update:', error);
+      logger.error('Error notifying interview update:', error);
       throw error;
     }
   }
@@ -279,7 +280,7 @@ class DashboardCommunicationService {
 
       return broadcastData;
     } catch (error) {
-      console.error('Error notifying system update:', error);
+      logger.error('Error notifying system update:', error);
       throw error;
     }
   }
@@ -312,7 +313,7 @@ class DashboardCommunicationService {
 
       return stats;
     } catch (error) {
-      console.error('Error getting real-time stats:', error);
+      logger.error('Error getting real-time stats:', error);
       // Return default stats instead of throwing
       return {
         totalUsers: 0,
@@ -342,10 +343,10 @@ class DashboardCommunicationService {
         }
       });
 
-      console.log(`Cleaned up ${deleted.count} old messages`);
+      logger.info(`Cleaned up ${deleted.count} old messages`);
       return deleted;
     } catch (error) {
-      console.error('Error cleaning up old messages:', error);
+      logger.error('Error cleaning up old messages:', error);
       throw error;
     }
   }

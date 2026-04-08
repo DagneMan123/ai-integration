@@ -1,6 +1,36 @@
 const { prisma } = require('../config/database');
 const { AppError } = require('../middleware/errorHandler');
-const { uploadToCloud } = require('../utils/cloudStorage');
+const { logger } = require('../utils/logger');
+const fs = require('fs');
+const path = require('path');
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Simple file upload helper
+const uploadFile = (file, folder = 'logos') => {
+  try {
+    const folderPath = path.join(uploadsDir, folder);
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+    }
+
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const ext = path.extname(file.originalname);
+    const filename = `${timestamp}-${randomStr}${ext}`;
+    const filepath = path.join(folderPath, filename);
+
+    fs.writeFileSync(filepath, file.buffer);
+    return `/uploads/${folder}/${filename}`;
+  } catch (error) {
+    logger.error('Error uploading file:', error);
+    throw error;
+  }
+};
 
 // Get all companies (With search and pagination)
 exports.getAllCompanies = async (req, res, next) => {
@@ -193,7 +223,7 @@ exports.uploadLogo = async (req, res, next) => {
       return next(new AppError('Please create a company profile first', 400));
     }
 
-    const logoUrl = await uploadToCloud(req.file, 'logos');
+    const logoUrl = uploadFile(req.file, 'logos');
 
     const company = await prisma.company.update({
       where: { id: existingCompany.id },

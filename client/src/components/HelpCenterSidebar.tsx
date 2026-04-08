@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, HelpCircle, BookOpen, Zap, AlertCircle, ChevronRight, Mail, MessageSquare, Send, Loader } from 'lucide-react';
 import { useHelpCenter } from '../hooks/useHelpCenter';
-import { useDashboardSync } from '../hooks/useDashboardSync';
 
 interface HelpCenterSidebarProps {
   isOpen: boolean;
@@ -16,14 +15,6 @@ const HelpCenterSidebar: React.FC<HelpCenterSidebarProps> = ({ isOpen, onClose }
   const [ticketSuccess, setTicketSuccess] = useState(false);
 
   const { articles, loading, submitTicket } = useHelpCenter();
-  const { emitNotify } = useDashboardSync('candidate');
-
-  // Sync help center data across dashboards
-  useEffect(() => {
-    if (isOpen) {
-      emitNotify('Help center opened');
-    }
-  }, [isOpen, emitNotify]);
 
   const handleSubmitTicket = async () => {
     if (!ticketSubject.trim() || !ticketMessage.trim()) {
@@ -37,9 +28,6 @@ const HelpCenterSidebar: React.FC<HelpCenterSidebarProps> = ({ isOpen, onClose }
       setTicketSuccess(true);
       setTicketSubject('');
       setTicketMessage('');
-      
-      // Notify other dashboards
-      emitNotify('Support ticket submitted successfully');
 
       setTimeout(() => setTicketSuccess(false), 3000);
     } catch (error) {

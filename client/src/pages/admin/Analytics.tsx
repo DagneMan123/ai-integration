@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
   Users, 
@@ -10,6 +10,8 @@ import {
   Download,
   Calendar
 } from 'lucide-react';
+import api from '../../utils/api';
+import Loading from '../../components/Loading';
 
 interface AnalyticsData {
   totalCandidates: number;
@@ -24,32 +26,6 @@ interface AnalyticsData {
   sectorData: Array<{ name: string; value: number; color: string }>;
   events: Array<{ id: number; source: string; action: string; status: string; timestamp: string }>;
 }
-
-const MOCK_ANALYTICS: AnalyticsData = {
-  totalCandidates: 2847,
-  activeEmployers: 156,
-  aiInterviews: 1234,
-  platformRevenue: '$45,230',
-  candidatesTrend: '+12.5%',
-  employersTrend: '+8.3%',
-  interviewsTrend: '+24.1%',
-  revenueTrend: '+18.7%',
-  interviewData: [45, 52, 48, 65, 72, 68, 75, 82, 78, 85, 88, 92],
-  sectorData: [
-    { name: 'Technology', value: 35, color: 'bg-blue-500' },
-    { name: 'Finance', value: 25, color: 'bg-green-500' },
-    { name: 'Healthcare', value: 20, color: 'bg-red-500' },
-    { name: 'Retail', value: 12, color: 'bg-yellow-500' },
-    { name: 'Other', value: 8, color: 'bg-purple-500' }
-  ],
-  events: [
-    { id: 1, source: 'System', action: 'Database backup completed', status: 'Success', timestamp: '2 hours ago' },
-    { id: 2, source: 'User', action: 'New candidate registered', status: 'Success', timestamp: '1 hour ago' },
-    { id: 3, source: 'System', action: 'Payment processed', status: 'Success', timestamp: '30 minutes ago' },
-    { id: 4, source: 'Admin', action: 'Job posting approved', status: 'Success', timestamp: '15 minutes ago' },
-    { id: 5, source: 'System', action: 'Interview scheduled', status: 'Success', timestamp: 'Just now' }
-  ]
-};
 
 // Reusable KPI Card Component
 const KPICard = ({ title, value, trend, icon: Icon, trendType }: any) => (
@@ -71,7 +47,47 @@ const KPICard = ({ title, value, trend, icon: Icon, trendType }: any) => (
 );
 
 const AdminAnalytics: React.FC = () => {
-  const [data] = useState<AnalyticsData>(MOCK_ANALYTICS);
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get('/admin/analytics');
+        const analyticsData = response.data?.data || {};
+        
+        setData({
+          totalCandidates: analyticsData.candidateCount || 0,
+          activeEmployers: analyticsData.employerCount || 0,
+          aiInterviews: analyticsData.totalInterviews || 0,
+          platformRevenue: `$${analyticsData.totalRevenue || 0}`,
+          candidatesTrend: '+12.5%',
+          employersTrend: '+8.3%',
+          interviewsTrend: '+24.1%',
+          revenueTrend: '+18.7%',
+          interviewData: [45, 52, 48, 65, 72, 68, 75, 82, 78, 85, 88, 92],
+          sectorData: [
+            { name: 'Technology', value: 35, color: 'bg-blue-500' },
+            { name: 'Finance', value: 25, color: 'bg-green-500' },
+            { name: 'Healthcare', value: 20, color: 'bg-red-500' },
+            { name: 'Retail', value: 12, color: 'bg-yellow-500' },
+            { name: 'Other', value: 8, color: 'bg-purple-500' }
+          ],
+          events: []
+        });
+      } catch (err: any) {
+        console.error('Error fetching analytics:', err);
+        setError('Failed to load analytics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
   
   return (
     <div className="space-y-8 animate-in fade-in duration-700 font-sans">
@@ -94,7 +110,17 @@ const AdminAnalytics: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Grid */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
+          {error}
+        </div>
+      )}
+
+      {loading && <Loading />}
+
+      {!loading && !error && data && (
+        <>
+          {/* KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <KPICard 
               title="Total Candidates" 
@@ -206,27 +232,37 @@ const AdminAnalytics: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {data.events.map((event) => (
-                    <tr key={event.id} className="group hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs">
-                            {event.source.charAt(0)}
-                          </div>
-                          <span className="text-sm font-bold text-slate-700">{event.source}</span>
-                        </div>
+                  {data.events.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-500">
+                        No recent events
                       </td>
-                      <td className="py-4 text-sm text-slate-500 font-medium italic">{event.action}</td>
-                      <td className="py-4">
-                        <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-md">{event.status}</span>
-                      </td>
-                      <td className="py-4 text-xs font-bold text-slate-400">{event.timestamp}</td>
                     </tr>
-                  ))}
+                  ) : (
+                    data.events.map((event) => (
+                      <tr key={event.id} className="group hover:bg-slate-50/50 transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs">
+                              {event.source.charAt(0)}
+                            </div>
+                            <span className="text-sm font-bold text-slate-700">{event.source}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-sm text-slate-500 font-medium italic">{event.action}</td>
+                        <td className="py-4">
+                          <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-md">{event.status}</span>
+                        </td>
+                        <td className="py-4 text-xs font-bold text-slate-400">{event.timestamp}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
+        </>
+      )}
     </div>
   );
 };

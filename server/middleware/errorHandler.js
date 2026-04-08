@@ -16,21 +16,22 @@ const errorHandler = (err, req, res, next) => {
   // Log error
   logger.error(`${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
 
-  // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
-    const message = 'Resource not found';
-    error = new AppError(message, 404);
-  }
-
-  // Mongoose duplicate key
-  if (err.code === 11000) {
-    const message = 'Duplicate field value entered';
+  // Prisma unique constraint violation
+  if (err.code === 'P2002') {
+    const field = err.meta?.target?.[0] || 'field';
+    const message = `${field} already exists`;
     error = new AppError(message, 400);
   }
 
-  // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map(val => val.message).join(', ');
+  // Prisma record not found
+  if (err.code === 'P2025') {
+    const message = 'Record not found';
+    error = new AppError(message, 404);
+  }
+
+  // Prisma validation error
+  if (err.code === 'P2003') {
+    const message = 'Invalid reference or foreign key constraint';
     error = new AppError(message, 400);
   }
 
