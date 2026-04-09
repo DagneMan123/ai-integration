@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { logger } = require('../utils/logger');
 
 /**
  * Dashboard Controller - Handles all dashboard data fetching based on user role
@@ -83,7 +84,7 @@ const getCandidateDashboard = async (userId) => {
       }
     };
   } catch (error) {
-    console.error('Error in getCandidateDashboard:', error);
+    logger.error('Error in getCandidateDashboard:', error);
     throw error;
   }
 };
@@ -167,7 +168,7 @@ const getEmployerDashboard = async (userId) => {
       }
     };
   } catch (error) {
-    console.error('Error in getEmployerDashboard:', error);
+    logger.error('Error in getEmployerDashboard:', error);
     throw error;
   }
 };
@@ -254,7 +255,7 @@ const getAdminDashboard = async (userId) => {
       }
     };
   } catch (error) {
-    console.error('Error in getAdminDashboard:', error);
+    logger.error('Error in getAdminDashboard:', error);
     throw error;
   }
 };

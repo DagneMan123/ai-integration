@@ -139,6 +139,9 @@ export interface Interview extends BaseEntity {
   responses: InterviewResponse[];
   status: InterviewStatus;
   aiEvaluation?: AIEvaluation;
+  overallScore?: number;
+  evaluation?: any;
+  integrityScore?: number;
   startedAt?: string;
   completedAt?: string;
   timeLimit: number; // በደቂቃ

@@ -11,13 +11,11 @@ const { connectionCheck, lightConnectionCheck } = require('./middleware/connecti
 
 const app = express();
 
-// Database Connection with retry logic
 const startDB = async () => {
   try {
     await prisma.connectWithRetry(5);
     logger.info('✅ Database connection established successfully');
     
-    // Initialize database tables - pass the prisma instance
     await initDatabase(prisma);
     return true;
   } catch (error) {
@@ -28,13 +26,11 @@ const startDB = async () => {
   }
 };
 
-// Start database and then start server
 let dbReady = false;
 startDB().then(ready => {
   dbReady = ready;
 });
 
-// Security middleware
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:3000',
@@ -43,7 +39,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 500,
@@ -51,14 +46,11 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Body parser - UTF-8 (አማርኛ) እንዲደግፍ limit ተጨምሮለታል
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files (for images, logos, etc.)
 app.use(express.static('public'));
 
-// Apply connection check to critical API routes
 app.use('/api/auth', lightConnectionCheck);
 app.use('/api/users', lightConnectionCheck);
 app.use('/api/payments', connectionCheck);
@@ -87,14 +79,12 @@ app.use('/api/webhook', require('./routes/chapaWebhook'));
 app.use('/api/help-center', require('./routes/helpCenter'));
 app.use('/api', require('./routes/interviewPersona'));
 
-// Messages route - only enable if migration has been run
 try {
   if (prisma.message) {
     app.use('/api/messages', require('./routes/messages'));
     logger.info(' Message service enabled');
   } else {
     logger.warn('  Message service disabled - database migration not run yet');
-    // Provide a helpful endpoint
     app.use('/api/messages', (req, res) => {
       res.status(503).json({
         success: false,
@@ -112,7 +102,6 @@ try {
   });
 }
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -121,7 +110,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Error handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

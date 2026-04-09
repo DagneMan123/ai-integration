@@ -1,4 +1,5 @@
 import api from '../utils/api';
+import { logger } from '../utils/logger';
 
 /**
  * Centralized service for fetching dashboard data based on user role
@@ -12,7 +13,7 @@ export const dashboardDataService = {
       const response = await api.get('/dashboard/candidate');
       return response.data;
     } catch (error) {
-      console.error('Error fetching candidate dashboard:', error);
+      logger.error('Error fetching candidate dashboard:', error);
       throw error;
     }
   },
@@ -22,7 +23,7 @@ export const dashboardDataService = {
       const response = await api.get('/applications');
       return response.data;
     } catch (error) {
-      console.error('Error fetching applications:', error);
+      logger.error('Error fetching applications:', error);
       throw error;
     }
   },
@@ -32,7 +33,7 @@ export const dashboardDataService = {
       const response = await api.get('/interviews/candidate');
       return response.data;
     } catch (error) {
-      console.error('Error fetching interviews:', error);
+      logger.error('Error fetching interviews:', error);
       throw error;
     }
   },
@@ -42,7 +43,7 @@ export const dashboardDataService = {
       const response = await api.get('/users/profile');
       return response.data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      logger.error('Error fetching profile:', error);
       throw error;
     }
   },
@@ -53,7 +54,7 @@ export const dashboardDataService = {
       const response = await api.get('/dashboard/employer');
       return response.data;
     } catch (error) {
-      console.error('Error fetching employer dashboard:', error);
+      logger.error('Error fetching employer dashboard:', error);
       throw error;
     }
   },
@@ -63,7 +64,7 @@ export const dashboardDataService = {
       const response = await api.get('/jobs/employer');
       return response.data;
     } catch (error) {
-      console.error('Error fetching employer jobs:', error);
+      logger.error('Error fetching employer jobs:', error);
       throw error;
     }
   },
@@ -73,7 +74,7 @@ export const dashboardDataService = {
       const response = await api.get('/applications/employer');
       return response.data;
     } catch (error) {
-      console.error('Error fetching employer applications:', error);
+      logger.error('Error fetching employer applications:', error);
       throw error;
     }
   },
@@ -83,7 +84,7 @@ export const dashboardDataService = {
       const response = await api.get('/interviews/employer');
       return response.data;
     } catch (error) {
-      console.error('Error fetching employer interviews:', error);
+      logger.error('Error fetching employer interviews:', error);
       throw error;
     }
   },
@@ -93,7 +94,7 @@ export const dashboardDataService = {
       const response = await api.get('/analytics/employer');
       return response.data;
     } catch (error) {
-      console.error('Error fetching employer analytics:', error);
+      logger.error('Error fetching employer analytics:', error);
       throw error;
     }
   },
@@ -104,7 +105,7 @@ export const dashboardDataService = {
       const response = await api.get('/dashboard/admin');
       return response.data;
     } catch (error) {
-      console.error('Error fetching admin dashboard:', error);
+      logger.error('Error fetching admin dashboard:', error);
       throw error;
     }
   },
@@ -114,7 +115,7 @@ export const dashboardDataService = {
       const response = await api.get('/admin/users');
       return response.data;
     } catch (error) {
-      console.error('Error fetching admin users:', error);
+      logger.error('Error fetching admin users:', error);
       throw error;
     }
   },
@@ -124,7 +125,7 @@ export const dashboardDataService = {
       const response = await api.get('/admin/companies');
       return response.data;
     } catch (error) {
-      console.error('Error fetching admin companies:', error);
+      logger.error('Error fetching admin companies:', error);
       throw error;
     }
   },
@@ -134,7 +135,7 @@ export const dashboardDataService = {
       const response = await api.get('/admin/jobs');
       return response.data;
     } catch (error) {
-      console.error('Error fetching admin jobs:', error);
+      logger.error('Error fetching admin jobs:', error);
       throw error;
     }
   },
@@ -144,7 +145,7 @@ export const dashboardDataService = {
       const response = await api.get('/admin/analytics');
       return response.data;
     } catch (error) {
-      console.error('Error fetching admin analytics:', error);
+      logger.error('Error fetching admin analytics:', error);
       throw error;
     }
   },
@@ -154,13 +155,13 @@ export const dashboardDataService = {
       const response = await api.get('/admin/logs');
       return response.data;
     } catch (error) {
-      console.error('Error fetching admin logs:', error);
+      logger.error('Error fetching admin logs:', error);
       throw error;
     }
   },
 
   // CROSS-DASHBOARD COMMUNICATION
-  broadcastUpdate: async (dashboard: 'candidate' | 'employer' | 'admin', data: any) => {
+  broadcastUpdate: async (dashboard: 'candidate' | 'employer' | 'admin', data: Record<string, unknown>) => {
     try {
       const response = await api.post('/dashboard/broadcast', {
         dashboard,
@@ -169,7 +170,7 @@ export const dashboardDataService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error broadcasting update:', error);
+      logger.error('Error broadcasting update:', error);
       throw error;
     }
   },
@@ -183,7 +184,7 @@ export const dashboardDataService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error sending notification:', error);
+      logger.error('Error sending notification:', error);
       throw error;
     }
   }

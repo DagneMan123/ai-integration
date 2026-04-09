@@ -52,6 +52,7 @@ const AccountSettings = lazy(() => import('./pages/candidate/AccountSettings'));
 const GettingStarted = lazy(() => import('./pages/candidate/GettingStarted'));
 const InterviewTips = lazy(() => import('./pages/candidate/InterviewTips'));
 const Troubleshooting = lazy(() => import('./pages/candidate/Troubleshooting'));
+const InterviewStart = lazy(() => import('./pages/candidate/InterviewStart'));
 
 const EmployerDashboard = lazy(() => import('./pages/employer/Dashboard'));
 const EmployerProfile = lazy(() => import('./pages/employer/Profile'));
@@ -224,6 +225,16 @@ const App: React.FC = () => {
                 <PrivateRoute role="candidate">
                   <Suspense fallback={<Loading />}>
                     <InterviewSession />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/interview/start/:jobId/:applicationId" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <InterviewStart />
                   </Suspense>
                 </PrivateRoute>
               } 

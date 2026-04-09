@@ -1,7 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
-// Rate limiting configurations
 const createRateLimit = (windowMs, max, message) => {
   return rateLimit({
     windowMs,
@@ -21,42 +20,36 @@ const createRateLimit = (windowMs, max, message) => {
   });
 };
 
-// General API rate limit
 const generalLimiter = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
-  100, // limit each IP to 100 requests per windowMs
+  15 * 60 * 1000,
+  100,
   'Too many requests from this IP, please try again after 15 minutes'
 );
 
-// Strict rate limit for authentication endpoints
 const authLimiter = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
-  5, // limit each IP to 5 requests per windowMs
+  15 * 60 * 1000,
+  5,
   'Too many authentication attempts, please try again after 15 minutes'
 );
 
-// Payment endpoints rate limit
 const paymentLimiter = createRateLimit(
-  60 * 60 * 1000, // 1 hour
-  10, // limit each IP to 10 payment requests per hour
+  60 * 60 * 1000,
+  10,
   'Too many payment attempts, please try again after 1 hour'
 );
 
-// AI interview rate limit
 const aiLimiter = createRateLimit(
-  60 * 60 * 1000, // 1 hour
-  20, // limit each IP to 20 AI requests per hour
+  60 * 60 * 1000,
+  20,
   'Too many AI requests, please try again after 1 hour'
 );
 
-// File upload rate limit
 const uploadLimiter = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
-  10, // limit each IP to 10 uploads per 15 minutes
+  15 * 60 * 1000,
+  10,
   'Too many file uploads, please try again after 15 minutes'
 );
 
-// Security headers middleware
 const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
@@ -80,12 +73,10 @@ const securityHeaders = helmet({
   }
 });
 
-// Input sanitization middleware
 const sanitizeInput = (req, res, next) => {
   const sanitize = (obj) => {
     for (let key in obj) {
       if (typeof obj[key] === 'string') {
-        // Remove potential XSS patterns
         obj[key] = obj[key]
           .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
           .replace(/javascript:/gi, '')
@@ -103,7 +94,6 @@ const sanitizeInput = (req, res, next) => {
   next();
 };
 
-// CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [

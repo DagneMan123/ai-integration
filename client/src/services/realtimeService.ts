@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { logger } from '../utils/logger';
 
 class RealtimeService {
   private socket: Socket | null = null;
@@ -15,11 +16,11 @@ class RealtimeService {
     });
 
     this.socket.on('connect', () => {
-      console.log('✓ Real-time connection established');
+      logger.info('Real-time connection established');
     });
 
     this.socket.on('disconnect', () => {
-      console.log('✗ Real-time connection lost');
+      logger.info('Real-time connection lost');
     });
 
     // Listen for all events

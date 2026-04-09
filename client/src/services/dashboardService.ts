@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { DashboardData } from '../types';
+import { logger } from '../utils/logger';
 
 export type DashboardRole = 'admin' | 'employer' | 'candidate';
 
@@ -8,14 +9,14 @@ export interface DashboardEvent {
   type: 'data-update' | 'status-change' | 'action-required' | 'notification' | 'sync-request';
   source: DashboardRole;
   target?: DashboardRole | 'all';
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: number;
   priority: 'low' | 'normal' | 'high' | 'critical';
   originTabId: string;
 }
 
 class DashboardCommunicationService extends EventEmitter {
-  private dashboardStates: Map<string, any> = new Map();
+  private dashboardStates: Map<string, Record<string, unknown>> = new Map();
   private eventHistory: DashboardEvent[] = [];
   private readonly maxHistorySize = 50;
   private channel: BroadcastChannel;
@@ -54,7 +55,7 @@ class DashboardCommunicationService extends EventEmitter {
     try {
       const saved = localStorage.getItem('simuai_dashboard_states');
       if (saved) this.dashboardStates = new Map(JSON.parse(saved));
-    } catch (e) { console.error("Storage load failed", e); }
+    } catch (e) { logger.error("Storage load failed", e); }
   }
 
   private saveToStorage() {
@@ -85,7 +86,7 @@ class DashboardCommunicationService extends EventEmitter {
     this.channel.postMessage(fullEvent);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`%c[Sync] ${fullEvent.source} -> ${fullEvent.type}`, 'color: #2563eb; font-weight: bold', fullEvent.payload);
+      logger.debug(`[Sync] ${fullEvent.source} -> ${fullEvent.type}`, fullEvent.payload);
     }
   }
 
@@ -94,12 +95,12 @@ class DashboardCommunicationService extends EventEmitter {
       type: 'data-update',
       source: role,
       target: 'all',
-      payload: data,
+      payload: data as unknown as Record<string, unknown>,
       priority: 'normal'
     });
   }
 
-  notifyStatusChange(source: DashboardRole, status: string, details: any = {}) {
+  notifyStatusChange(source: DashboardRole, status: string, details: Record<string, unknown> = {}) {
     this.broadcastEvent({
       type: 'status-change',
       source,
@@ -109,7 +110,7 @@ class DashboardCommunicationService extends EventEmitter {
     });
   }
 
-  requestAction(source: DashboardRole, target: DashboardRole, action: string, data: any = {}) {
+  requestAction(source: DashboardRole, target: DashboardRole, action: string, data: Record<string, unknown> = {}) {
     this.broadcastEvent({
       type: 'action-required',
       source,
@@ -143,7 +144,7 @@ class DashboardCommunicationService extends EventEmitter {
     return this.dashboardStates.get(role);
   }
 
-  getAllDashboardStates(): Map<string, any> {
+  getAllDashboardStates(): Map<string, Record<string, unknown>> {
     return new Map(this.dashboardStates);
   }
 

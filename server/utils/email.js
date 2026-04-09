@@ -1,7 +1,6 @@
 const nodemailer = require('nodemailer');
 const { logger } = require('./logger');
 
-// Create transporter
 const createTransport = () => {
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
@@ -14,10 +13,8 @@ const createTransport = () => {
   });
 };
 
-// Send verification email
 const sendVerificationEmail = async (email, firstName, verificationToken) => {
   try {
-    // Check if email is configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS ||
         process.env.EMAIL_USER === 'your_email@gmail.com' || 
         process.env.EMAIL_PASS === 'your_app_password') {
@@ -58,17 +55,14 @@ const sendVerificationEmail = async (email, firstName, verificationToken) => {
     logger.info('Verification email sent', { email });
   } catch (error) {
     logger.error('Failed to send verification email', { email, error: error.message });
-    // Don't throw in development - just log
     if (process.env.NODE_ENV === 'production') {
       throw error;
     }
   }
 };
 
-// Send password reset email
 const sendPasswordResetEmail = async (email, firstName, resetToken) => {
   try {
-    // Check if email is configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS ||
         process.env.EMAIL_USER === 'your_email@gmail.com' || 
         process.env.EMAIL_PASS === 'your_app_password') {
@@ -110,17 +104,14 @@ const sendPasswordResetEmail = async (email, firstName, resetToken) => {
     logger.info('Password reset email sent', { email });
   } catch (error) {
     logger.error('Failed to send password reset email', { email, error: error.message });
-    // Don't throw in development - just log
     if (process.env.NODE_ENV === 'production') {
       throw error;
     }
   }
 };
 
-// Send interview completion notification
 const sendInterviewCompletionEmail = async (email, firstName, interviewResult) => {
   try {
-    // Check if email is configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS ||
         process.env.EMAIL_USER === 'your_email@gmail.com' || 
         process.env.EMAIL_PASS === 'your_app_password') {
@@ -165,17 +156,14 @@ const sendInterviewCompletionEmail = async (email, firstName, interviewResult) =
     logger.info('Interview completion email sent', { email });
   } catch (error) {
     logger.error('Failed to send interview completion email', { email, error: error.message });
-    // Don't throw in development - just log
     if (process.env.NODE_ENV === 'production') {
       throw error;
     }
   }
 };
 
-// Send payment confirmation email
 const sendPaymentConfirmationEmail = async (email, firstName, paymentDetails) => {
   try {
-    // Check if email is configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS ||
         process.env.EMAIL_USER === 'your_email@gmail.com' || 
         process.env.EMAIL_PASS === 'your_app_password') {
@@ -221,23 +209,19 @@ const sendPaymentConfirmationEmail = async (email, firstName, paymentDetails) =>
     logger.info('Payment confirmation email sent', { email });
   } catch (error) {
     logger.error('Failed to send payment confirmation email', { email, error: error.message });
-    // Don't throw in development - just log
     if (process.env.NODE_ENV === 'production') {
       throw error;
     }
   }
 };
 
-// Generic send email function
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    // Check if email is configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       logger.warn('Email not configured, skipping email send', { to, subject });
       return;
     }
 
-    // Check if using placeholder credentials
     if (process.env.EMAIL_USER === 'your_email@gmail.com' || 
         process.env.EMAIL_PASS === 'your_app_password') {
       logger.warn('Email credentials are placeholders, skipping email send', { to, subject });
@@ -256,7 +240,6 @@ const sendEmail = async ({ to, subject, html }) => {
     logger.info('Email sent successfully', { to, subject });
   } catch (error) {
     logger.error('Failed to send email', { to, subject, error: error.message });
-    // Don't throw error in development mode - just log it
     if (process.env.NODE_ENV === 'production') {
       throw error;
     }

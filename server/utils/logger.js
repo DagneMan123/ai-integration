@@ -2,7 +2,6 @@ const winston = require('winston');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Configure Winston logger
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
@@ -17,7 +16,6 @@ const logger = winston.createLogger({
   ]
 });
 
-// Add console transport in development
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
@@ -27,10 +25,8 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-// Log activity to database using Prisma
 const logActivity = async (userId, action, resourceType, resourceId, details = {}, ipAddress = null, userAgent = null, severity = 'info') => {
   try {
-    // Convert userId to integer if it's a string
     const userIdInt = userId ? parseInt(userId, 10) : null;
     
     await prisma.activityLog.create({
@@ -48,27 +44,22 @@ const logActivity = async (userId, action, resourceType, resourceId, details = {
   }
 };
 
-// Log payment events
 const logPayment = (level, message, meta = {}) => {
   logger.log(level, `[PAYMENT] ${message}`, meta);
 };
 
-// Log AI events
 const logAI = (level, message, meta = {}) => {
   logger.log(level, `[AI] ${message}`, meta);
 };
 
-// Log authentication events
 const logAuth = (level, message, meta = {}) => {
   logger.log(level, `[AUTH] ${message}`, meta);
 };
 
-// Log security events
 const logSecurity = (level, message, meta = {}) => {
   logger.log(level, `[SECURITY] ${message}`, meta);
 };
 
-// Error logging middleware
 const errorLogger = (err, req, res, next) => {
   logger.error('API Error:', {
     error: err.message,
@@ -80,7 +71,6 @@ const errorLogger = (err, req, res, next) => {
     userId: req.user?.id
   });
 
-  // Log to activity log if user is authenticated
   if (req.user) {
     logActivity(
       req.user.id,
@@ -101,7 +91,6 @@ const errorLogger = (err, req, res, next) => {
   next(err);
 };
 
-// Request logging middleware
 const requestLogger = (req, res, next) => {
   const start = Date.now();
   

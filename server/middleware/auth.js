@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
 const { logActivity } = require('../utils/logger');
 
+const { logger } = require('../utils/logger');
+
 const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -19,7 +21,6 @@ const authenticateToken = async (req, res, next) => {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        // Allow payment verification with expired token (grace period)
         if (req.path.includes('/payments/verify') || req.path.includes('/payments/webhook')) {
           try {
             decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
@@ -41,14 +42,13 @@ const authenticateToken = async (req, res, next) => {
     }
     
     try {
-      // Prisma query (findByPk በ findUnique ተተክቷል)
       const user = await prisma.user.findUnique({
-        where: { id: decoded.id || decoded.userId }, // JWT payloadህ ላይ ባለው ስም መሰረት
+        where: { id: decoded.id || decoded.userId },
         select: {
           id: true,
           email: true,
           role: true,
-          isActive: true, // ወደ camelCase ተቀይሯል
+          isActive: true,
           isLocked: true
         }
       });
@@ -60,7 +60,6 @@ const authenticateToken = async (req, res, next) => {
         });
       }
 
-      // is_active የነበረው በ Prisma isActive ተብሏል
       if (user.isActive === false) {
         return res.status(401).json({
           success: false,
@@ -68,7 +67,6 @@ const authenticateToken = async (req, res, next) => {
         });
       }
 
-      // isLocked() ፈንክሽን የነበረው አሁን ቀጥታ ዳታቤዝ ውስጥ ያለ boolean ነው
       if (user.isLocked) {
         return res.status(423).json({
           success: false,
@@ -79,9 +77,8 @@ const authenticateToken = async (req, res, next) => {
       req.user = user;
       next();
     } catch (dbError) {
-      // Handle database connection errors gracefully
       if (dbError.message && dbError.message.includes('Can\'t reach database server')) {
-        console.error('Database connection error:', dbError.message);
+        logger.error('Database connection error:', dbError.message);
         return res.status(503).json({
           success: false,
           message: 'Database service temporarily unavailable. Please try again in a moment.',
@@ -171,7 +168,7 @@ const optionalAuth = async (req, res, next) => {
       } catch (error) {
         // Silently fail for optional auth - don't block the request
         if (error.message && error.message.includes('Can\'t reach database server')) {
-          console.warn('Database unavailable in optionalAuth');
+          logger.warn('Database unavailable in optionalAuth');
         }
       }
     }

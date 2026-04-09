@@ -1,8 +1,3 @@
-/**
- * Custom Error Handler
- * Provides consistent error handling across the application
- */
-
 class AppError extends Error {
   constructor(message, statusCode = 500, errors = null) {
     super(message);
@@ -13,9 +8,6 @@ class AppError extends Error {
   }
 }
 
-/**
- * Validation Error
- */
 class ValidationError extends AppError {
   constructor(message = 'Validation failed', errors = null) {
     super(message, 400, errors);
@@ -23,9 +15,6 @@ class ValidationError extends AppError {
   }
 }
 
-/**
- * Authentication Error
- */
 class AuthenticationError extends AppError {
   constructor(message = 'Authentication failed') {
     super(message, 401);
@@ -33,9 +22,6 @@ class AuthenticationError extends AppError {
   }
 }
 
-/**
- * Authorization Error
- */
 class AuthorizationError extends AppError {
   constructor(message = 'Access denied') {
     super(message, 403);
@@ -43,9 +29,6 @@ class AuthorizationError extends AppError {
   }
 }
 
-/**
- * Not Found Error
- */
 class NotFoundError extends AppError {
   constructor(message = 'Resource not found') {
     super(message, 404);
@@ -53,9 +36,6 @@ class NotFoundError extends AppError {
   }
 }
 
-/**
- * Conflict Error
- */
 class ConflictError extends AppError {
   constructor(message = 'Resource already exists') {
     super(message, 409);
@@ -63,9 +43,6 @@ class ConflictError extends AppError {
   }
 }
 
-/**
- * Rate Limit Error
- */
 class RateLimitError extends AppError {
   constructor(message = 'Too many requests') {
     super(message, 429);
@@ -73,9 +50,6 @@ class RateLimitError extends AppError {
   }
 }
 
-/**
- * Server Error
- */
 class ServerError extends AppError {
   constructor(message = 'Internal server error') {
     super(message, 500);

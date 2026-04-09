@@ -6,6 +6,7 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
+import { logger } from '../utils/logger';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -28,7 +29,7 @@ class ApiService {
   private isRefreshing = false;
   private failedQueue: Array<{
     resolve: (token: string) => void;
-    reject: (error: any) => void;
+    reject: (error: Error) => void;
   }> = [];
 
   constructor() {
@@ -99,7 +100,7 @@ class ApiService {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return this.api(originalRequest);
           } catch (refreshError) {
-            this.processQueue(refreshError, null);
+            this.processQueue(refreshError instanceof Error ? refreshError : new Error(String(refreshError)), null);
             useAuthStore.getState().logout();
             window.location.href = '/login?expired=true';
             return Promise.reject(refreshError);
@@ -115,7 +116,7 @@ class ApiService {
     );
   }
 
-  private processQueue(error: any, token: string | null) {
+  private processQueue(error: Error | null, token: string | null) {
     this.failedQueue.forEach((prom) => {
       if (error) prom.reject(error);
       else prom.resolve(token!);
@@ -155,7 +156,7 @@ class ApiService {
 
     // Log error in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('API Error:', {
+      logger.error('API Error:', {
         status,
         message,
         data: error.response?.data,
@@ -170,19 +171,19 @@ class ApiService {
   }
 
   // POST request
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(url: string, data?: Record<string, unknown>, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.post<ApiSuccessResponse<T>>(url, data, config);
     return response.data.data;
   }
 
   // PUT request
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T>(url: string, data?: Record<string, unknown>, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.put<ApiSuccessResponse<T>>(url, data, config);
     return response.data.data;
   }
 
   // PATCH request
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T>(url: string, data?: Record<string, unknown>, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.patch<ApiSuccessResponse<T>>(url, data, config);
     return response.data.data;
   }

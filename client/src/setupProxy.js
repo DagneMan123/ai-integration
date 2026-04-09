@@ -1,7 +1,6 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
-  // Proxy API requests to backend
   app.use(
     '/api',
     createProxyMiddleware({
@@ -11,7 +10,6 @@ module.exports = function(app) {
         '^/api': '/api'
       },
       onError: (err, req, res) => {
-        // Silently handle errors instead of crashing
         res.status(503).json({
           success: false,
           error: 'Backend service unavailable'
@@ -20,7 +18,6 @@ module.exports = function(app) {
     })
   );
 
-  // Don't proxy favicon requests
   app.use((req, res, next) => {
     if (req.path === '/favicon.ico') {
       res.status(204).end();

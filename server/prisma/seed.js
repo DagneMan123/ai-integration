@@ -1,10 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { logger } = require('../utils/logger');
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Starting database seeding...');
+  logger.info('Starting database seeding...');
 
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 12);
@@ -22,7 +23,7 @@ async function main() {
     },
   });
 
-  console.log('Admin user created:', admin.email);
+  logger.info('Admin user created:', admin.email);
 
   // Create sample employer
   const employerPassword = await bcrypt.hash('employer123', 12);
@@ -41,7 +42,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Employer user created:', employer.email);
+  logger.info('Employer user created:', employer.email);
 
   // Create sample candidate
   const candidatePassword = await bcrypt.hash('candidate123', 12);
@@ -60,10 +61,10 @@ async function main() {
     },
   });
 
-  console.log('✅ Candidate user created:', candidate.email);
+  logger.info('Candidate user created:', candidate.email);
 
   // Create candidate profile
-  const candidateProfile = await prisma.candidateProfile.upsert({
+  await prisma.candidateProfile.upsert({
     where: { userId: candidate.id },
     update: {},
     create: {
@@ -91,7 +92,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Candidate profile created');
+  logger.info('Candidate profile created');
 
   // Create sample company
   const company = await prisma.company.upsert({
@@ -109,7 +110,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Company created:', company.name);
+  logger.info('Company created:', company.name);
 
   // Create sample jobs
   const jobs = [
@@ -161,11 +162,11 @@ async function main() {
     const job = await prisma.job.create({
       data: jobData,
     });
-    console.log('✅ Job created:', job.title);
+    logger.info('Job created:', job.title);
   }
 
   // Create sample application
-  const application = await prisma.application.create({
+  await prisma.application.create({
     data: {
       jobId: 1,
       candidateId: candidate.id,
@@ -174,10 +175,10 @@ async function main() {
     },
   });
 
-  console.log('✅ Application created');
+  logger.info('Application created');
 
   // Create sample interview
-  const interview = await prisma.interview.create({
+  await prisma.interview.create({
     data: {
       jobId: 1,
       candidateId: candidate.id,
@@ -201,7 +202,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Interview created');
+  logger.info('Interview created');
 
   // Create activity logs
   await prisma.activityLog.createMany({
@@ -227,7 +228,7 @@ async function main() {
     ],
   });
 
-  console.log(' Activity logs created');
+  logger.info('Activity logs created');
 
   // Create credit bundles
   const bundles = [
@@ -257,11 +258,11 @@ async function main() {
       update: {},
       create: bundleData
     });
-    console.log(`✅ Credit bundle created: ${bundle.name} (${bundle.creditAmount} credits for ${bundle.priceETB} ETB)`);
+    logger.info(`Credit bundle created: ${bundle.name} (${bundle.creditAmount} credits for ${bundle.priceETB} ETB)`);
   }
 
   // Initialize wallet for candidate with 5 credits for testing
-  const candidateWallet = await prisma.wallet.upsert({
+  await prisma.wallet.upsert({
     where: { userId: candidate.id },
     update: {},
     create: {
@@ -271,18 +272,18 @@ async function main() {
     }
   });
 
-  console.log('✅ Candidate wallet initialized with 5 credits');
+  logger.info('Candidate wallet initialized with 5 credits');
 
-  console.log('🎉 Database seeding completed successfully!');
-  console.log('\n📋 Sample Accounts Created:');
-  console.log('👤 Admin: admin@simuai.com / admin123');
-  console.log('🏢 Employer: employer@techcorp.com / employer123');
-  console.log('👨‍💻 Candidate: candidate@example.com / candidate123');
+  logger.info('Database seeding completed successfully!');
+  logger.info('Sample Accounts Created:');
+  logger.info('Admin: admin@simuai.com / admin123');
+  logger.info('Employer: employer@techcorp.com / employer123');
+  logger.info('Candidate: candidate@example.com / candidate123');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e);
+    logger.error('Error during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

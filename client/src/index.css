@@ -4,7 +4,6 @@
 
 @layer base {
   :root {
-    /* ብራንድ ቀለሞችን እዚህ መግለጽ ለጥገና ይመቻል */
     --brand-primary: #2563eb;
     --brand-secondary: #4f46e5;
   }
@@ -14,19 +13,16 @@
   }
 
   body {
-    /* Inter font መጠቀም ይመከራል */
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     @apply bg-[#fcfcfd] text-slate-900 antialiased;
   }
 
-  /* ፕሮፌሽናል የሆኑ የFocus states ለሁሉም Inputs */
   input:focus, textarea:focus, select:focus {
     @apply outline-none ring-4 ring-blue-50 border-blue-500 transition-all duration-200;
   }
 }
 
 @layer components {
-  /* 1. የተሻሻለ Custom Scrollbar (ይበልጥ ቀጭን እና ዘመናዊ) */
   ::-webkit-scrollbar {
     @apply w-1.5 h-1.5;
   }
@@ -43,12 +39,10 @@
     @apply bg-slate-400;
   }
 
-  /* 2. Professional Glassmorphism Utility */
   .glass-effect {
     @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl shadow-blue-900/5;
   }
 
-  /* 3. Skeleton Loading Shimmer (ዳታ እስኪመጣ የሚታይ አኒሜሽን) */
   .skeleton {
     @apply relative overflow-hidden bg-slate-200;
   }
@@ -60,25 +54,20 @@
     animation: shimmer 1.5s infinite;
   }
 
-  /* 4. የተሻሻለ Loading Spinner */
   .spinner-pro {
     @apply w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin;
   }
 }
 
 @layer utilities {
-  /* ጽሁፍን በሁለቱም በኩል እኩል የሚያደርግ */
   .text-balance {
     text-wrap: balance;
   }
   
-  /* ለትላልቅ ርዕሶች የሚሆን ጥልቅ ጥላ */
   .shadow-soft {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.03), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
   }
 }
-
-/* --- Professional Keyframes --- */
 
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
@@ -96,12 +85,10 @@
   }
 }
 
-/* ለስላሳ የገጽ መግቢያ አኒሜሽን */
 .animate-page-entry {
   animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* --- Hover Effects --- */
 .hover-lift {
   @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg;
 }

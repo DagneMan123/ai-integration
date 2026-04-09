@@ -4,7 +4,6 @@ import { interviewAPI, jobAPI } from '../../utils/api';
 import { Interview, Job } from '../../types';
 import Loading from '../../components/Loading';
 import toast from 'react-hot-toast';
-import api from '../../utils/api';
 import { 
   CheckCircle2, 
   Clock, 
@@ -24,7 +23,6 @@ const CandidateInterviews: React.FC = () => {
   const [jobsMap, setJobsMap] = useState<Record<string, Job>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkingPayment, setCheckingPayment] = useState<string | null>(null);
 
   const fetchInterviewsWithJobs = useCallback(async () => {
     try {
@@ -87,30 +85,8 @@ const CandidateInterviews: React.FC = () => {
     return jobsMap[jobId] || (typeof interview.job === 'object' ? interview.job : null);
   };
 
-  const handleStartInterview = async (interviewId: string, jobId: string, applicationId: string) => {
-    try {
-      setCheckingPayment(interviewId);
-      
-      // Interviews are now free for candidates - start directly
-      const startResponse = await api.post('/interviews/start', {
-        jobId: parseInt(jobId),
-        applicationId: parseInt(applicationId),
-        interviewMode: 'text',
-        strictnessLevel: 'moderate'
-      });
-      
-      const actualInterviewId = startResponse.data?.data?.interviewId;
-      if (actualInterviewId) {
-        navigate(`/candidate/interview/${actualInterviewId}`);
-      } else {
-        toast.error('Failed to start interview');
-      }
-    } catch (err: any) {
-      console.error('Interview start error:', err);
-      toast.error(err.response?.data?.message || 'Failed to start interview');
-    } finally {
-      setCheckingPayment(null);
-    }
+  const handleStartInterview = (jobId: string, applicationId: string) => {
+    navigate(`/candidate/interview/start/${jobId}/${applicationId}`);
   };
 
   if (loading) return <Loading />;
@@ -154,16 +130,16 @@ const CandidateInterviews: React.FC = () => {
 
                       <div>
                         <h3 className="text-xl md:text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {jobData ? jobData.title : 'AI Evaluation'}
+                          {jobData && typeof jobData.title === 'string' ? jobData.title : 'AI Evaluation'}
                         </h3>
                         
                         {jobData && (
                           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-3 text-sm font-semibold text-gray-500">
                             <span className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4" /> {jobData.company?.name || 'Partner'}
+                              <Building2 className="w-4 h-4" /> {typeof jobData.company === 'object' && jobData.company?.name ? jobData.company.name : 'Partner'}
                             </span>
                             <span className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4" /> {jobData.location || 'Addis Ababa'}
+                              <MapPin className="w-4 h-4" /> {typeof jobData.location === 'string' ? jobData.location : 'Addis Ababa'}
                             </span>
                           </div>
                         )}
@@ -181,7 +157,7 @@ const CandidateInterviews: React.FC = () => {
                             <p className="text-[10px] font-black text-gray-400 uppercase">Final Score</p>
                             <div className="flex items-center gap-1 text-emerald-600">
                               <Trophy className="w-4 h-4" />
-                              <span className="text-xl font-black">{interview.aiEvaluation?.overallScore || 0}%</span>
+                              <span className="text-xl font-black">{(interview.overallScore || interview.aiEvaluation?.overallScore || 0)}%</span>
                             </div>
                           </div>
                           <Link to={`/candidate/interview/${interviewId}/report`} className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-black transition-all shadow-lg">
@@ -190,22 +166,14 @@ const CandidateInterviews: React.FC = () => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleStartInterview(interviewId, String(interview.jobId || interview.job), String(interview.applicationId))}
-                          disabled={checkingPayment === interviewId}
+                          onClick={() => handleStartInterview(String(interview.jobId || (typeof interview.job === 'object' ? interview.job?.id : interview.job)), String(interview.applicationId))}
                           className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${
-                            checkingPayment === interviewId
-                            ? 'bg-gray-400 text-white cursor-not-allowed'
-                            : statusNormalized === 'IN_PROGRESS' 
+                            statusNormalized === 'IN_PROGRESS' 
                             ? 'bg-blue-600 text-white hover:bg-blue-700' 
                             : 'bg-emerald-600 text-white hover:bg-emerald-700'
                           }`}
                         >
-                          {checkingPayment === interviewId ? (
-                            <>
-                              <Clock className="w-5 h-5 animate-spin" />
-                              Checking...
-                            </>
-                          ) : statusNormalized === 'IN_PROGRESS' ? (
+                          {statusNormalized === 'IN_PROGRESS' ? (
                             <>
                               Continue Interview
                               <ChevronRight className="w-5 h-5" />

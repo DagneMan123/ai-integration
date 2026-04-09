@@ -12,7 +12,6 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// User validation rules
 const validateRegister = [
   body('email')
     .trim()
@@ -80,7 +79,6 @@ const validateLogin = [
   handleValidationErrors
 ];
 
-// Job validation rules
 const validateJob = [
   body('title')
     .trim()
@@ -131,7 +129,6 @@ const validateJob = [
   handleValidationErrors
 ];
 
-// Company validation rules
 const validateCompany = [
   body('company_name')
     .trim()
@@ -158,7 +155,6 @@ const validateCompany = [
   handleValidationErrors
 ];
 
-// Candidate profile validation rules
 const validateCandidateProfile = [
   body('title')
     .optional()
@@ -201,7 +197,6 @@ const validateCandidateProfile = [
   handleValidationErrors
 ];
 
-// Payment validation rules
 const validatePayment = [
   body('amount')
     .isFloat({ min: 1 })
@@ -220,7 +215,6 @@ const validatePayment = [
   handleValidationErrors
 ];
 
-// Parameter validation
 const validateUUID = (paramName) => [
   param(paramName)
     .isUUID()
@@ -228,7 +222,6 @@ const validateUUID = (paramName) => [
   handleValidationErrors
 ];
 
-// Query validation
 const validatePagination = [
   query('page')
     .optional()

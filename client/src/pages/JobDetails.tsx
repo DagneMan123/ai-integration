@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { jobAPI, applicationAPI, interviewAPI } from '../utils/api';
+import { jobAPI, applicationAPI } from '../utils/api';
 import { Job } from '../types';
 import { useAuthStore } from '../store/authStore';
 import Loading from '../components/Loading';
@@ -49,7 +49,6 @@ const JobDetails: React.FC = () => {
     
     setApplying(true);
     try {
-      // Step 1: Create application
       const appResponse = await applicationAPI.createApplication({ jobId: id! });
       const applicationId = appResponse.data?.data?.id;
       
@@ -57,38 +56,11 @@ const JobDetails: React.FC = () => {
         throw new Error('Failed to create application');
       }
 
-      console.log('Application created:', applicationId);
-      toast.success('Application submitted!');
-
-      // Step 2: Create interview automatically
-      try {
-        const interviewResponse = await interviewAPI.start({
-          jobId: parseInt(id!),
-          applicationId: applicationId,
-          interviewMode: 'text',
-          strictnessLevel: 'moderate'
-        });
-
-        console.log('Interview created:', interviewResponse.data);
-        
-        const interviewId = (interviewResponse.data?.data as any)?.interviewId || (interviewResponse.data?.data as any)?.id;
-        if (interviewId) {
-          toast.success('AI Interview started!');
-          // Redirect to interview session
-          navigate(`/candidate/interview/${interviewId}`);
-        } else {
-          // If interview creation fails, just go to applications
-          navigate('/candidate/applications');
-        }
-      } catch (interviewError: any) {
-        console.error('Interview creation error:', interviewError);
-        // Don't fail the whole flow if interview creation fails
-        toast.success('Application successful. Interview will be scheduled soon.');
-        navigate('/candidate/applications');
-      }
+      toast.success('Application submitted successfully!');
+      navigate('/candidate/applications');
     } catch (error: any) {
       console.error('Apply error:', error);
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Failed to apply');
+      toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to apply');
     } finally {
       setApplying(false);
     }

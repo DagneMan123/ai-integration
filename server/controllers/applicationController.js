@@ -22,25 +22,21 @@ exports.createApplication = async (req, res, next) => {
       return next(new AppError('Target job not found', 404));
     }
 
-    // Check if user already applied for this job
-    const existingApplication = await prisma.application.findUnique({
-      where: {
-        jobId_candidateId: {
-          jobId: jobIdInt,
-          candidateId: userId
-        }
-      }
-    });
-
-    if (existingApplication) {
-      return next(new AppError('You have already applied for this job', 400));
-    }
-
-    // Transaction: Both records must be created together or not at all
-    // Increased timeout to 30 seconds to handle slow database operations
     const result = await prisma.$transaction(
       async (tx) => {
-        // 1. Create the Application record
+        const existingApplication = await tx.application.findUnique({
+          where: {
+            jobId_candidateId: {
+              jobId: jobIdInt,
+              candidateId: userId
+            }
+          }
+        });
+
+        if (existingApplication) {
+          throw new AppError('You have already applied for this job', 400);
+        }
+
         const application = await tx.application.create({
           data: {
             jobId: jobIdInt,
@@ -51,35 +47,85 @@ exports.createApplication = async (req, res, next) => {
           }
         });
 
-        // 2. Create the Interview record (Status: IN_PROGRESS so it's ready to use)
         const interview = await tx.interview.create({
           data: {
             jobId: jobIdInt,
             candidateId: userId,
             applicationId: application.id,
-            status: 'IN_PROGRESS',
+            status: 'PENDING',
             interviewMode: 'text',
-            questions: null,
-            startedAt: new Date()
+            questions: null
           }
         });
 
         return { application, interview };
       },
       {
-        timeout: 30000 // 30 seconds timeout
+        timeout: 30000,
+        isolationLevel: 'Serializable'
       }
     );
 
-    logger.info(`Auto-Flow Success: App ${result.application.id} and Interview ${result.interview.id} created for User ${userId}`);
+    logger.info(`Application created: App ${result.application.id} for User ${userId} on Job ${jobIdInt}`);
 
     res.status(201).json({
       success: true,
-      message: 'Application submitted and interview scheduled.',
+      message: 'Application submitted successfully.',
       data: result.application
     });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return next(new AppError('You have already applied for this job', 400));
+    }
     logger.error('Error in createApplication:', error.message);
+    next(error);
+  }
+};
+
+/**
+ * POST /api/applications/deduplicate
+ * Admin endpoint to remove duplicate applications
+ */
+exports.deduplicateApplications = async (req, res, next) => {
+  try {
+    const duplicates = await prisma.$queryRaw`
+      SELECT jobId, candidateId, COUNT(*) as count
+      FROM applications
+      GROUP BY jobId, candidateId
+      HAVING COUNT(*) > 1
+    `;
+
+    let removedCount = 0;
+
+    for (const dup of duplicates) {
+      const apps = await prisma.application.findMany({
+        where: {
+          jobId: dup.jobId,
+          candidateId: dup.candidateId
+        },
+        orderBy: { appliedAt: 'desc' }
+      });
+
+      if (apps.length > 1) {
+        const toKeep = apps[0];
+        const toDelete = apps.slice(1);
+
+        for (const app of toDelete) {
+          await prisma.application.delete({ where: { id: app.id } });
+          removedCount++;
+        }
+      }
+    }
+
+    logger.info(`Deduplicated applications: removed ${removedCount} duplicates`);
+
+    res.json({
+      success: true,
+      message: `Removed ${removedCount} duplicate applications`,
+      data: { removedCount }
+    });
+  } catch (error) {
+    logger.error('Error in deduplicateApplications:', error.message);
     next(error);
   }
 };

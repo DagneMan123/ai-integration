@@ -1,14 +1,9 @@
 const { logger } = require('../utils/logger');
 
-/**
- * Initialize database tables if they don't exist
- * This runs on server startup to ensure all tables are created
- */
 async function initDatabase(prisma) {
   try {
     logger.info('🔄 Initializing database tables...');
 
-    // Create DashboardMessage table
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "dashboard_messages" (
         "id" SERIAL NOT NULL PRIMARY KEY,
@@ -21,7 +16,6 @@ async function initDatabase(prisma) {
       );
     `);
 
-    // Create ApplicationActivity table
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "application_activities" (
         "id" SERIAL NOT NULL PRIMARY KEY,
@@ -32,7 +26,6 @@ async function initDatabase(prisma) {
       );
     `);
 
-    // Create InterviewActivity table
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "interview_activities" (
         "id" SERIAL NOT NULL PRIMARY KEY,
@@ -43,7 +36,6 @@ async function initDatabase(prisma) {
       );
     `);
 
-    // Create SystemUpdate table
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "system_updates" (
         "id" SERIAL NOT NULL PRIMARY KEY,
@@ -54,7 +46,6 @@ async function initDatabase(prisma) {
       );
     `);
 
-    // Create DashboardNotification table
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "dashboard_notifications" (
         "id" SERIAL NOT NULL PRIMARY KEY,
@@ -68,7 +59,6 @@ async function initDatabase(prisma) {
       );
     `);
 
-    // Create indexes
     await prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS "dashboard_messages_fromDashboard_idx" 
       ON "dashboard_messages"("fromDashboard");
@@ -88,7 +78,6 @@ async function initDatabase(prisma) {
     return true;
   } catch (error) {
     logger.error('❌ Error initializing database tables:', error.message);
-    // Don't throw - allow server to continue
     return false;
   }
 }

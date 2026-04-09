@@ -123,12 +123,12 @@ const CandidateApplications: React.FC = () => {
 
                       <div>
                         <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {jobData ? jobData.title : 'Position Title'}
+                          {jobData && typeof jobData.title === 'string' ? jobData.title : 'Position Title'}
                         </h3>
                         <div className="flex flex-wrap items-center gap-y-1 gap-x-4 mt-1 text-sm font-medium text-gray-500">
                           <span className="flex items-center gap-1.5">
                             <Building2 className="w-4 h-4" />
-                            {jobData?.company?.name || 'Company Name'}
+                            {typeof jobData?.company === 'object' && jobData?.company?.name ? jobData.company.name : 'Company Name'}
                           </span>
                           <span className="flex items-center gap-1.5">
                             <Clock className="w-4 h-4" />

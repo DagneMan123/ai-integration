@@ -1,4 +1,5 @@
 import api from '../utils/api';
+import { logger } from '../utils/logger';
 
 /**
  * Frontend Dashboard Communication Service
@@ -12,7 +13,7 @@ export interface DashboardMessage {
   fromDashboard?: string;
   toDashboard?: string;
   eventType?: string;
-  data?: any;
+  data?: Record<string, unknown>;
   timestamp: Date;
   type: 'alert' | 'notification' | 'data-update' | 'request';
   title: string;
@@ -48,11 +49,11 @@ export interface DashboardNotification {
 }
 
 // Event listeners for real-time updates
-const listeners: Map<string, Set<(data: any) => void>> = new Map();
+const listeners: Map<string, Set<(data: Record<string, unknown>) => void>> = new Map();
 
 export const dashboardCommunicationService = {
   // Subscribe to events
-  subscribe: (eventType: string, callback: (data: any) => void) => {
+  subscribe: (eventType: string, callback: (data: Record<string, unknown>) => void) => {
     if (!listeners.has(eventType)) {
       listeners.set(eventType, new Set());
     }
@@ -65,12 +66,12 @@ export const dashboardCommunicationService = {
   },
 
   // Emit event to all listeners
-  emit: (eventType: string, data: any) => {
+  emit: (eventType: string, data: Record<string, unknown>) => {
     listeners.get(eventType)?.forEach(callback => {
       try {
         callback(data);
       } catch (error) {
-        console.error('Error in event listener:', error);
+        logger.error('Error in event listener:', error);
       }
     });
   },
@@ -83,7 +84,7 @@ export const dashboardCommunicationService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      logger.error('Error fetching messages:', error);
       throw error;
     }
   },
@@ -94,7 +95,7 @@ export const dashboardCommunicationService = {
       const response = await api.get('/dashboard-communication/stats');
       return response.data;
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      logger.error('Error fetching stats:', error);
       throw error;
     }
   },
@@ -108,7 +109,7 @@ export const dashboardCommunicationService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error notifying application update:', error);
+      logger.error('Error notifying application update:', error);
       throw error;
     }
   },
@@ -122,13 +123,13 @@ export const dashboardCommunicationService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error notifying interview update:', error);
+      logger.error('Error notifying interview update:', error);
       throw error;
     }
   },
 
   // Admin: Notify system update
-  notifySystemUpdate: async (updateType: string, data: any) => {
+  notifySystemUpdate: async (updateType: string, data: Record<string, unknown>) => {
     try {
       const response = await api.post('/dashboard-communication/notify/system-update', {
         updateType,
@@ -136,7 +137,7 @@ export const dashboardCommunicationService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error notifying system update:', error);
+      logger.error('Error notifying system update:', error);
       throw error;
     }
   },
@@ -149,7 +150,7 @@ export const dashboardCommunicationService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      logger.error('Error fetching notifications:', error);
       throw error;
     }
   },
@@ -162,7 +163,7 @@ export const dashboardCommunicationService = {
       );
       return response.data;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      logger.error('Error marking notification as read:', error);
       throw error;
     }
   },
@@ -175,7 +176,7 @@ export const dashboardCommunicationService = {
       );
       return response.data;
     } catch (error) {
-      console.error('Error fetching application activity:', error);
+      logger.error('Error fetching application activity:', error);
       throw error;
     }
   },
@@ -188,7 +189,7 @@ export const dashboardCommunicationService = {
       );
       return response.data;
     } catch (error) {
-      console.error('Error fetching interview activity:', error);
+      logger.error('Error fetching interview activity:', error);
       throw error;
     }
   },
@@ -199,7 +200,7 @@ export const dashboardCommunicationService = {
       const response = await api.get('/dashboard-communication/system-updates');
       return response.data;
     } catch (error) {
-      console.error('Error fetching system updates:', error);
+      logger.error('Error fetching system updates:', error);
       throw error;
     }
   }

@@ -1,17 +1,50 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Clock, MapPin } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
 import Loading from '../../components/Loading';
+import { interviewAPI } from '../../utils/api';
 
 const Invitations: React.FC = () => {
-  const [invitations] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const [invitations, setInvitations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch interview invitations
-    setLoading(false);
+    fetchInvitations();
   }, []);
+
+  const fetchInvitations = async () => {
+    try {
+      const response = await interviewAPI.getCandidateInterviews();
+      if (response.data.success) {
+        setInvitations(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching invitations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccept = async (invitation: any) => {
+    try {
+      if (invitation.jobId && invitation.applicationId) {
+        navigate(`/candidate/interview/start/${invitation.jobId}/${invitation.applicationId}`);
+      }
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+    }
+  };
+
+  const handleDecline = async (interviewId: number) => {
+    try {
+      setInvitations(invitations.filter(inv => inv.id !== interviewId));
+    } catch (error) {
+      console.error('Error declining invitation:', error);
+    }
+  };
 
   if (loading) return <Loading />;
 
@@ -32,9 +65,18 @@ const Invitations: React.FC = () => {
                 <div key={invitation.id} className="p-6 bg-white border border-gray-100 rounded-2xl hover:shadow-lg transition-all">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900">{invitation.jobTitle}</h3>
-                      <p className="text-gray-600 font-medium">{invitation.company}</p>
-                      <p className="text-sm text-gray-500 mt-2">Invited on: {invitation.invitedDate}</p>
+                      <h3 className="text-lg font-bold text-gray-900">{typeof invitation.job === 'object' ? (invitation.job?.title || 'Interview') : 'Interview'}</h3>
+                      <p className="text-gray-600 font-medium">{typeof invitation.job === 'object' ? (invitation.job?.company?.name || 'Company') : 'Company'}</p>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {new Date(invitation.createdAt).toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {invitation.interviewMode || 'Online'}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-6 h-6 text-emerald-600" />
@@ -42,10 +84,14 @@ const Invitations: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-4 flex gap-3">
-                    <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-all">
+                    <button 
+                      onClick={() => handleAccept(invitation)}
+                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-all">
                       Accept & Schedule
                     </button>
-                    <button className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-50 transition-all">
+                    <button 
+                      onClick={() => handleDecline(invitation.id)}
+                      className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-50 transition-all">
                       Decline
                     </button>
                   </div>

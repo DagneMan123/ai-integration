@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Play, BookOpen, Zap } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
+import { interviewAPI } from '../../utils/api';
 
 const Practice: React.FC = () => {
   const [practiceMode] = useState<any[]>([
@@ -9,6 +10,17 @@ const Practice: React.FC = () => {
     { id: 2, title: 'Behavioral Interview', description: 'Improve your soft skills and communication', difficulty: 'Beginner' },
     { id: 3, title: 'Case Study Analysis', description: 'Solve real-world business problems', difficulty: 'Advanced' },
   ]);
+
+  const handleStartPractice = async (sessionId: number) => {
+    try {
+      const response = await interviewAPI.start({ sessionId });
+      if (response.data.success) {
+        window.location.href = `/candidate/practice/${response.data.data.id}`;
+      }
+    } catch (error) {
+      console.error('Error starting practice:', error);
+    }
+  };
 
   return (
     <DashboardLayout menuItems={candidateMenu} role="candidate">
@@ -39,7 +51,9 @@ const Practice: React.FC = () => {
                   }`}>
                     {session.difficulty}
                   </span>
-                  <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all">
+                  <button 
+                    onClick={() => handleStartPractice(session.id)}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all">
                     <Play className="w-4 h-4" />
                     Start
                   </button>

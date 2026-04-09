@@ -22,7 +22,7 @@ declare module 'canvas-confetti' {
   
   namespace confetti {
     function reset(): void;
-    function create(canvas: HTMLCanvasElement, options?: any): (opts?: ConfettiOptions) => Promise<null>;
+    function create(canvas: HTMLCanvasElement, options?: ConfettiOptions): (opts?: ConfettiOptions) => Promise<null>;
   }
 
   export default confetti;

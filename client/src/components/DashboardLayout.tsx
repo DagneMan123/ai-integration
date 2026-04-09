@@ -24,6 +24,7 @@ interface MenuItem {
   badge?: number;
   submenu?: MenuItem[];
   isSection?: boolean;
+  description?: string;
 }
 
 interface DashboardLayoutProps {
@@ -158,7 +159,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
                             <span className={`flex-shrink-0 ${active ? 'text-indigo-500' : 'text-slate-400 group-hover:text-slate-200'} transition-colors`}>
                               {subitem.icon}
                             </span>
-                            <span className="ml-2 truncate">{subitem.label}</span>
+                            <div className="ml-2 flex-1 min-w-0">
+                              <span className="block text-sm font-medium truncate">{subitem.label}</span>
+                              {subitem.description && sidebarOpen && (
+                                <span className="text-[11px] text-slate-500 truncate">{subitem.description}</span>
+                              )}
+                            </div>
                             {subitem.badge ? (
                               <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-[#0f172a] flex-shrink-0 ml-auto">
                                 {subitem.badge}
@@ -197,13 +203,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
                   {item.icon}
                 </span>
                 {sidebarOpen && (
-                  <div className="flex-1 flex items-center justify-between ml-3 min-w-0">
+                  <div className="flex-1 flex flex-col justify-between ml-3 min-w-0">
                     <span className="text-sm font-medium truncate">{item.label}</span>
-                    {item.badge ? (
-                      <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-[#0f172a] flex-shrink-0 ml-2">
-                        {item.badge}
-                      </span>
-                    ) : null}
+                    {item.description && (
+                      <span className="text-[11px] text-slate-500 truncate">{item.description}</span>
+                    )}
                   </div>
                 )}
                 {/* Tooltip for collapsed mode */}

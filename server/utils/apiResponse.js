@@ -1,8 +1,3 @@
-/**
- * Standardized API Response Handler
- * Ensures consistent response format across all endpoints
- */
-
 class ApiResponse {
   constructor(statusCode, data, message = 'Success') {
     this.statusCode = statusCode;
@@ -13,40 +8,16 @@ class ApiResponse {
   }
 }
 
-/**
- * Success Response
- * @param {number} statusCode - HTTP status code
- * @param {any} data - Response data
- * @param {string} message - Success message
- * @returns {ApiResponse}
- */
 const successResponse = (statusCode = 200, data = null, message = 'Success') => {
   return new ApiResponse(statusCode, data, message);
 };
 
-/**
- * Error Response
- * @param {number} statusCode - HTTP status code
- * @param {string} message - Error message
- * @param {any} errors - Additional error details
- * @returns {ApiResponse}
- */
 const errorResponse = (statusCode = 500, message = 'Internal Server Error', errors = null) => {
   const response = new ApiResponse(statusCode, null, message);
   if (errors) response.errors = errors;
   return response;
 };
 
-/**
- * Paginated Response
- * @param {number} statusCode - HTTP status code
- * @param {array} data - Response data
- * @param {number} total - Total items
- * @param {number} page - Current page
- * @param {number} limit - Items per page
- * @param {string} message - Success message
- * @returns {ApiResponse}
- */
 const paginatedResponse = (statusCode = 200, data = [], total = 0, page = 1, limit = 10, message = 'Success') => {
   const response = new ApiResponse(statusCode, data, message);
   response.pagination = {
@@ -59,9 +30,19 @@ const paginatedResponse = (statusCode = 200, data = [], total = 0, page = 1, lim
   return response;
 };
 
+const sendResponse = (res, statusCode = 200, data = null, message = 'Success') => {
+  res.status(statusCode).json(successResponse(statusCode, data, message));
+};
+
+const sendError = (res, statusCode = 500, message = 'Internal Server Error', errors = null) => {
+  res.status(statusCode).json(errorResponse(statusCode, message, errors));
+};
+
 module.exports = {
   ApiResponse,
   successResponse,
   errorResponse,
-  paginatedResponse
+  paginatedResponse,
+  sendResponse,
+  sendError
 };

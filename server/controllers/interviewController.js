@@ -30,24 +30,30 @@ const checkAndDeductCredit = async (userId) => {
 
 exports.startInterview = async (req, res, next) => {
   try {
-    const jobId = parseInt(req.body.jobId);
-    const applicationId = parseInt(req.body.applicationId);
+    const { jobId, applicationId, interviewMode = 'text', strictnessLevel = 'moderate' } = req.body;
+    
+    if (!jobId || !applicationId) {
+      return next(new AppError('jobId and applicationId are required', 400));
+    }
+    
+    const parsedJobId = parseInt(jobId);
+    const parsedApplicationId = parseInt(applicationId);
     const userId = req.user.id;
-    const { interviewMode = 'text', strictnessLevel = 'moderate' } = req.body;
     
-    // No payment required for candidates - interviews are free
+    if (isNaN(parsedJobId) || isNaN(parsedApplicationId)) {
+      return next(new AppError('jobId and applicationId must be valid numbers', 400));
+    }
     
-    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    const job = await prisma.job.findUnique({ where: { id: parsedJobId } });
     if (!job) return next(new AppError('Job not found', 404));
     
     const questions = await enhancedAI.generateInterviewQuestions(job, strictnessLevel, 10);
     
-    // Create interview without credit deduction
     const interview = await prisma.interview.create({
       data: {
-        jobId, 
+        jobId: parsedJobId, 
         candidateId: userId, 
-        applicationId, 
+        applicationId: parsedApplicationId, 
         status: 'IN_PROGRESS',
         startedAt: new Date(), 
         interviewMode, 
@@ -57,7 +63,7 @@ exports.startInterview = async (req, res, next) => {
       }
     });
     
-    antiCheatService.initializeSession(applicationId, userId);
+    antiCheatService.initializeSession(parsedApplicationId, userId);
     
     res.status(201).json({ 
       success: true, 

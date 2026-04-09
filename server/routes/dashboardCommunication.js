@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const dashboardCommService = require('../services/dashboardCommunicationService');
 const prisma = require('../lib/prisma');
+const { logger } = require('../utils/logger');
 
 /**
  * Dashboard Communication Routes
@@ -23,7 +24,7 @@ router.get('/messages/:dashboard', authenticateToken, async (req, res) => {
     const messages = await dashboardCommService.getMessageHistory(dashboard, parseInt(limit));
     res.json({ success: true, data: messages });
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    logger.error('Error fetching messages:', error);
     res.status(500).json({ message: 'Failed to fetch messages' });
   }
 });
@@ -34,7 +35,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
     const stats = await dashboardCommService.getRealTimeStats();
     res.json({ success: true, data: stats });
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    logger.error('Error fetching stats:', error);
     res.status(500).json({ message: 'Failed to fetch stats' });
   }
 });
@@ -56,7 +57,7 @@ router.post('/notify/application-update', authenticateToken, async (req, res) =>
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('Error notifying application update:', error);
+    logger.error('Error notifying application update:', error);
     res.status(500).json({ message: 'Failed to notify application update' });
   }
 });
@@ -78,7 +79,7 @@ router.post('/notify/interview-update', authenticateToken, async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('Error notifying interview update:', error);
+    logger.error('Error notifying interview update:', error);
     res.status(500).json({ message: 'Failed to notify interview update' });
   }
 });
@@ -100,7 +101,7 @@ router.post('/notify/system-update', authenticateToken, async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (error) {
-    console.error('Error notifying system update:', error);
+    logger.error('Error notifying system update:', error);
     res.status(500).json({ message: 'Failed to notify system update' });
   }
 });
@@ -124,13 +125,13 @@ router.get('/notifications/:dashboard', authenticateToken, async (req, res) => {
       orderBy: { createdAt: 'desc' },
       take: 20
     }).catch(err => {
-      console.warn('Failed to fetch notifications:', err.message);
+      logger.warn('Failed to fetch notifications:', err.message);
       return [];
     });
 
     res.json({ success: true, data: notifications || [] });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    logger.error('Error fetching notifications:', error);
     res.json({ success: true, data: [] });
   }
 });
@@ -147,7 +148,7 @@ router.put('/notifications/:notificationId/read', authenticateToken, async (req,
 
     res.json({ success: true, data: notification });
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    logger.error('Error marking notification as read:', error);
     res.status(500).json({ message: 'Failed to mark notification as read' });
   }
 });
@@ -166,7 +167,7 @@ router.get('/activity/application/:applicationId', authenticateToken, async (req
       where: { applicationId: parseInt(applicationId) },
       orderBy: { timestamp: 'desc' }
     }).catch(err => {
-      console.warn('Failed to fetch activity log:', err.message);
+      logger.warn('Failed to fetch activity log:', err.message);
       return [];
     });
 
@@ -177,7 +178,7 @@ router.get('/activity/application/:applicationId', authenticateToken, async (req
 
     res.json({ success: true, data: formattedActivities });
   } catch (error) {
-    console.error('Error fetching activity log:', error);
+    logger.error('Error fetching activity log:', error);
     res.json({ success: true, data: [] });
   }
 });
@@ -196,7 +197,7 @@ router.get('/activity/interview/:interviewId', authenticateToken, async (req, re
       where: { interviewId: parseInt(interviewId) },
       orderBy: { timestamp: 'desc' }
     }).catch(err => {
-      console.warn('Failed to fetch activity log:', err.message);
+      logger.warn('Failed to fetch activity log:', err.message);
       return [];
     });
 
@@ -207,7 +208,7 @@ router.get('/activity/interview/:interviewId', authenticateToken, async (req, re
 
     res.json({ success: true, data: formattedActivities });
   } catch (error) {
-    console.error('Error fetching activity log:', error);
+    logger.error('Error fetching activity log:', error);
     res.json({ success: true, data: [] });
   }
 });
@@ -228,7 +229,7 @@ router.get('/system-updates', authenticateToken, async (req, res) => {
       orderBy: { timestamp: 'desc' },
       take: 50
     }).catch(err => {
-      console.warn('Failed to fetch system updates:', err.message);
+      logger.warn('Failed to fetch system updates:', err.message);
       return [];
     });
 
@@ -239,7 +240,7 @@ router.get('/system-updates', authenticateToken, async (req, res) => {
 
     res.json({ success: true, data: formattedUpdates });
   } catch (error) {
-    console.error('Error fetching system updates:', error);
+    logger.error('Error fetching system updates:', error);
     res.json({ success: true, data: [] });
   }
 });
