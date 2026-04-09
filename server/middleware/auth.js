@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
-const { logActivity } = require('../utils/logger');
-
-const { logger } = require('../utils/logger');
+const { logActivity, logger } = require('../utils/logger');
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -150,38 +148,7 @@ const authorizeRoles = (...roles) => {
   };
 };
 
-const optionalAuth = async (req, res, next) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await prisma.user.findUnique({
-          where: { id: decoded.id || decoded.userId }
-        });
-
-        if (user && user.isActive && !user.isLocked) {
-          req.user = user;
-        }
-      } catch (error) {
-        // Silently fail for optional auth - don't block the request
-        if (error.message && error.message.includes('Can\'t reach database server')) {
-          logger.warn('Database unavailable in optionalAuth');
-        }
-      }
-    }
-
-    next();
-  } catch (error) {
-    // Always continue for optional auth
-    next();
-  }
-};
-
 module.exports = {
   authenticateToken,
-  authorizeRoles,
-  optionalAuth
+  authorizeRoles
 };

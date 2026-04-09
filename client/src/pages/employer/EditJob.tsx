@@ -41,7 +41,7 @@ const EditJob: React.FC = () => {
   // 1. ነባር መረጃዎችን ከ API ማምጣት
   const fetchJobDetails = useCallback(async () => {
     try {
-      const response = await jobAPI.getJob(id!); // jobAPI.getJob የሚል function እንዳለህ በማሰብ
+      const response = await jobAPI.getOne(id!); // jobAPI.getOne
       const job = response.data.data;
       
       // ፎርሙን በዳታ መሙላት
@@ -80,7 +80,7 @@ const EditJob: React.FC = () => {
         requiredSkills: data.requiredSkills.split(',').map(s => s.trim()).filter(s => s !== '')
       };
 
-      await jobAPI.updateJob(id!, updatedData); // jobAPI.updateJob የሚል function እንዳለህ በማሰብ
+      await jobAPI.update(id!, updatedData); // jobAPI.update
       toast.success('Job updated successfully!');
       navigate('/employer/jobs');
     } catch (error: any) {

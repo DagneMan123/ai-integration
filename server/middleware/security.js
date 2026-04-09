@@ -32,24 +32,6 @@ const authLimiter = createRateLimit(
   'Too many authentication attempts, please try again after 15 minutes'
 );
 
-const paymentLimiter = createRateLimit(
-  60 * 60 * 1000,
-  10,
-  'Too many payment attempts, please try again after 1 hour'
-);
-
-const aiLimiter = createRateLimit(
-  60 * 60 * 1000,
-  20,
-  'Too many AI requests, please try again after 1 hour'
-);
-
-const uploadLimiter = createRateLimit(
-  15 * 60 * 1000,
-  10,
-  'Too many file uploads, please try again after 15 minutes'
-);
-
 const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
@@ -116,9 +98,6 @@ const corsOptions = {
 module.exports = {
   generalLimiter,
   authLimiter,
-  paymentLimiter,
-  aiLimiter,
-  uploadLimiter,
   securityHeaders,
   sanitizeInput,
   corsOptions

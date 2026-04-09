@@ -43,7 +43,7 @@ const EmployerJobs: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to permanently remove this job?')) return;
     try {
-      await jobAPI.deleteJob(id);
+      await jobAPI.delete(id);
       toast.success('Job removed successfully');
       fetchJobs();
     } catch (error: any) {
@@ -54,7 +54,7 @@ const EmployerJobs: React.FC = () => {
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus.toLowerCase() === 'active' ? 'closed' : 'active';
     try {
-      await jobAPI.updateJobStatus(id, newStatus);
+      await jobAPI.updateStatus(id, newStatus);
       toast.success(`Job marked as ${newStatus}`);
       fetchJobs();
     } catch (error: any) {

@@ -31,7 +31,7 @@ const InterviewSession: React.FC = () => {
 
   const fetchInterview = useCallback(async () => {
     try {
-      const response = await interviewAPI.getInterviewReport(id!);
+      const response = await interviewAPI.getReport(id!);
       const data = response.data.data as any;
       
       setInterview(data);
@@ -39,7 +39,7 @@ const InterviewSession: React.FC = () => {
       // Fetch job details if jobId exists
       if (data?.jobId) {
         try {
-          const jobResponse = await jobAPI.getJob(data.jobId);
+          const jobResponse = await jobAPI.getOne(data.jobId);
           setJob(jobResponse.data?.data);
           console.log('Job fetched:', jobResponse.data?.data);
         } catch (jobError) {
@@ -87,7 +87,7 @@ const InterviewSession: React.FC = () => {
       });
 
       if (currentQuestionIndex + 1 >= interview.questions.length) {
-        await interviewAPI.completeInterview(id!);
+        await interviewAPI.complete(id!);
         toast.success('Interview completed!');
         navigate(`/candidate/interview/${id}/report`);
       } else {

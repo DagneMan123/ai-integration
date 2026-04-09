@@ -183,12 +183,16 @@ const StatCard = ({ title, value, icon, color }: any) => {
     purple: "bg-purple-50/50 border-purple-100",
     orange: "bg-orange-50/50 border-orange-100",
   };
+  
+  // Ensure value is a number or string, not an object
+  const displayValue = typeof value === 'object' ? 0 : (value || 0);
+  
   return (
     <div className={`p-6 rounded-[2rem] border shadow-sm bg-white ${bgColors[color]}`}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-widest text-gray-400">{title}</p>
-          <h3 className="text-4xl font-black text-gray-900 mt-2">{value}</h3>
+          <h3 className="text-4xl font-black text-gray-900 mt-2">{displayValue}</h3>
         </div>
         <div className="p-3 bg-white rounded-2xl shadow-sm italic">
           {icon}

@@ -148,16 +148,11 @@ export const authAPI = {
 
 export const jobAPI = {
   getAll: (params: object) => request.get<Job[]>('/jobs', { params }),
-  getAllJobs: (params: object) => request.get<Job[]>('/jobs', { params }), // Alias
   getOne: (id: string) => request.get<Job>(`/jobs/${id}`),
-  getJob: (id: string) => request.get<Job>(`/jobs/${id}`), // Alias
   create: (data: object) => request.post<Job>('/jobs', data),
-  createJob: (data: object) => request.post<Job>('/jobs', data), // Alias
   update: (id: string, data: object) => request.put<Job>(`/jobs/${id}`, data),
-  updateJob: (id: string, data: object) => request.put<Job>(`/jobs/${id}`, data), // Alias
-  updateJobStatus: (id: string, status: string) => request.patch(`/jobs/${id}/status`, { status }), // Alias
+  updateStatus: (id: string, status: string) => request.patch(`/jobs/${id}/status`, { status }),
   delete: (id: string) => request.delete(`/jobs/${id}`),
-  deleteJob: (id: string) => request.delete(`/jobs/${id}`), // Alias
   getEmployerJobs: () => request.get<Job[]>('/jobs/employer/my-jobs'),
 };
 
@@ -165,37 +160,28 @@ export const interviewAPI = {
   start: (data: object) => request.post<Interview>('/interviews/start', data),
   submitAnswer: (id: string, data: object) => request.post(`/interviews/${id}/submit-answer`, data),
   complete: (id: string) => request.post(`/interviews/${id}/complete`),
-  completeInterview: (id: string) => request.post(`/interviews/${id}/complete`), // Alias
   getReport: (id: string) => request.get(`/interviews/${id}/report`),
-  getInterviewReport: (id: string) => request.get(`/interviews/${id}/report`), // Alias
   getCandidateInterviews: () => request.get<Interview[]>('/interviews/candidate/my-interviews'),
-  logViolation: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data),
-  recordAntiCheatEvent: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data), // Alias
+  recordAntiCheatEvent: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data),
   recordIdentitySnapshot: (id: string, data: object) => request.post(`/interviews/${id}/identity-snapshot`, data),
 };
 
 export const paymentAPI = {
   initialize: (data: { amount: number; type: string; description?: string; creditAmount?: number; bundleId?: string }) => request.post<any>('/payments/initialize', data),
-  initializePayment: (data: { amount: number; type: string; description?: string; creditAmount?: number; bundleId?: string }) => request.post<any>('/payments/initialize', data), // Alias
   verify: (txRef: string) => request.get<any>(`/payments/verify/${txRef}`),
-  verifyPayment: (txRef: string) => request.get<any>(`/payments/verify/${txRef}`), // Alias
   getHistory: () => request.get<Payment[]>('/payments/history'),
-  getPaymentHistory: () => request.get<Payment[]>('/payments/history'), // Alias
-  getSubscription: () => request.get<any>('/subscription'), // Fixed: use /subscription endpoint
+  getSubscription: () => request.get<any>('/subscription'),
 };
 
 export const companyAPI = {
   getProfile: () => request.get<Company>('/companies/profile'),
-  getMyCompany: () => request.get<Company>('/companies/profile'), // Alias
   updateProfile: (data: object) => request.put<Company>('/companies/profile', data),
-  updateCompany: (data: object) => request.put<Company>('/companies/profile', data), // Alias
   uploadLogo: (file: FormData) => request.post<Company>('/companies/upload-logo', file),
   getAll: (params?: object) => request.get<Company[]>('/companies', { params: params || {} }),
 };
 
 export const adminAPI = {
   getUsers: (params?: object) => request.get<User[]>('/admin/users', { params: params || {} }),
-  getAllUsers: (params?: object) => request.get<User[]>('/admin/users', { params: params || {} }), // Alias
   verifyCompany: (id: string) => request.patch(`/admin/companies/${id}/verify`),
   approveJob: (id: string) => request.patch(`/admin/jobs/${id}/approve`),
   getLogs: () => request.get('/admin/logs'),
@@ -218,12 +204,11 @@ export const applicationAPI = {
   getAll: (params: object) => request.get<Application[]>('/applications', { params }),
   getOne: (id: string) => request.get<Application>(`/applications/${id}`),
   create: (data: object) => request.post<Application>('/applications', data),
-  createApplication: (data: object) => request.post<Application>('/applications', data), // Alias
   update: (id: string, data: object) => request.put<Application>(`/applications/${id}`, data),
-  updateStatus: (id: string, status: string) => request.patch(`/applications/${id}/status`, { status }), // Alias
+  updateStatus: (id: string, status: string) => request.patch(`/applications/${id}/status`, { status }),
   delete: (id: string) => request.delete(`/applications/${id}`),
   getCandidateApplications: () => request.get<Application[]>('/applications/candidate/my-applications'),
-  getJobApplications: (jobId: string) => request.get<Application[]>(`/applications/job/${jobId}`), // Alias
+  getJobApplications: (jobId: string) => request.get<Application[]>(`/applications/job/${jobId}`),
 };
 
 export const messageAPI = {

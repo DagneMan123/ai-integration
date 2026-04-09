@@ -74,7 +74,7 @@ const EmployerSubscription: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await paymentAPI.initializePayment({
+      const response = await paymentAPI.initialize({
         amount: plan.price,
         type: 'subscription',
         description: `${plan.name} - Monthly Subscription`

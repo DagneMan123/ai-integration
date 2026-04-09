@@ -1410,3 +1410,35 @@
 {"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-09T11:01:36.310Z"}
 {"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T11:01:41.692Z"}
 {"level":"info","message":"✅ Database reconnected successfully","service":"simuai-api","timestamp":"2026-04-09T11:01:41.693Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-09T16:06:16.322Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-09T16:06:16.375Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-09T16:06:16.415Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-09T16:06:16.420Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-09T16:06:16.421Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:06:18.941Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:06:18.944Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-09T16:06:18.948Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-09T16:06:19.743Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-09T16:35:24.109Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-09T16:35:24.230Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-09T16:35:24.231Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-09T16:35:24.231Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-09T16:35:24.232Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:35:26.803Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:35:26.804Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-09T16:35:26.805Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-09T16:35:27.440Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-09T16:42:34.816Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-09T16:42:38.850Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-09T16:42:38.871Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:42:59.442Z"}
+{"level":"info","message":" Database reconnected successfully","service":"simuai-api","timestamp":"2026-04-09T16:42:59.443Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-09T16:47:56.596Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-09T16:47:57.799Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-09T16:47:57.800Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-09T16:47:57.801Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-09T16:47:57.801Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:48:00.861Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:48:00.862Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-09T16:48:00.863Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-09T16:48:03.962Z"}

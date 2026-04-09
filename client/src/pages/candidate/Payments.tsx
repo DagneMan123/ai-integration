@@ -23,7 +23,7 @@ const CandidatePayments: React.FC = () => {
 
   const fetchPayments = async () => {
     try {
-      const response = await paymentAPI.getPaymentHistory();
+      const response = await paymentAPI.getHistory();
       setPayments(response.data.data || []);
     } catch (error) {
       console.error('Failed to fetch payments', error);

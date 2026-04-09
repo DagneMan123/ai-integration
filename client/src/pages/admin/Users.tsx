@@ -34,7 +34,7 @@ const AdminUsers: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await adminAPI.getAllUsers();
+      const response = await adminAPI.getUsers();
       setUsers(response.data.data || []);
     } catch (error) {
       console.error('Failed to fetch users', error);

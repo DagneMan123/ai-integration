@@ -780,3 +780,6 @@
 {"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-09T11:01:34.211Z"}
 {"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-09T11:01:36.309Z"}
 {"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-09T11:01:36.310Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-09T16:42:34.816Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-09T16:42:38.850Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-09T16:42:38.871Z"}

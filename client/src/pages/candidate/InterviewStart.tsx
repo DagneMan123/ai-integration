@@ -44,7 +44,7 @@ const InterviewStart: React.FC = () => {
   const fetchJobDetails = async () => {
     try {
       if (jobId) {
-        const response = await jobAPI.getJob(jobId);
+        const response = await jobAPI.getOne(jobId);
         setJob(response.data?.data);
       }
     } catch (error) {

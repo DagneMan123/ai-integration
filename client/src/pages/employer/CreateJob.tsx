@@ -49,7 +49,7 @@ const CreateJob: React.FC = () => {
         requiredSkills: data.requiredSkills.split(',').map(s => s.trim()).filter(s => s !== '')
       };
 
-      await jobAPI.createJob(jobData);
+      await jobAPI.create(jobData);
       toast.success('Job published successfully!');
       navigate('/employer/jobs');
     } catch (error: any) {

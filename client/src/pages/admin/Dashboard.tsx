@@ -173,18 +173,18 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-6">
-              {data?.recentActivity && data.recentActivity.length > 0 ? (
+              {data?.recentActivity && Array.isArray(data.recentActivity) && data.recentActivity.length > 0 ? (
                 data.recentActivity.map((activity: any, idx: number) => (
                   <div key={idx} className="flex items-start gap-4 group">
                     <div className="mt-1 w-2 h-2 rounded-full bg-slate-200 group-hover:bg-indigo-500 transition-colors shrink-0"></div>
                     <div className="flex-1 border-b border-slate-50 pb-4">
                       <div className="flex justify-between items-start">
-                        <p className="text-sm font-bold text-slate-800">{activity.action}</p>
+                        <p className="text-sm font-bold text-slate-800">{String(activity?.action || 'Activity')}</p>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                          {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {activity?.timestamp ? new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{activity.description}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{String(activity?.description || '')}</p>
                     </div>
                   </div>
                 ))

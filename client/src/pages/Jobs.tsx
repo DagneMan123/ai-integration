@@ -30,7 +30,7 @@ const Jobs: React.FC = () => {
       if (experienceLevel) params.experienceLevel = experienceLevel;
 
       console.log('Fetching jobs with params:', params);
-      const response = await jobAPI.getAllJobs(params);
+      const response = await jobAPI.getAll(params);
       
       console.log('API Response:', response);
       

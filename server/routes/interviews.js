@@ -8,7 +8,6 @@ router.use(authenticateToken);
 // Candidate routes - MUST come before /:id route
 router.post('/start', authorizeRoles('candidate'), interviewController.startInterview);
 router.get('/candidate/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews);
-router.get('/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews); // Alias
 router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);
 router.post('/:id/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.post('/:id/complete', authorizeRoles('candidate'), interviewController.completeInterview);
@@ -27,6 +26,6 @@ router.get('/job/:jobId/interviews', authorizeRoles('employer', 'admin'), interv
 router.post('/:id/evaluate', authorizeRoles('employer', 'admin'), interviewController.evaluateInterview);
 
 // Admin routes
-router.get('/all', authorizeRoles('admin'), interviewController.getAllInterviews);
+router.get('/admin/all', authorizeRoles('admin'), interviewController.getAllInterviews);
 
 module.exports = router;

@@ -45,7 +45,7 @@ const CandidateInterviews: React.FC = () => {
       await Promise.all(
         Array.from(jobIds).map(async (id) => {
           try {
-            const jobRes = await jobAPI.getJob(id);
+            const jobRes = await jobAPI.getOne(id);
             if (jobRes.data?.data) {
               jobsData[id] = jobRes.data.data;
             }

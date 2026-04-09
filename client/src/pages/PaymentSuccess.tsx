@@ -37,7 +37,7 @@ const PaymentSuccess: React.FC = () => {
       }
 
       try {
-        const response = await paymentAPI.verifyPayment(txRef);
+        const response = await paymentAPI.verify(txRef);
 
         if (response.data.success) {
           setTxDetails(response.data.data);

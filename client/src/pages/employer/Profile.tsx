@@ -32,7 +32,7 @@ const EmployerProfile: React.FC = () => {
 
   const fetchCompany = useCallback(async () => {
     try {
-      const response = await companyAPI.getMyCompany();
+      const response = await companyAPI.getProfile();
       const data = response.data.data;
       setCompany(data);
       setValue('name', data.name || '');
@@ -53,7 +53,7 @@ const EmployerProfile: React.FC = () => {
   const onSubmit = async (data: CompanyFormData) => {
     setSaving(true);
     try {
-      await companyAPI.updateCompany(data);
+      await companyAPI.updateProfile(data);
       toast.success('Company profile updated!');
     } catch (error: any) {
       toast.error('Update failed');

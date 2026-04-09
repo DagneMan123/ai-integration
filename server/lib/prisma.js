@@ -31,7 +31,7 @@ async function connectWithRetry(maxRetries = 5) {
   while (retries < maxRetries) {
     try {
       await prisma.$connect();
-      logger.info('✅ Database connection established successfully');
+      logger.info(' Database connection established successfully');
       return true;
     } catch (error) {
       lastError = error;
@@ -81,10 +81,10 @@ async function handleDisconnection() {
     setupEventListeners();
 
     await connectWithRetry(5);
-    logger.info('✅ Database reconnected successfully');
+    logger.info(' Database reconnected successfully');
     isReconnecting = false;
   } catch (error) {
-    logger.error('❌ Failed to reconnect to database:', error.message);
+    logger.error(' Failed to reconnect to database:', error.message);
     isReconnecting = false;
     setTimeout(handleDisconnection, 10000);
   }

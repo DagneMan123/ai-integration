@@ -29,7 +29,7 @@ const JobDetails: React.FC = () => {
 
   const fetchJob = useCallback(async () => {
     try {
-      const response = await jobAPI.getJob(id!);
+      const response = await jobAPI.getOne(id!);
       setJob(response.data?.data || null);
     } catch (error) {
       toast.error('Could not load job details');
@@ -49,7 +49,7 @@ const JobDetails: React.FC = () => {
     
     setApplying(true);
     try {
-      const appResponse = await applicationAPI.createApplication({ jobId: id! });
+      const appResponse = await applicationAPI.create({ jobId: id! });
       const applicationId = appResponse.data?.data?.id;
       
       if (!applicationId) {

@@ -7,10 +7,7 @@ router.use(authenticateToken);
 
 router.post('/', authorizeRoles('candidate'), applicationController.createApplication);
 router.get('/candidate/my-applications', authorizeRoles('candidate'), applicationController.getCandidateApplications);
-router.get('/my-applications', authorizeRoles('candidate'), applicationController.getCandidateApplications);
 router.delete('/:id', authorizeRoles('candidate'), applicationController.withdrawApplication);
-
-router.post('/deduplicate', authorizeRoles('admin'), applicationController.deduplicateApplications);
 
 router.get('/:id', applicationController.getApplication);
 

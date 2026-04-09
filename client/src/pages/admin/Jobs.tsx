@@ -23,20 +23,30 @@ const AdminJobs: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await api.get('/admin/jobs');
-        const data = response.data?.data || [];
         
-        const formattedJobs = data.map((job: any) => ({
-          id: job.id,
-          title: job.title,
-          company: job.company?.name || 'Unknown',
-          date: new Date(job.createdAt).toLocaleDateString(),
-          status: job.status
-        }));
+        // Safely extract data
+        let data: any[] = [];
+        if (response.data?.data) {
+          data = Array.isArray(response.data.data) ? response.data.data : [response.data.data];
+        } else if (Array.isArray(response.data)) {
+          data = response.data;
+        }
+        
+        const formattedJobs = data
+          .filter((job: any) => job && typeof job === 'object')
+          .map((job: any) => ({
+            id: job.id || job._id || Math.random(),
+            title: String(job.title || ''),
+            company: typeof job.company === 'object' ? String(job.company?.name || 'Unknown') : String(job.company || 'Unknown'),
+            date: job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'N/A',
+            status: String(job.status || 'DRAFT')
+          }));
         
         setJobs(formattedJobs);
       } catch (err: any) {
         console.error('Error fetching jobs:', err);
         setError('Failed to load jobs');
+        setJobs([]);
       } finally {
         setLoading(false);
       }

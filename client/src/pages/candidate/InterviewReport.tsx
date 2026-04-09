@@ -24,7 +24,7 @@ const InterviewReport: React.FC = () => {
 
   const fetchReport = useCallback(async () => {
     try {
-      const response = await interviewAPI.getInterviewReport(id!);
+      const response = await interviewAPI.getReport(id!);
       setReport(response.data.data);
     } catch (error) {
       console.error('Failed to fetch report', error);

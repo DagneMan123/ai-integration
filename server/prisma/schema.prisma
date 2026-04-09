@@ -44,6 +44,7 @@ model User {
   subscriptions    Subscription[]
   wallet           Wallet?
   practiceSessions PracticeSession[]
+  supportTickets   SupportTicket[]
 
   @@map("users")
 }
@@ -439,4 +440,48 @@ model DashboardNotification {
   createdAt     DateTime  @default(now())
   
   @@map("dashboard_notifications")
+}
+
+model HelpCenterCategory {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  articles HelpCenterArticle[]
+
+  @@map("help_center_categories")
+}
+
+model HelpCenterArticle {
+  id         Int       @id @default(autoincrement())
+  title      String
+  category   String
+  content    String
+  views      Int       @default(0)
+  helpful    Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([createdAt])
+  @@map("help_center_articles")
+}
+
+model SupportTicket {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  subject   String
+  message   String
+  category  String
+  status    String    @default("open") // open, in_progress, resolved, closed
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("support_tickets")
 }

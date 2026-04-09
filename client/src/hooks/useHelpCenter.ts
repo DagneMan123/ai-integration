@@ -29,10 +29,12 @@ export const useHelpCenter = () => {
       setLoading(true);
       setError(null);
       const response = await helpCenterAPI.getArticles(category, search);
-      setArticles(response.data || response || []);
+      const data = Array.isArray(response.data) ? response.data : (response.data?.data || response.data || []);
+      setArticles(Array.isArray(data) ? data : []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch articles');
       console.error('Error fetching articles:', err);
+      setArticles([]);
     } finally {
       setLoading(false);
     }
@@ -42,9 +44,11 @@ export const useHelpCenter = () => {
   const fetchCategories = useCallback(async () => {
     try {
       const response = await helpCenterAPI.getCategories();
-      setCategories(response.data || response || []);
+      const data = Array.isArray(response.data) ? response.data : (response.data?.data || response.data || []);
+      setCategories(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Error fetching categories:', err);
+      setCategories([]);
     }
   }, []);
 
