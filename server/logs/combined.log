@@ -1442,3 +1442,95 @@
 {"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T16:48:00.862Z"}
 {"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-09T16:48:00.863Z"}
 {"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-09T16:48:03.962Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-09T17:36:41.175Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-09T17:36:41.240Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-09T17:36:41.256Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-09T17:36:41.261Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-09T17:36:41.262Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T17:36:43.480Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-09T17:36:43.483Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-09T17:36:43.486Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-09T17:36:44.683Z"}
+{"level":"info","message":"New Job Created: asedrftgyhujik (ID: 18)","service":"simuai-api","timestamp":"2026-04-09T17:52:51.082Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T06:08:07.110Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T06:08:07.625Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T06:08:07.637Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T06:08:07.651Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T06:08:07.652Z"}
+{"level":"warn","message":"Database connection failed (attempt 4/5). Retrying in 8000ms...","service":"simuai-api","timestamp":"2026-04-10T06:08:42.901Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-10T06:08:42.905Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-10T06:08:42.906Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-10T06:08:43.037Z"}
+{"level":"error","message":"Failed to connect to database after 5 attempts:","service":"simuai-api","timestamp":"2026-04-10T06:08:54.070Z"}
+{"level":"error","message":"❌ Failed to connect to database after 5 attempts.","service":"simuai-api","timestamp":"2026-04-10T06:08:54.071Z"}
+{"level":"error","message":"Please ensure PostgreSQL is running: Start-Service -Name \"postgresql-x64-15\"","service":"simuai-api","timestamp":"2026-04-10T06:08:54.071Z"}
+{"level":"warn","message":"⚠️ Server starting with limited functionality.","service":"simuai-api","timestamp":"2026-04-10T06:08:54.072Z"}
+{"level":"warn","message":"Database connection failed (attempt 4/5). Retrying in 8000ms...","service":"simuai-api","timestamp":"2026-04-10T06:09:10.104Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-10T06:09:10.106Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-10T06:09:10.107Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-10T06:09:10.108Z"}
+{"level":"error","message":"Failed to connect to database after 5 attempts:","service":"simuai-api","timestamp":"2026-04-10T06:09:24.291Z"}
+{"level":"error","message":" Failed to reconnect to database:","service":"simuai-api","timestamp":"2026-04-10T06:09:24.292Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-10T06:09:34.294Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T06:09:38.583Z"}
+{"level":"info","message":" Database reconnected successfully","service":"simuai-api","timestamp":"2026-04-10T06:09:38.584Z"}
+{"level":"info","message":"Received SIGINT, disconnecting from database...","service":"simuai-api","timestamp":"2026-04-10T06:19:05.912Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T06:20:23.162Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T06:20:23.171Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T06:20:23.171Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T06:20:23.172Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T06:20:23.173Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T06:20:23.348Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T06:20:23.349Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T06:20:23.350Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T06:20:24.176Z"}
+{"level":"info","message":"New Job Created: lether (ID: 19)","service":"simuai-api","timestamp":"2026-04-10T06:23:31.787Z"}
+{"email":"mikd@gmail.com","level":"info","message":"User logged in successfully","service":"simuai-api","timestamp":"2026-04-10T06:24:10.695Z","userId":20}
+{"email":"lema@gmail.com","level":"info","message":"User logged in successfully","service":"simuai-api","timestamp":"2026-04-10T06:25:51.405Z","userId":14}
+{"level":"info","message":"Payment initialization: userId=14, amount=2999, creditAmount=undefined","service":"simuai-api","timestamp":"2026-04-10T06:27:27.247Z"}
+{"level":"info","message":"Payment initialized: txRef=tx_1775802447250_gucwof6u, userId=14, bundleId=null, amount=2999, credits=undefined","service":"simuai-api","timestamp":"2026-04-10T06:27:34.099Z"}
+{"level":"info","message":"Payment initialized: txRef=tx_1775802447250_gucwof6u","service":"simuai-api","timestamp":"2026-04-10T06:27:34.100Z"}
+{"level":"info","message":"Generating Chapa payment URL: txRef=tx_1775802447250_gucwof6u, amount=2999","service":"simuai-api","timestamp":"2026-04-10T06:27:34.101Z"}
+{"level":"info","message":"Chapa request payload: {\"amount\":2999,\"currency\":\"ETB\",\"email\":\"lema@gmail.com\",\"first_name\":\"User\",\"last_name\":\"SimuAI\",\"tx_ref\":\"tx_1775802447250_gucwof6u\",\"callback_url\":\"http://localhost:5000/api/payments/webhook\",\"return_url\":\"http://localhost:3000/payment/success?tx_ref=tx_1775802447250_gucwof6u\",\"customization\":{\"title\":\"SimuAI Credits\",\"description\":\"Purchase undefined credits\"}}","service":"simuai-api","timestamp":"2026-04-10T06:27:34.102Z"}
+{"level":"info","message":"Calling Chapa API at https://api.chapa.co/v1/transaction/initialize","service":"simuai-api","timestamp":"2026-04-10T06:27:34.103Z"}
+{"level":"info","message":"Chapa response status: 200","service":"simuai-api","timestamp":"2026-04-10T06:27:38.819Z"}
+{"level":"info","message":"Chapa response data: {\"message\":\"Hosted Link\",\"status\":\"success\",\"data\":{\"checkout_url\":\"https://checkout.chapa.co/checkout/payment/Nhr83FSqQ5KW7na10Xxd4JgIS5x6agiwvpGIrm7XjzVQd\"}}","service":"simuai-api","timestamp":"2026-04-10T06:27:38.820Z"}
+{"level":"info","message":"Chapa payment URL generated: https://checkout.chapa.co/checkout/payment/Nhr83FSqQ5KW7na10Xxd4JgIS5x6agiwvpGIrm7XjzVQd","service":"simuai-api","timestamp":"2026-04-10T06:27:38.820Z"}
+{"level":"info","message":"Chapa URL generated: https://checkout.chapa.co/checkout/payment/Nhr83FSqQ5KW7na10Xxd4JgIS5x6agiwvpGIrm7XjzVQd","service":"simuai-api","timestamp":"2026-04-10T06:27:38.821Z"}
+{"level":"info","message":"Received SIGINT, disconnecting from database...","service":"simuai-api","timestamp":"2026-04-10T06:54:14.473Z"}
+{"level":"info","message":"Received SIGINT, disconnecting from database...","service":"simuai-api","timestamp":"2026-04-10T06:54:15.671Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T07:00:59.914Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T07:00:59.923Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T07:00:59.924Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T07:00:59.925Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T07:00:59.926Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T07:01:03.341Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T07:01:03.342Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T07:01:03.343Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T07:01:04.470Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T08:17:48.769Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T08:17:48.987Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T08:17:48.990Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T08:17:48.992Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T08:17:48.999Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:17:52.059Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:17:52.060Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T08:17:52.061Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T08:17:54.995Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T08:17:55.003Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T08:17:55.003Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T08:17:55.004Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T08:17:55.005Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:17:55.431Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:17:55.432Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T08:17:55.433Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T08:17:55.824Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T08:18:08.403Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T08:18:08.451Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T08:18:08.452Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T08:18:08.453Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T08:18:08.454Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:18:08.868Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:18:08.869Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T08:18:08.870Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T08:18:09.305Z"}

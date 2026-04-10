@@ -14,6 +14,9 @@ interface SidebarContextType {
   // Help center
   helpCenterOpen: boolean;
   setHelpCenterOpen: (open: boolean) => void;
+  // Employer sidebar
+  employerSidebarOpen: boolean;
+  setEmployerSidebarOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -24,6 +27,7 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [supportTicketsOpen, setSupportTicketsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpCenterOpen, setHelpCenterOpen] = useState(false);
+  const [employerSidebarOpen, setEmployerSidebarOpen] = useState(false);
 
   return (
     <SidebarContext.Provider
@@ -38,6 +42,8 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
         setSettingsOpen,
         helpCenterOpen,
         setHelpCenterOpen,
+        employerSidebarOpen,
+        setEmployerSidebarOpen,
       }}
     >
       {children}
