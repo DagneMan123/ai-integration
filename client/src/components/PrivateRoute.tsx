@@ -29,10 +29,11 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, role }) => {
   }
 
   // Handle Role-based Authorization
-  if (role && user.role !== role) {
-    const fallbackPath = user.role === 'admin' 
+  if (role && user.role?.toLowerCase() !== role.toLowerCase()) {
+    const userRole = user.role?.toLowerCase() || 'candidate';
+    const fallbackPath = userRole === 'admin' 
       ? '/admin/dashboard' 
-      : user.role === 'employer' 
+      : userRole === 'employer' 
         ? '/employer/dashboard' 
         : '/candidate/dashboard';
 

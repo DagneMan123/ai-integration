@@ -72,7 +72,11 @@ const authenticateToken = async (req, res, next) => {
         });
       }
 
-      req.user = user;
+      // Ensure role is always uppercase for consistency
+      req.user = {
+        ...user,
+        role: String(user.role).toUpperCase()
+      };
       next();
     } catch (dbError) {
       if (dbError.message && dbError.message.includes('Can\'t reach database server')) {

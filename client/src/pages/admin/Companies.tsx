@@ -71,7 +71,9 @@ const AdminCompanies: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -240,6 +242,8 @@ const AdminCompanies: React.FC = () => {
           </div>
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 };

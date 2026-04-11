@@ -57,6 +57,7 @@ app.use('/api/payments', connectionCheck);
 app.use('/api/wallet', connectionCheck);
 app.use('/api/interviews', lightConnectionCheck);
 app.use('/api/applications', lightConnectionCheck);
+app.use('/api/admin', lightConnectionCheck);
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

@@ -46,6 +46,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
     setSupportTicketsOpen,
     setSettingsOpen,
     setHelpCenterOpen,
+    setAdminSidebarOpen,
+    setCandidateSidebarOpen,
+    setEmployerSidebarOpen,
   } = useSidebar();
   useSessionMonitoring();
 
@@ -266,6 +269,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
             {role === 'admin' && (
               <>
                 <button
+                  onClick={() => setAdminSidebarOpen(true)}
+                  className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors flex-shrink-0 hover:text-indigo-700"
+                  title="Admin Hub"
+                >
+                  <LayoutDashboard size={20} />
+                </button>
+                <button
                   onClick={() => setSessionMonitoringOpen(true)}
                   className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0 hover:text-blue-700"
                   title="Session Monitoring"
@@ -287,6 +297,28 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
                   <MessageSquare size={20} />
                 </button>
               </>
+            )}
+
+            {/* Employer Button - Only show for employer role */}
+            {role === 'employer' && (
+              <button
+                onClick={() => setEmployerSidebarOpen(true)}
+                className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0 hover:text-blue-700"
+                title="Employer Hub"
+              >
+                <LayoutDashboard size={20} />
+              </button>
+            )}
+
+            {/* Candidate Button - Only show for candidate role */}
+            {role === 'candidate' && (
+              <button
+                onClick={() => setCandidateSidebarOpen(true)}
+                className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors flex-shrink-0 hover:text-indigo-700"
+                title="Candidate Hub"
+              >
+                <LayoutDashboard size={20} />
+              </button>
             )}
 
             {/* Settings Button - For non-admin users */}

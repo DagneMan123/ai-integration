@@ -456,14 +456,16 @@ model HelpCenterCategory {
 model HelpCenterArticle {
   id         Int       @id @default(autoincrement())
   title      String
-  category   String
+  categoryId Int       @map("category_id")
   content    String
   views      Int       @default(0)
   helpful    Int       @default(0)
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  @@index([category])
+  category HelpCenterCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
   @@index([createdAt])
   @@map("help_center_articles")
 }

@@ -6,6 +6,9 @@ import AdminSessionMonitoring from './AdminSessionMonitoring';
 import AdminGlobalSettings from './AdminGlobalSettings';
 import SupportTickets from './SupportTickets';
 import HelpCenterSidebar from './HelpCenterSidebar';
+import AdminSidebar from './AdminSidebar';
+import CandidateSidebar from './CandidateSidebar';
+import EmployerSidebar from './EmployerSidebar';
 
 const GlobalSidebars: React.FC = () => {
   const { user } = useAuthStore();
@@ -20,6 +23,12 @@ const GlobalSidebars: React.FC = () => {
     setSettingsOpen,
     helpCenterOpen,
     setHelpCenterOpen,
+    adminSidebarOpen,
+    setAdminSidebarOpen,
+    candidateSidebarOpen,
+    setCandidateSidebarOpen,
+    employerSidebarOpen,
+    setEmployerSidebarOpen,
   } = useSidebar();
 
   return (
@@ -36,7 +45,18 @@ const GlobalSidebars: React.FC = () => {
           <AdminSessionMonitoring isOpen={sessionMonitoringOpen} onClose={() => setSessionMonitoringOpen(false)} />
           <AdminGlobalSettings isOpen={globalSettingsOpen} onClose={() => setGlobalSettingsOpen(false)} />
           <SupportTickets isOpen={supportTicketsOpen} onClose={() => setSupportTicketsOpen(false)} />
+          <AdminSidebar isOpen={adminSidebarOpen} onClose={() => setAdminSidebarOpen(false)} />
         </>
+      )}
+
+      {/* Employer Sidebar - Only for employer users */}
+      {user?.role === 'employer' && (
+        <EmployerSidebar isOpen={employerSidebarOpen} onClose={() => setEmployerSidebarOpen(false)} />
+      )}
+
+      {/* Candidate Sidebar - Only for candidate users */}
+      {user?.role === 'candidate' && (
+        <CandidateSidebar isOpen={candidateSidebarOpen} onClose={() => setCandidateSidebarOpen(false)} />
       )}
     </>
   );

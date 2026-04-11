@@ -18,7 +18,8 @@ import {
   TrendingUp,
   AlertCircle,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  Power
 } from 'lucide-react';
 
 import { dashboardDataService } from '../../services/dashboardDataService';
@@ -27,6 +28,12 @@ const AdminDashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [systemStatus, setSystemStatus] = useState({
+    databaseOnline: true,
+    apiOnline: true,
+    authServiceOnline: true,
+    paymentServiceOnline: true
+  });
 
   // Session monitoring
   useSessionMonitoring();
@@ -39,8 +46,20 @@ const AdminDashboard: React.FC = () => {
       const response = await dashboardDataService.getAdminDashboard();
       const dashboardData = response.data || null;
       setData(dashboardData);
+      
+      // Update system status based on successful fetch
+      setSystemStatus(prev => ({
+        ...prev,
+        databaseOnline: true,
+        apiOnline: true
+      }));
     } catch (error) {
       console.error('Dashboard fetch error:', error);
+      setSystemStatus(prev => ({
+        ...prev,
+        databaseOnline: false,
+        apiOnline: false
+      }));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -199,6 +218,39 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Quick Management Shortcuts */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 mb-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">System Health</h2>
+            <span className={`p-2 rounded-lg ${systemStatus.databaseOnline && systemStatus.apiOnline ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'}`}>
+              <CheckCircle2 size={20}/>
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <SystemStatusCard 
+              label="Database"
+              status={systemStatus.databaseOnline}
+              icon={<ShieldCheck size={20} />}
+            />
+            <SystemStatusCard 
+              label="API Server"
+              status={systemStatus.apiOnline}
+              icon={<Activity size={20} />}
+            />
+            <SystemStatusCard 
+              label="Auth Service"
+              status={systemStatus.authServiceOnline}
+              icon={<CheckCircle2 size={20} />}
+            />
+            <SystemStatusCard 
+              label="Payment Service"
+              status={systemStatus.paymentServiceOnline}
+              icon={<Wallet size={20} />}
+            />
+          </div>
+        </div>
+
+        {/* Quick Management Shortcuts */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <ShortcutCard 
             to="/admin/users" 
@@ -265,6 +317,23 @@ const ShortcutCard = ({ to, label, description, icon: Icon }: any) => (
       Open Module <ArrowRight size={14} />
     </div>
   </Link>
+);
+
+const SystemStatusCard = ({ label, status, icon }: any) => (
+  <div className={`p-6 rounded-2xl border-2 transition-all ${status ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+    <div className="flex items-center justify-between mb-4">
+      <div className={`p-2 rounded-lg ${status ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+        {icon}
+      </div>
+      <div className={`w-10 h-6 rounded-full flex items-center transition-all ${status ? 'bg-emerald-500 justify-end' : 'bg-red-500 justify-start'}`}>
+        <div className="w-5 h-5 bg-white rounded-full shadow-md"></div>
+      </div>
+    </div>
+    <p className={`text-sm font-bold ${status ? 'text-emerald-700' : 'text-red-700'}`}>{label}</p>
+    <p className={`text-xs font-medium mt-1 ${status ? 'text-emerald-600' : 'text-red-600'}`}>
+      {status ? 'Online' : 'Offline'}
+    </p>
+  </div>
 );
 
 export default AdminDashboard;

@@ -1534,3 +1534,428 @@
 {"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:18:08.869Z"}
 {"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T08:18:08.870Z"}
 {"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T08:18:09.305Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T08:26:50.119Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T08:26:50.127Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T08:26:50.127Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T08:26:50.128Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T08:26:50.129Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:26:50.338Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T08:26:50.339Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T08:26:50.341Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T08:26:50.365Z"}
+{"email":"admin@simuai.com","level":"info","message":"User logged in successfully","service":"simuai-api","timestamp":"2026-04-10T08:27:56.937Z","userId":1}
+{"level":"error","message":"Error in getAdminDashboard: Unauthorized","service":"simuai-api","stack":"Error: Unauthorized\n    at getAdminDashboard (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\dashboardController.js:184:47)\n    at async C:\\Users\\Hena\\Desktop\\ai integration\\server\\routes\\dashboard.js:33:16","timestamp":"2026-04-10T08:27:58.013Z"}
+{"level":"error","message":"Unauthorized - /api/dashboard/admin - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T08:27:58.018Z"}
+{"level":"error","message":"Error in getAdminDashboard: Unauthorized","service":"simuai-api","stack":"Error: Unauthorized\n    at getAdminDashboard (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\dashboardController.js:184:47)\n    at async C:\\Users\\Hena\\Desktop\\ai integration\\server\\routes\\dashboard.js:33:16","timestamp":"2026-04-10T08:27:58.035Z"}
+{"level":"error","message":"Unauthorized - /api/dashboard/admin - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T08:27:58.037Z"}
+{"level":"error","message":"Error in getAdminDashboard: Unauthorized","service":"simuai-api","stack":"Error: Unauthorized\n    at getAdminDashboard (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\dashboardController.js:184:47)\n    at async C:\\Users\\Hena\\Desktop\\ai integration\\server\\routes\\dashboard.js:33:16","timestamp":"2026-04-10T08:28:12.789Z"}
+{"level":"error","message":"Unauthorized - /api/dashboard/admin - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T08:28:12.791Z"}
+{"level":"error","message":"Error in getAdminDashboard: Unauthorized","service":"simuai-api","stack":"Error: Unauthorized\n    at getAdminDashboard (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\dashboardController.js:184:47)\n    at async C:\\Users\\Hena\\Desktop\\ai integration\\server\\routes\\dashboard.js:33:16","timestamp":"2026-04-10T09:01:59.348Z"}
+{"level":"error","message":"Unauthorized - /api/dashboard/admin - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T09:01:59.764Z"}
+{"level":"error","message":"Error in getAdminDashboard: Unauthorized","service":"simuai-api","stack":"Error: Unauthorized\n    at getAdminDashboard (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\dashboardController.js:184:47)\n    at async C:\\Users\\Hena\\Desktop\\ai integration\\server\\routes\\dashboard.js:33:16","timestamp":"2026-04-10T09:02:00.266Z"}
+{"level":"error","message":"Unauthorized - /api/dashboard/admin - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T09:02:00.267Z"}
+{"level":"error","message":"Error in getAdminDashboard: Unauthorized","service":"simuai-api","stack":"Error: Unauthorized\n    at getAdminDashboard (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\dashboardController.js:184:47)\n    at async C:\\Users\\Hena\\Desktop\\ai integration\\server\\routes\\dashboard.js:33:16","timestamp":"2026-04-10T09:03:01.011Z"}
+{"level":"error","message":"Unauthorized - /api/dashboard/admin - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T09:03:01.013Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:04:21.799Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:04:21.878Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:04:21.881Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:04:21.884Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:04:21.886Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:04:22.114Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:04:22.115Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:04:22.117Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:04:22.638Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:04:45.786Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:04:45.794Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:04:45.794Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:04:45.795Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:04:45.795Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:04:45.873Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:04:45.874Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:04:45.875Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:04:45.889Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:08:45.452Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:08:45.490Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:08:45.492Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:08:45.496Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:08:45.500Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:08:45.849Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:08:45.851Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:08:45.853Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:08:45.883Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:08:49.006Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:08:49.014Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:08:49.015Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:08:49.016Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:08:49.016Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:08:49.262Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:08:49.264Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:08:49.266Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:08:49.419Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:09:22.078Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:09:22.084Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:09:22.085Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:09:22.087Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:09:22.088Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:09:22.388Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:09:22.390Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:09:22.392Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:09:22.414Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:09:32.645Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:09:32.653Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:09:32.654Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:09:32.655Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:09:32.656Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:09:32.846Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:09:32.847Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:09:32.848Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:09:32.860Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:10:31.355Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:10:42.298Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:10:42.442Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:11:03.664Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:11:03.748Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Received SIGINT, disconnecting from database...","service":"simuai-api","timestamp":"2026-04-10T09:16:39.446Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:18:08.441Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:18:08.503Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:18:08.505Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:18:08.506Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:18:08.507Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:18:09.795Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:18:09.796Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:18:09.798Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:18:10.548Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:23:50.551Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:23:50.571Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:23:50.572Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:23:50.574Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:23:50.575Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:23:50.789Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:23:50.791Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:23:50.792Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:23:50.811Z"}
+{"level":"error","message":"Get support tickets error: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","stack":"TypeError: Cannot read properties of undefined (reading 'findMany')\n    at exports.getSupportTickets (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\adminController.js:634:28)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\middleware\\auth.js:151:5\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)","timestamp":"2026-04-10T09:25:51.767Z"}
+{"level":"error","message":"Cannot read properties of undefined (reading 'findMany') - /api/admin/support-tickets - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T09:25:51.794Z"}
+{"level":"error","message":"Get support tickets error: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","stack":"TypeError: Cannot read properties of undefined (reading 'findMany')\n    at exports.getSupportTickets (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\adminController.js:634:28)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\middleware\\auth.js:151:5\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)","timestamp":"2026-04-10T09:25:51.806Z"}
+{"level":"error","message":"Cannot read properties of undefined (reading 'findMany') - /api/admin/support-tickets - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T09:25:51.808Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:26:37.391Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:26:37.398Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:26:37.398Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:26:37.399Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:26:37.399Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:26:37.792Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:26:37.794Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:26:37.796Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:26:37.828Z"}
+{"level":"error","message":"Get support tickets error: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","stack":"TypeError: Cannot read properties of undefined (reading 'findMany')\n    at exports.getSupportTickets (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\adminController.js:634:28)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\middleware\\auth.js:151:5\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)","timestamp":"2026-04-10T09:28:14.784Z"}
+{"level":"error","message":"Cannot read properties of undefined (reading 'findMany') - /api/admin/support-tickets - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T09:28:14.789Z"}
+{"level":"error","message":"Get support tickets error: Cannot read properties of undefined (reading 'findMany')","service":"simuai-api","stack":"TypeError: Cannot read properties of undefined (reading 'findMany')\n    at exports.getSupportTickets (C:\\Users\\Hena\\Desktop\\ai integration\\server\\controllers\\adminController.js:634:28)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at C:\\Users\\Hena\\Desktop\\ai integration\\server\\middleware\\auth.js:151:5\n    at Layer.handle [as handle_request] (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)","timestamp":"2026-04-10T09:28:14.803Z"}
+{"level":"error","message":"Cannot read properties of undefined (reading 'findMany') - /api/admin/support-tickets - GET - ::1","service":"simuai-api","timestamp":"2026-04-10T09:28:14.807Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:29:25.076Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:29:25.121Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:29:25.124Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:29:25.128Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:29:25.131Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:29:25.544Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:29:25.546Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:29:25.548Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:29:25.586Z"}
+{"level":"warn","message":"Support tickets database query failed, returning empty list:","service":"simuai-api","timestamp":"2026-04-10T09:30:09.438Z"}
+{"level":"warn","message":"Support tickets database query failed, returning empty list:","service":"simuai-api","timestamp":"2026-04-10T09:30:09.466Z"}
+{"level":"warn","message":"Support tickets database query failed, returning empty list:","service":"simuai-api","timestamp":"2026-04-10T09:30:58.744Z"}
+{"level":"warn","message":"Support tickets database query failed, returning empty list:","service":"simuai-api","timestamp":"2026-04-10T09:30:58.751Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:31:02.481Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:31:04.440Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:31:45.789Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-10T09:31:45.883Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T09:32:26.432Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T09:32:26.438Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T09:32:26.439Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T09:32:26.439Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T09:32:26.440Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:32:26.500Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T09:32:26.501Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T09:32:26.502Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T09:32:26.512Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-10T18:24:38.567Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-10T18:24:38.661Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-10T18:24:38.662Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-10T18:24:38.664Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-10T18:24:38.665Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T18:24:42.021Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-10T18:24:42.022Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-10T18:24:42.023Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-10T18:24:42.925Z"}
+{"level":"info","message":"Received SIGINT, disconnecting from database...","service":"simuai-api","timestamp":"2026-04-10T18:29:55.305Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T05:36:22.211Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T05:36:22.447Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T05:36:22.448Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T05:36:22.449Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T05:36:22.450Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T05:36:37.736Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T05:36:37.739Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T05:36:37.742Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T05:36:51.980Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-11T05:42:06.962Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-11T05:42:06.963Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-11T05:42:06.964Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T05:42:07.447Z"}
+{"level":"info","message":" Database reconnected successfully","service":"simuai-api","timestamp":"2026-04-11T05:42:07.448Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T05:56:05.036Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T05:56:05.937Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T05:57:28.245Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T05:57:28.306Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T05:58:28.213Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T05:59:28.283Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:00:28.241Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:01:28.224Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:02:28.215Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:03:28.220Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:04:28.220Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:05:28.247Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:06:40.762Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:06:41.549Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:07:38.749Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:08:10.677Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:08:10.807Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:08:35.639Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:08:35.696Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:08:56.211Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:08:56.338Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T06:09:56.213Z","userId":1,"userRole":"ADMIN"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-11T06:31:35.773Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-11T06:31:35.899Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-11T06:31:35.899Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T06:31:44.154Z"}
+{"level":"info","message":" Database reconnected successfully","service":"simuai-api","timestamp":"2026-04-11T06:31:44.154Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-11T06:59:06.020Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-11T06:59:06.021Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-11T06:59:06.021Z"}
+{"level":"warn","message":"Database connection failed (attempt 4/5). Retrying in 8000ms...","service":"simuai-api","timestamp":"2026-04-11T06:59:36.029Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-11T06:59:36.032Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-11T06:59:36.034Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-11T06:59:36.080Z"}
+{"level":"error","message":"Failed to connect to database after 5 attempts:","service":"simuai-api","timestamp":"2026-04-11T06:59:49.057Z"}
+{"level":"error","message":" Failed to reconnect to database:","service":"simuai-api","timestamp":"2026-04-11T06:59:49.059Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-11T06:59:59.069Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-11T07:00:06.631Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-11T07:00:06.633Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-11T07:00:06.634Z"}
+{"level":"warn","message":"Database connection failed (attempt 4/5). Retrying in 8000ms...","service":"simuai-api","timestamp":"2026-04-11T07:00:28.718Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-11T07:00:36.638Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-11T07:00:36.639Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-11T07:00:36.640Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T07:00:37.033Z"}
+{"level":"info","message":" Database reconnected successfully","service":"simuai-api","timestamp":"2026-04-11T07:00:37.033Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:01:50.982Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:01:55.947Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T07:09:33.742Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T07:09:33.865Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T07:09:33.865Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T07:09:33.866Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T07:09:33.866Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T07:09:34.418Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T07:09:34.419Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T07:09:34.420Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T07:09:35.098Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:14:20.960Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:14:21.086Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:14:27.415Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:14:27.469Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:14:53.515Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:14:53.564Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:26:00.510Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:26:02.061Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:27:25.563Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:27:25.993Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:28:42.593Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:28:42.989Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:29:22.785Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:29:22.897Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:31:52.146Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T07:32:01.560Z","userId":1,"userRole":"ADMIN"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.user.count()`\u001b[22m invocation in\u001b[39m\n\u001b[4mC:\\Users\\Hena\\Desktop\\ai integration\\server\\services\\dashboardCommunicationService.js:294:39\u001b[24m\n\n  \u001b[2m\u001b[90m291\u001b[39m \u001b[36masync\u001b[39m \u001b[36mgetRealTimeStats\u001b[39m\u001b[34m(\u001b[39m\u001b[34m)\u001b[39m \u001b[34m{\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m292\u001b[39m   \u001b[36mtry\u001b[39m \u001b[34m{\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m293\u001b[39m     \u001b[36mconst\u001b[39m stats = \u001b[34m{\u001b[39m\u001b[22m\n\u001b[1m\u001b[31m→\u001b[39m\u001b[22m \u001b[2m\u001b[90m294\u001b[39m       totalUsers\u001b[34m:\u001b[39m \u001b[36mawait\u001b[39m prisma\u001b[34m.\u001b[39muser\u001b[34m.\u001b[39m\u001b[36mcount\u001b[39m\u001b[34m(\u001b[39m\u001b[22m\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"user.count","timestamp":"2026-04-11T07:32:47.417Z"}
+{"level":"error","message":"🔄 Database disconnected! Attempting automatic reconnection...","service":"simuai-api","timestamp":"2026-04-11T07:32:51.610Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.dashboardMessage.findMany()`\u001b[22m invocation in\u001b[39m\n\u001b[4mC:\\Users\\Hena\\Desktop\\ai integration\\server\\services\\dashboardCommunicationService.js:137:54\u001b[24m\n\n  \u001b[2m\u001b[90m134\u001b[39m   \u001b[36mreturn\u001b[39m \u001b[34m[\u001b[39m\u001b[34m]\u001b[39m\u001b[34m;\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m135\u001b[39m \u001b[34m}\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m136\u001b[39m \u001b[22m\n\u001b[1m\u001b[31m→\u001b[39m\u001b[22m \u001b[2m\u001b[90m137\u001b[39m \u001b[36mconst\u001b[39m messages = \u001b[36mawait\u001b[39m prisma\u001b[34m.\u001b[39mdashboardMessage\u001b[34m.\u001b[39m\u001b[36mfindMany\u001b[39m\u001b[34m(\u001b[39m\u001b[22m\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"dashboardMessage.findMany","timestamp":"2026-04-11T07:32:52.780Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-11T07:32:52.782Z"}
+{"clientVersion":"5.22.0","code":"P1001","level":"error","message":"Error fetching message history: \n\u001b[31mInvalid \u001b[1m`prisma.dashboardMessage.findMany()`\u001b[22m invocation in\u001b[39m\n\u001b[4mC:\\Users\\Hena\\Desktop\\ai integration\\server\\services\\dashboardCommunicationService.js:137:54\u001b[24m\n\n  \u001b[2m\u001b[90m134\u001b[39m   \u001b[36mreturn\u001b[39m \u001b[34m[\u001b[39m\u001b[34m]\u001b[39m\u001b[34m;\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m135\u001b[39m \u001b[34m}\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m136\u001b[39m \u001b[22m\n\u001b[1m\u001b[31m→\u001b[39m\u001b[22m \u001b[2m\u001b[90m137\u001b[39m \u001b[36mconst\u001b[39m messages = \u001b[36mawait\u001b[39m prisma\u001b[34m.\u001b[39mdashboardMessage\u001b[34m.\u001b[39m\u001b[36mfindMany\u001b[39m\u001b[34m(\u001b[39m\u001b[22m\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","meta":{"database_host":"localhost","database_port":5432,"modelName":"DashboardMessage"},"name":"PrismaClientKnownRequestError","service":"simuai-api","stack":"PrismaClientKnownRequestError: \n\u001b[31mInvalid \u001b[1m`prisma.dashboardMessage.findMany()`\u001b[22m invocation in\u001b[39m\n\u001b[4mC:\\Users\\Hena\\Desktop\\ai integration\\server\\services\\dashboardCommunicationService.js:137:54\u001b[24m\n\n  \u001b[2m\u001b[90m134\u001b[39m   \u001b[36mreturn\u001b[39m \u001b[34m[\u001b[39m\u001b[34m]\u001b[39m\u001b[34m;\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m135\u001b[39m \u001b[34m}\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m136\u001b[39m \u001b[22m\n\u001b[1m\u001b[31m→\u001b[39m\u001b[22m \u001b[2m\u001b[90m137\u001b[39m \u001b[36mconst\u001b[39m messages = \u001b[36mawait\u001b[39m prisma\u001b[34m.\u001b[39mdashboardMessage\u001b[34m.\u001b[39m\u001b[36mfindMany\u001b[39m\u001b[34m(\u001b[39m\u001b[22m\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.\n    at $n.handleRequestError (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\@prisma\\client\\runtime\\library.js:121:7315)\n    at $n.handleAndLogRequestError (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\@prisma\\client\\runtime\\library.js:121:6623)\n    at $n.request (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\@prisma\\client\\runtime\\library.js:121:6307)\n    at async l (C:\\Users\\Hena\\Desktop\\ai integration\\server\\node_modules\\@prisma\\client\\runtime\\library.js:130:9633)\n    at async DashboardCommunicationService.getMessageHistory (C:\\Users\\Hena\\Desktop\\ai integration\\server\\services\\dashboardCommunicationService.js:137:24)\n    at async C:\\Users\\Hena\\Desktop\\ai integration\\server\\routes\\dashboardCommunication.js:24:22","timestamp":"2026-04-11T07:32:52.782Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.job.count()`\u001b[22m invocation in\u001b[39m\n\u001b[4mC:\\Users\\Hena\\Desktop\\ai integration\\server\\services\\dashboardCommunicationService.js:295:37\u001b[24m\n\n  \u001b[2m\u001b[90m292\u001b[39m \u001b[36mtry\u001b[39m \u001b[34m{\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m293\u001b[39m   \u001b[36mconst\u001b[39m stats = \u001b[34m{\u001b[39m\u001b[22m\n  \u001b[2m\u001b[90m294\u001b[39m     totalUsers\u001b[34m:\u001b[39m \u001b[36mawait\u001b[39m prisma\u001b[34m.\u001b[39muser\u001b[34m.\u001b[39m\u001b[36mcount\u001b[39m\u001b[34m(\u001b[39m\u001b[34m)\u001b[39m\u001b[34m.\u001b[39m\u001b[36mcatch\u001b[39m\u001b[34m(\u001b[39m\u001b[34m(\u001b[39m\u001b[34m)\u001b[39m => \u001b[36m0\u001b[39m\u001b[34m)\u001b[39m\u001b[34m,\u001b[39m\u001b[22m\n\u001b[1m\u001b[31m→\u001b[39m\u001b[22m \u001b[2m\u001b[90m295\u001b[39m     totalJobs\u001b[34m:\u001b[39m \u001b[36mawait\u001b[39m prisma\u001b[34m.\u001b[39mjob\u001b[34m.\u001b[39m\u001b[36mcount\u001b[39m\u001b[34m(\u001b[39m\u001b[22m\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"job.count","timestamp":"2026-04-11T07:33:06.173Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-11T07:33:06.174Z"}
+{"level":"error","message":"Prisma Error \n\u001b[31mInvalid \u001b[1m`prisma.$queryRaw()`\u001b[22m invocation:\u001b[39m\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","service":"simuai-api","target":"$queryRaw","timestamp":"2026-04-11T07:33:06.175Z"}
+{"level":"warn","message":"⚠️ Reconnection already in progress, skipping...","service":"simuai-api","timestamp":"2026-04-11T07:33:06.176Z"}
+{"level":"error","message":"❌ Database health check failed:","service":"simuai-api","timestamp":"2026-04-11T07:33:06.176Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T07:33:21.983Z"}
+{"level":"info","message":" Database reconnected successfully","service":"simuai-api","timestamp":"2026-04-11T07:33:21.984Z"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T08:08:24.392Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T08:08:24.456Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T08:08:24.469Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T08:08:24.471Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T08:08:24.472Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:08:26.544Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:08:26.546Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T08:08:26.549Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T08:08:27.899Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:16:58.730Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:17:00.150Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T08:18:48.740Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T08:18:48.749Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T08:18:48.749Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T08:18:48.750Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T08:18:48.751Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:18:49.041Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:18:49.042Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T08:18:49.043Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T08:18:49.086Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:29:10.930Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:29:11.506Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T08:34:54.542Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T08:34:55.275Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T08:34:55.276Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T08:34:55.277Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T08:34:55.277Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:34:58.120Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:34:58.176Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T08:34:58.177Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T08:34:58.881Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:35:00.837Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T08:35:55.913Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T08:35:55.920Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T08:35:55.921Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T08:35:55.921Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T08:35:55.922Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:35:56.148Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T08:35:56.149Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T08:35:56.151Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T08:35:56.352Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:36:01.109Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:37:01.052Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:38:01.081Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:38:27.207Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:39:03.087Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:40:04.055Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:41:06.603Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:55:12.480Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:55:13.035Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:56:12.346Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:57:12.081Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:58:12.049Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T08:59:11.983Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:07:27.486Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:07:27.546Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:08:29.522Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:08:29.886Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:09:30.978Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:10:30.082Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:11:30.052Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T09:12:54.499Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T09:12:55.479Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T09:12:55.480Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T09:12:55.480Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T09:12:55.481Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T09:12:56.782Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T09:12:56.783Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T09:12:56.783Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T09:12:57.042Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:13:05.799Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:13:05.851Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:14:49.272Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:14:49.545Z","userId":1,"userRole":"ADMIN"}
+{"email":"admin@simuai.com","level":"info","message":"User logged in successfully","service":"simuai-api","timestamp":"2026-04-11T09:16:21.764Z","userId":1}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:16:22.321Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:16:22.382Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:17:23.058Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:18:23.040Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:19:04.057Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:19:14.065Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:19:14.101Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:19:14.190Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:19:14.215Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:19:27.069Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:19:59.066Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:20:27.083Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T09:22:23.513Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T09:22:23.525Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T09:22:23.526Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T09:22:23.527Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T09:22:23.528Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T09:22:24.074Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T09:22:24.079Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T09:22:24.083Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T09:22:24.224Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:22:28.085Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:23:11.700Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:23:11.920Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:23:29.976Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:23:30.070Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:24:30.053Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:25:30.048Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:26:30.052Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:27:30.055Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:28:30.090Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:29:30.077Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":" Message service enabled","service":"simuai-api","timestamp":"2026-04-11T09:30:45.337Z"}
+{"level":"info","message":"🚀 Server running on port 5000","service":"simuai-api","timestamp":"2026-04-11T09:30:45.345Z"}
+{"level":"info","message":"📊 Database status: ⏳ Connecting...","service":"simuai-api","timestamp":"2026-04-11T09:30:45.345Z"}
+{"level":"info","message":"🌐 API available at http://localhost:5000","service":"simuai-api","timestamp":"2026-04-11T09:30:45.346Z"}
+{"level":"info","message":"💻 Frontend available at http://localhost:3000","service":"simuai-api","timestamp":"2026-04-11T09:30:45.347Z"}
+{"level":"info","message":" Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T09:30:45.909Z"}
+{"level":"info","message":"✅ Database connection established successfully","service":"simuai-api","timestamp":"2026-04-11T09:30:45.911Z"}
+{"level":"info","message":"🔄 Initializing database tables...","service":"simuai-api","timestamp":"2026-04-11T09:30:45.914Z"}
+{"level":"info","message":"✅ Database tables initialized successfully","service":"simuai-api","timestamp":"2026-04-11T09:30:45.932Z"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:31:14.841Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:32:14.064Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:33:14.071Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:34:14.080Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:35:14.055Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:36:14.065Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:37:14.057Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:38:14.184Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:39:14.068Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:40:14.094Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:41:14.063Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:42:14.077Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:43:14.077Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:44:17.157Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:44:59.303Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:45:18.161Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:45:19.519Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:46:19.050Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:47:19.060Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:48:19.056Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:49:19.070Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:50:19.048Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:51:19.046Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:53:14.092Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:54:14.097Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:55:14.064Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:56:14.073Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:57:14.063Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:58:14.051Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T09:59:14.054Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:00:14.065Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:01:14.214Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:02:14.058Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:03:14.058Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:04:14.064Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:05:14.066Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:06:14.065Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:07:14.085Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:08:14.072Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:09:14.072Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:10:14.091Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:11:14.072Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:12:14.064Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:13:14.066Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:14:14.074Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:15:14.058Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:16:14.669Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:17:14.063Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:18:14.063Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:19:14.064Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:20:14.051Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:21:14.073Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:22:14.632Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:23:14.065Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:24:14.061Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:25:14.072Z","userId":1,"userRole":"ADMIN"}
+{"level":"info","message":"Admin dashboard access attempt","rawRole":"ADMIN","service":"simuai-api","timestamp":"2026-04-11T10:25:18.135Z","userId":1,"userRole":"ADMIN"}

@@ -181,7 +181,19 @@ const getAdminDashboard = async (userId) => {
       where: { id: userId }
     });
 
-    if (!user || user.role !== 'admin') throw new Error('Unauthorized');
+    if (!user) {
+      logger.error('User not found for admin dashboard', { userId });
+      throw new Error('Unauthorized');
+    }
+    
+    // Check if user is admin - handle both uppercase and lowercase
+    const userRole = String(user.role).toUpperCase();
+    logger.info('Admin dashboard access attempt', { userId, userRole, rawRole: user.role });
+    
+    if (userRole !== 'ADMIN') {
+      logger.error('Non-admin user attempted to access admin dashboard', { userId, userRole });
+      throw new Error('Unauthorized');
+    }
 
     // Get all users count by role
     const totalUsers = await prisma.user.count();
@@ -227,32 +239,25 @@ const getAdminDashboard = async (userId) => {
         email: user.email,
         role: user.role
       },
-      stats: {
-        totalUsers,
-        candidateCount,
-        employerCount,
-        adminCount,
-        totalJobs,
-        activeJobs,
-        totalInterviews,
-        completedInterviews,
-        totalCompanies,
-        totalRevenue,
-        pendingCompanies,
-        pendingJobs
-      },
+      totalUsers,
+      candidateCount,
+      employerCount,
+      adminCount,
+      totalJobs,
+      activeJobs,
+      totalInterviews,
+      completedInterviews,
+      totalCompanies,
+      totalRevenue,
+      pendingCompanies,
+      pendingJobs,
       recentActivity: recentActivity.map(activity => ({
         id: activity.id,
         action: `Interview with ${activity.candidate?.firstName} ${activity.candidate?.lastName}`,
         description: `${activity.candidate?.firstName} ${activity.candidate?.lastName} completed interview for ${activity.job?.title}`,
         timestamp: activity.startedAt,
         type: 'interview'
-      })),
-      systemHealth: {
-        uptime: '99.9%',
-        responseTime: '< 200ms',
-        activeConnections: Math.floor(Math.random() * 100) + 50
-      }
+      }))
     };
   } catch (error) {
     logger.error('Error in getAdminDashboard:', error);

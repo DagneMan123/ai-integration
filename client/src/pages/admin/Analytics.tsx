@@ -64,19 +64,13 @@ const AdminAnalytics: React.FC = () => {
           activeEmployers: analyticsData.employerCount || 0,
           aiInterviews: analyticsData.totalInterviews || 0,
           platformRevenue: `$${analyticsData.totalRevenue || 0}`,
-          candidatesTrend: '+12.5%',
-          employersTrend: '+8.3%',
-          interviewsTrend: '+24.1%',
-          revenueTrend: '+18.7%',
-          interviewData: [45, 52, 48, 65, 72, 68, 75, 82, 78, 85, 88, 92],
-          sectorData: [
-            { name: 'Technology', value: 35, color: 'bg-blue-500' },
-            { name: 'Finance', value: 25, color: 'bg-green-500' },
-            { name: 'Healthcare', value: 20, color: 'bg-red-500' },
-            { name: 'Retail', value: 12, color: 'bg-yellow-500' },
-            { name: 'Other', value: 8, color: 'bg-purple-500' }
-          ],
-          events: []
+          candidatesTrend: analyticsData.candidateTrend || '0%',
+          employersTrend: analyticsData.employerTrend || '0%',
+          interviewsTrend: analyticsData.interviewTrend || '0%',
+          revenueTrend: analyticsData.revenueTrend || '0%',
+          interviewData: analyticsData.interviewData || [],
+          sectorData: analyticsData.sectorData || [],
+          events: analyticsData.events || []
         });
       } catch (err: any) {
         console.error('Error fetching analytics:', err);
@@ -90,7 +84,9 @@ const AdminAnalytics: React.FC = () => {
   }, []);
   
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 font-sans">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="space-y-8 animate-in fade-in duration-700 font-sans">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -263,6 +259,8 @@ const AdminAnalytics: React.FC = () => {
           </div>
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 };

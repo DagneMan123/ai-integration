@@ -34,9 +34,18 @@ export const useAuthStore = create<ExtendedAuthState>()(
 
       isAuthenticated: () => !!get().token && !!get().user,
       
-      isAdmin: () => get().user?.role === 'admin',
-      isEmployer: () => get().user?.role === 'employer',
-      isCandidate: () => get().user?.role === 'candidate',
+      isAdmin: () => {
+        const role = String(get().user?.role || '').toUpperCase();
+        return role === 'ADMIN';
+      },
+      isEmployer: () => {
+        const role = String(get().user?.role || '').toUpperCase();
+        return role === 'EMPLOYER';
+      },
+      isCandidate: () => {
+        const role = String(get().user?.role || '').toUpperCase();
+        return role === 'CANDIDATE';
+      },
 
       setHasHydrated: (state: boolean) => {
         set({ _hasHydrated: state });

@@ -17,6 +17,12 @@ interface SidebarContextType {
   // Employer sidebar
   employerSidebarOpen: boolean;
   setEmployerSidebarOpen: (open: boolean) => void;
+  // Admin sidebar
+  adminSidebarOpen: boolean;
+  setAdminSidebarOpen: (open: boolean) => void;
+  // Candidate sidebar
+  candidateSidebarOpen: boolean;
+  setCandidateSidebarOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -28,6 +34,8 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpCenterOpen, setHelpCenterOpen] = useState(false);
   const [employerSidebarOpen, setEmployerSidebarOpen] = useState(false);
+  const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
+  const [candidateSidebarOpen, setCandidateSidebarOpen] = useState(false);
 
   return (
     <SidebarContext.Provider
@@ -44,6 +52,10 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
         setHelpCenterOpen,
         employerSidebarOpen,
         setEmployerSidebarOpen,
+        adminSidebarOpen,
+        setAdminSidebarOpen,
+        candidateSidebarOpen,
+        setCandidateSidebarOpen,
       }}
     >
       {children}
