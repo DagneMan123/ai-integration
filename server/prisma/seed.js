@@ -165,44 +165,65 @@ async function main() {
     logger.info('Job created:', job.title);
   }
 
-  // Create sample application
-  await prisma.application.create({
-    data: {
-      jobId: 1,
-      candidateId: candidate.id,
-      status: 'PENDING',
-      coverLetter: 'I am very interested in this position and believe my skills align well with your requirements.',
-    },
-  });
+  // Create sample applications for all jobs
+  const applicationStatuses = ['PENDING', 'ACCEPTED', 'REJECTED'];
+  const jobs = await prisma.job.findMany({ where: { companyId: company.id } });
+  
+  for (let i = 0; i < jobs.length; i++) {
+    const existingApp = await prisma.application.findFirst({
+      where: { jobId: jobs[i].id, candidateId: candidate.id }
+    });
+    
+    if (!existingApp) {
+      await prisma.application.create({
+        data: {
+          jobId: jobs[i].id,
+          candidateId: candidate.id,
+          status: applicationStatuses[i % applicationStatuses.length],
+          coverLetter: `I am very interested in the ${jobs[i].title} position and believe my skills align well with your requirements.`,
+        },
+      });
+      logger.info(`Application created for: ${jobs[i].title}`);
+    }
+  }
 
-  logger.info('Application created');
-
-  // Create sample interview
-  await prisma.interview.create({
-    data: {
-      jobId: 1,
-      candidateId: candidate.id,
-      status: 'PENDING',
-      questions: {
-        questions: [
-          {
-            id: 1,
-            question: 'Tell me about your experience with React.',
-            type: 'Technical',
-            difficulty: 'Medium'
-          },
-          {
-            id: 2,
-            question: 'How do you handle state management in large applications?',
-            type: 'Technical',
-            difficulty: 'Hard'
+  // Create sample interviews for all jobs
+  const interviewStatuses = ['SCHEDULED', 'COMPLETED', 'IN_PROGRESS'];
+  
+  for (let i = 0; i < jobs.length; i++) {
+    const existingInterview = await prisma.interview.findFirst({
+      where: { jobId: jobs[i].id, candidateId: candidate.id }
+    });
+    
+    if (!existingInterview) {
+      const interview = await prisma.interview.create({
+        data: {
+          jobId: jobs[i].id,
+          candidateId: candidate.id,
+          status: interviewStatuses[i % interviewStatuses.length],
+          startedAt: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000),
+          overallScore: interviewStatuses[i % interviewStatuses.length] === 'COMPLETED' ? 75 + Math.random() * 20 : null,
+          questions: {
+            questions: [
+              {
+                id: 1,
+                question: 'Tell me about your experience with React.',
+                type: 'Technical',
+                difficulty: 'Medium'
+              },
+              {
+                id: 2,
+                question: 'How do you handle state management in large applications?',
+                type: 'Technical',
+                difficulty: 'Hard'
+              }
+            ]
           }
-        ]
-      }
-    },
-  });
-
-  logger.info('Interview created');
+        },
+      });
+      logger.info(`Interview created for: ${jobs[i].title} - Status: ${interviewStatuses[i % interviewStatuses.length]}`);
+    }
+  }
 
   // Create activity logs
   await prisma.activityLog.createMany({

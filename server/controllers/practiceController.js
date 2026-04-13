@@ -6,7 +6,7 @@ exports.getPracticeSessions = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const sessions = await prisma.practiceSessions.findMany({
+    const sessions = await prisma.practiceSession.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' }
     });
@@ -38,7 +38,7 @@ exports.createPracticeSession = async (req, res) => {
       });
     }
 
-    const session = await prisma.practiceSessions.create({
+    const session = await prisma.practiceSession.create({
       data: {
         userId,
         topic,
@@ -68,9 +68,9 @@ exports.getPracticeSessionDetails = async (req, res) => {
     const { sessionId } = req.params;
     const userId = req.user.id;
 
-    const session = await prisma.practiceSessions.findFirst({
+    const session = await prisma.practiceSession.findFirst({
       where: {
-        id: sessionId,
+        id: parseInt(sessionId),
         userId
       }
     });
@@ -111,9 +111,9 @@ exports.submitPracticeAnswer = async (req, res) => {
     }
 
     // Verify session belongs to user
-    const session = await prisma.practiceSessions.findFirst({
+    const session = await prisma.practiceSession.findFirst({
       where: {
-        id: sessionId,
+        id: parseInt(sessionId),
         userId
       }
     });
@@ -145,9 +145,9 @@ exports.endPracticeSession = async (req, res) => {
     const { sessionId } = req.params;
     const userId = req.user.id;
 
-    const session = await prisma.practiceSessions.findFirst({
+    const session = await prisma.practiceSession.findFirst({
       where: {
-        id: sessionId,
+        id: parseInt(sessionId),
         userId
       }
     });
@@ -159,8 +159,8 @@ exports.endPracticeSession = async (req, res) => {
       });
     }
 
-    const updatedSession = await prisma.practiceSessions.update({
-      where: { id: sessionId },
+    const updatedSession = await prisma.practiceSession.update({
+      where: { id: parseInt(sessionId) },
       data: {
         status: 'completed',
         endedAt: new Date()
@@ -186,7 +186,7 @@ exports.getPracticeStats = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const stats = await prisma.practiceSessions.aggregate({
+    const stats = await prisma.practiceSession.aggregate({
       where: { userId },
       _count: true
     });

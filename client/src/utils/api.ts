@@ -220,4 +220,13 @@ export const messageAPI = {
   delete: (id: string) => request.delete(`/messages/${id}`),
 };
 
+export const practiceAPI = {
+  getSessions: () => request.get('/practice/sessions'),
+  createSession: (data: object) => request.post('/practice/sessions', data),
+  getSessionDetails: (sessionId: string) => request.get(`/practice/sessions/${sessionId}`),
+  submitAnswer: (sessionId: string, data: object) => request.post(`/practice/sessions/${sessionId}/answer`, data),
+  endSession: (sessionId: string) => request.post(`/practice/sessions/${sessionId}/end`),
+  getStats: () => request.get('/practice/stats'),
+};
+
 export default api;

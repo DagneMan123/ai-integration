@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const aiService = require('../services/aiService');
+const aiInterviewController = require('../controllers/aiInterviewController');
 const { authenticateToken } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
+const { upload } = require('../middleware/upload');
 
 // Check AI service availability
 router.get('/status', async (req, res, next) => {
@@ -21,19 +23,7 @@ router.get('/status', async (req, res, next) => {
 // Generate interview questions
 router.post('/generate-questions', authenticateToken, async (req, res, next) => {
   try {
-    const { jobDetails, questionCount = 10 } = req.body;
-
-    if (!jobDetails) {
-      return next(new AppError('Job details are required', 400));
-    }
-
-    const questions = await aiService.generateInterviewQuestions(jobDetails, questionCount);
-
-    res.json({
-      success: true,
-      data: questions,
-      message: 'Interview questions generated successfully'
-    });
+    await aiInterviewController.generateQuestions(req, res, next);
   } catch (error) {
     next(error);
   }
@@ -215,6 +205,82 @@ router.post('/chat', async (req, res, next) => {
       message: 'Failed to process chat message',
       error: error.message
     });
+  }
+});
+
+// ============================================
+// VIDEO INTERVIEW ROUTES
+// ============================================
+
+// Start video interview session
+router.post('/video-interview/start', authenticateToken, async (req, res, next) => {
+  try {
+    await aiInterviewController.startVideoInterview(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Submit video response
+router.post('/video-interview/submit-response', authenticateToken, upload.single('video'), async (req, res, next) => {
+  try {
+    await aiInterviewController.submitVideoResponse(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Analyze video response
+router.get('/video-interview/:interviewId/analysis/:questionId', authenticateToken, async (req, res, next) => {
+  try {
+    await aiInterviewController.analyzeVideoResponse(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get real-time feedback
+router.get('/video-interview/:interviewId/feedback', authenticateToken, async (req, res, next) => {
+  try {
+    await aiInterviewController.getRealTimeFeedback(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Complete video interview
+router.post('/video-interview/:interviewId/complete', authenticateToken, async (req, res, next) => {
+  try {
+    await aiInterviewController.completeVideoInterview(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get interview report
+router.get('/video-interview/:interviewId/report', authenticateToken, async (req, res, next) => {
+  try {
+    await aiInterviewController.getInterviewReport(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Report suspicious activity (anti-cheat)
+router.post('/anti-cheat/report', authenticateToken, async (req, res, next) => {
+  try {
+    await aiInterviewController.reportSuspiciousActivity(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get interview insights
+router.get('/interview/:interviewId/insights', authenticateToken, async (req, res, next) => {
+  try {
+    await aiInterviewController.getInterviewInsights(req, res, next);
+  } catch (error) {
+    next(error);
   }
 });
 

@@ -14,7 +14,7 @@ const app = express();
 const startDB = async () => {
   try {
     await prisma.connectWithRetry(5);
-    logger.info('✅ Database connection established successfully');
+    logger.info(' Database connection established successfully');
     
     await initDatabase(prisma);
     return true;
@@ -76,6 +76,7 @@ app.use('/api/dashboard-communication', require('./routes/dashboardCommunication
 app.use('/api/subscription', require('./routes/subscription'));
 app.use('/api/wallet', require('./routes/wallet'));
 app.use('/api/practice', require('./routes/practice'));
+app.use('/api/video-analysis', require('./routes/videoAnalysis'));
 app.use('/api/webhook', require('./routes/chapaWebhook'));
 app.use('/api/help-center', require('./routes/helpCenter'));
 app.use('/api', require('./routes/interviewPersona'));

@@ -45,6 +45,7 @@ model User {
   wallet           Wallet?
   practiceSessions PracticeSession[]
   supportTickets   SupportTicket[]
+  interviewResponses InterviewResponse[]
 
   @@map("users")
 }
@@ -486,4 +487,61 @@ model SupportTicket {
   @@index([status])
   @@index([createdAt])
   @@map("support_tickets")
+}
+
+model InterviewResponse {
+  id            Int       @id @default(autoincrement())
+  sessionId     Int       @map("session_id")
+  questionId    Int       @map("question_id")
+  userId        Int       @map("user_id")
+  videoPath     String    @map("video_path")
+  videoUrl      String?   @map("video_url")
+  videoSize     Int?      @map("video_size")
+  recordingTime Int?      @map("recording_time")
+  status        String    @default("processing") // processing, completed, error
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user     User                @relation(fields: [userId], references: [id])
+  analysis InterviewAnalysis?
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("interview_responses")
+}
+
+model InterviewAnalysis {
+  id                Int       @id @default(autoincrement())
+  responseId        Int       @unique @map("response_id")
+  transcript        String
+  scores            Json      // { clarity, technicalKnowledge, confidence, communication, relevance, overall }
+  strengths         String[]
+  improvements      String[]
+  observations      String[]
+  fillerWords       Json      // { total, byWord, frequency }
+  speechPatterns    Json      // { totalWords, totalSentences, averageWordsPerSentence, uniqueWords, vocabularyDiversity, complexity }
+  feedback          String
+  status            String    @default("completed")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  response InterviewResponse @relation(fields: [responseId], references: [id])
+
+  @@index([responseId])
+  @@index([createdAt])
+  @@map("interview_analyses")
+}
+
+model InterviewQuestion {
+  id          Int       @id @default(autoincrement())
+  sessionId   Int       @map("session_id")
+  text        String
+  type        String    // technical, behavioral, case_study
+  difficulty  String    // beginner, intermediate, advanced
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@map("interview_questions")
 }

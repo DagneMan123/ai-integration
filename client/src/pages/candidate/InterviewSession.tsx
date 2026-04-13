@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interviewAPI, jobAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
+import AIVideoInterview from '../../components/AIVideoInterview';
 import toast from 'react-hot-toast';
 import { 
   Clock, 
@@ -28,6 +29,7 @@ const InterviewSession: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [isVideoMode, setIsVideoMode] = useState(false);
 
   const fetchInterview = useCallback(async () => {
     try {
@@ -35,6 +37,11 @@ const InterviewSession: React.FC = () => {
       const data = response.data.data as any;
       
       setInterview(data);
+      
+      // Check if this is a video interview
+      if (data?.interviewMode === 'video') {
+        setIsVideoMode(true);
+      }
       
       // Fetch job details if jobId exists
       if (data?.jobId) {
@@ -110,6 +117,70 @@ const InterviewSession: React.FC = () => {
   };
 
   if (loading) return <Loading />;
+
+  // Video Interview Mode
+  if (isVideoMode) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Top Professional Header */}
+        <nav className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <Cpu className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Video Interview</h2>
+                <p className="text-xs text-gray-500">AI-Powered Assessment</p>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border-2 transition-all ${timeLeft < 300 ? 'bg-red-50 border-red-100 animate-pulse' : 'bg-white border-gray-100'}`}>
+              <Clock className={`w-5 h-5 ${timeLeft < 300 ? 'text-red-600' : 'text-blue-600'}`} />
+              <span className={`text-xl font-black tabular-nums ${timeLeft < 300 ? 'text-red-600' : 'text-gray-900'}`}>
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+
+            <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs font-bold text-emerald-700 uppercase">AI Proctoring Active</span>
+            </div>
+          </div>
+        </nav>
+
+        {/* Main Video Interview Area */}
+        <main className="flex-1 max-w-6xl mx-auto w-full p-6 lg:p-10">
+          <AIVideoInterview
+            interviewId={parseInt(id!)}
+            questionId={currentQuestionIndex}
+            question={currentQuestion?.text || 'Please answer the following question'}
+            onComplete={async (videoBlob) => {
+              toast.success('Video recorded successfully');
+              // Move to next question or complete
+              if (currentQuestionIndex + 1 >= interview.questions.length) {
+                toast.success('Interview completed!');
+                navigate(`/candidate/interview/${id}/report`);
+              } else {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                setCurrentQuestion(interview.questions[currentQuestionIndex + 1]);
+              }
+            }}
+            onSkip={() => {
+              if (currentQuestionIndex + 1 >= interview.questions.length) {
+                navigate(`/candidate/interview/${id}/report`);
+              } else {
+                setCurrentQuestionIndex(currentQuestionIndex + 1);
+                setCurrentQuestion(interview.questions[currentQuestionIndex + 1]);
+              }
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  // Text Interview Mode (existing code)
 
   const progress = interview?.questions?.length ? ((currentQuestionIndex + 1) / interview.questions.length) * 100 : 0;
 
