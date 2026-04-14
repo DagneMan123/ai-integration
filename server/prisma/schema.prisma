@@ -46,6 +46,8 @@ model User {
   practiceSessions PracticeSession[]
   supportTickets   SupportTicket[]
   interviewResponses InterviewResponse[]
+  savedJobs        SavedJob[]
+  jobAlerts        JobAlert[]
 
   @@map("users")
 }
@@ -92,6 +94,8 @@ model Job {
   createdBy    User          @relation(fields: [createdById], references: [id])
   applications Application[]
   interviews   Interview[]
+  savedJobs    SavedJob[]
+  jobAlerts    JobAlert[]
 
   @@index([createdById])
   @@index([companyId])
@@ -544,4 +548,40 @@ model InterviewQuestion {
 
   @@index([sessionId])
   @@map("interview_questions")
+}
+
+model SavedJob {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  jobId     Int       @map("job_id")
+  savedAt   DateTime  @default(now()) @map("saved_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId])
+  @@index([jobId])
+  @@map("saved_jobs")
+}
+
+model JobAlert {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  jobId         Int?      @map("job_id")
+  keyword       String
+  location      String?
+  experienceLevel String? @map("experience_level")
+  jobType       String?   @map("job_type")
+  isActive      Boolean   @default(true) @map("is_active")
+  lastTriggered DateTime? @map("last_triggered")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([jobId])
+  @@map("job_alerts")
 }

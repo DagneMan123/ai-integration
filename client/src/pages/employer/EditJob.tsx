@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { jobAPI } from '../../utils/api';
+import DashboardLayout from '../../components/DashboardLayout';
+import { employerMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
 import Loading from '../../components/Loading';
 import { 
@@ -93,7 +95,8 @@ const EditJob: React.FC = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
+    <DashboardLayout menuItems={employerMenu} role="employer">
+      <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
         
         {/* Navigation */}
@@ -227,6 +230,7 @@ const EditJob: React.FC = () => {
         }
       `}</style>
     </div>
+    </DashboardLayout>
   );
 };
 

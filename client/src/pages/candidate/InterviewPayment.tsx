@@ -4,6 +4,8 @@ import { interviewAPI, paymentAPI } from '../../utils/api';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import Loading from '../../components/Loading';
+import DashboardLayout from '../../components/DashboardLayout';
+import { candidateMenu } from '../../config/menuConfig';
 import { 
   CreditCard, 
   CheckCircle2, 
@@ -99,8 +101,9 @@ const InterviewPayment: React.FC = () => {
   const hasSufficientCredits = wallet?.balance >= CREDITS_REQUIRED;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-10 px-4 md:px-8">
-      <div className="max-w-2xl mx-auto">
+    <DashboardLayout menuItems={candidateMenu} role="candidate">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-10 px-4 md:px-8">
+        <div className="max-w-2xl mx-auto">
         
         {/* Header */}
         <div className="text-center mb-12">
@@ -286,8 +289,9 @@ const InterviewPayment: React.FC = () => {
             🔒 Your payment is secure and encrypted. No charges will be made until you confirm.
           </p>
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

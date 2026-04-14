@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
+import DashboardLayout from '../../components/DashboardLayout';
+import { adminMenu } from '../../config/menuConfig';
 import { 
   Search, 
   UserX, 
@@ -67,7 +69,8 @@ const AdminUsers: React.FC = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <DashboardLayout menuItems={adminMenu} role="admin">
+      <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         
         {/* Header Area */}
@@ -206,7 +209,8 @@ const AdminUsers: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

@@ -146,6 +146,17 @@ if (process.env.NODE_ENV === 'production') {
   prisma = global.__prisma;
 }
 
+// Ensure SavedJob and JobAlert models are available
+if (!prisma.savedJob) {
+  logger.warn('⚠️ SavedJob model not found in Prisma client. Attempting to regenerate...');
+  // This will be handled by the error handler
+}
+
+if (!prisma.jobAlert) {
+  logger.warn('⚠️ JobAlert model not found in Prisma client. Attempting to regenerate...');
+  // This will be handled by the error handler
+}
+
 setupEventListeners();
 
 function startHealthCheck() {

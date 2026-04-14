@@ -64,6 +64,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/companies', require('./routes/companies'));
 app.use('/api/jobs', require('./routes/jobs'));
+app.use('/api/saved-jobs', require('./routes/savedJobs'));
+app.use('/api/job-alerts', require('./routes/jobAlerts'));
 app.use('/api/interviews', require('./routes/interviews'));
 app.use('/api/applications', require('./routes/applications'));
 app.use('/api/payments', require('./routes/payments'));

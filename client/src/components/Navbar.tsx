@@ -22,12 +22,23 @@ const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Hide navbar on dashboard pages
+  const isDashboardPage = location.pathname.includes('/candidate/') || 
+                          location.pathname.includes('/employer/') || 
+                          location.pathname.includes('/admin/');
+
   // Handle scroll effect for glassmorphism
   useEffect(() => {
+    if (isDashboardPage) return;
+    
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isDashboardPage]);
+
+  if (isDashboardPage) {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();

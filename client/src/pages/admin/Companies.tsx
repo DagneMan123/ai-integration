@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import DashboardLayout from '../../components/DashboardLayout';
+import { adminMenu } from '../../config/menuConfig';
 import { 
   Building2, 
   Search, 
@@ -71,7 +73,8 @@ const AdminCompanies: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <DashboardLayout menuItems={adminMenu} role="admin">
+      <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
@@ -244,7 +247,8 @@ const AdminCompanies: React.FC = () => {
       )}
         </div>
       </div>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

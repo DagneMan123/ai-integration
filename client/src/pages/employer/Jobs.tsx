@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { jobAPI } from '../../utils/api';
 import { Job } from '../../types';
 import Loading from '../../components/Loading';
+import DashboardLayout from '../../components/DashboardLayout';
+import { employerMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
 import { 
   Plus, 
@@ -69,8 +71,9 @@ const EmployerJobs: React.FC = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
+    <DashboardLayout menuItems={employerMenu} role="employer">
+      <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
@@ -230,8 +233,9 @@ const EmployerJobs: React.FC = () => {
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

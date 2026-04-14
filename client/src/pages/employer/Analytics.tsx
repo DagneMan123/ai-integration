@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import DashboardLayout from '../../components/DashboardLayout';
+import { employerMenu } from '../../config/menuConfig';
 import { 
   BarChart3, 
   Users, 
@@ -16,8 +18,9 @@ const EmployerAnalytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('Last 30 Days');
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
+    <DashboardLayout menuItems={employerMenu} role="employer">
+      <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
@@ -133,8 +136,9 @@ const EmployerAnalytics: React.FC = () => {
           </div>
 
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

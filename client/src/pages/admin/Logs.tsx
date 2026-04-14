@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import DashboardLayout from '../../components/DashboardLayout';
+import { adminMenu } from '../../config/menuConfig';
 import { 
   Clock, 
   Activity, 
@@ -60,7 +62,8 @@ const AdminLogs: React.FC = () => {
   }, []);
   
   return (
-    <div className="space-y-6 font-sans">
+    <DashboardLayout menuItems={adminMenu} role="admin">
+      <div className="space-y-6 font-sans">
       <div className="max-w-7xl mx-auto">
         
         {/* Header Section */}
@@ -197,7 +200,8 @@ const AdminLogs: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

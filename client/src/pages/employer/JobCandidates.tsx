@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { applicationAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
+import DashboardLayout from '../../components/DashboardLayout';
+import { employerMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
 import { 
   UserCircle, 
@@ -56,8 +58,9 @@ const JobCandidates: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
+    <DashboardLayout menuItems={employerMenu} role="employer">
+      <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto">
 
         {/* Header & Back Navigation */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
@@ -180,8 +183,9 @@ const JobCandidates: React.FC = () => {
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

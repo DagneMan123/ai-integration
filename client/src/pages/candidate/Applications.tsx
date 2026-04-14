@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { applicationAPI } from '../../utils/api';
 import { Application } from '../../types';
 import Loading from '../../components/Loading';
+import DashboardLayout from '../../components/DashboardLayout';
+import { candidateMenu } from '../../config/menuConfig';
 import { Link } from 'react-router-dom';
 import { 
   Briefcase, 
@@ -60,8 +62,9 @@ const CandidateApplications: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-white py-10 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
+    <DashboardLayout menuItems={candidateMenu} role="candidate">
+      <div className="min-h-screen bg-white py-10 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto">
 
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
@@ -173,8 +176,9 @@ const CandidateApplications: React.FC = () => {
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

@@ -167,38 +167,38 @@ async function main() {
 
   // Create sample applications for all jobs
   const applicationStatuses = ['PENDING', 'ACCEPTED', 'REJECTED'];
-  const jobs = await prisma.job.findMany({ where: { companyId: company.id } });
+  const createdJobs = await prisma.job.findMany({ where: { companyId: company.id } });
   
-  for (let i = 0; i < jobs.length; i++) {
+  for (let i = 0; i < createdJobs.length; i++) {
     const existingApp = await prisma.application.findFirst({
-      where: { jobId: jobs[i].id, candidateId: candidate.id }
+      where: { jobId: createdJobs[i].id, candidateId: candidate.id }
     });
     
     if (!existingApp) {
       await prisma.application.create({
         data: {
-          jobId: jobs[i].id,
+          jobId: createdJobs[i].id,
           candidateId: candidate.id,
           status: applicationStatuses[i % applicationStatuses.length],
-          coverLetter: `I am very interested in the ${jobs[i].title} position and believe my skills align well with your requirements.`,
+          coverLetter: `I am very interested in the ${createdJobs[i].title} position and believe my skills align well with your requirements.`,
         },
       });
-      logger.info(`Application created for: ${jobs[i].title}`);
+      logger.info(`Application created for: ${createdJobs[i].title}`);
     }
   }
 
   // Create sample interviews for all jobs
   const interviewStatuses = ['SCHEDULED', 'COMPLETED', 'IN_PROGRESS'];
   
-  for (let i = 0; i < jobs.length; i++) {
+  for (let i = 0; i < createdJobs.length; i++) {
     const existingInterview = await prisma.interview.findFirst({
-      where: { jobId: jobs[i].id, candidateId: candidate.id }
+      where: { jobId: createdJobs[i].id, candidateId: candidate.id }
     });
     
     if (!existingInterview) {
       const interview = await prisma.interview.create({
         data: {
-          jobId: jobs[i].id,
+          jobId: createdJobs[i].id,
           candidateId: candidate.id,
           status: interviewStatuses[i % interviewStatuses.length],
           startedAt: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000),
@@ -221,7 +221,7 @@ async function main() {
           }
         },
       });
-      logger.info(`Interview created for: ${jobs[i].title} - Status: ${interviewStatuses[i % interviewStatuses.length]}`);
+      logger.info(`Interview created for: ${createdJobs[i].title} - Status: ${interviewStatuses[i % interviewStatuses.length]}`);
     }
   }
 

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { jobAPI } from '../../utils/api';
+import DashboardLayout from '../../components/DashboardLayout';
+import { employerMenu } from '../../config/menuConfig';
 import toast from 'react-hot-toast';
 import { 
   Briefcase, 
@@ -60,7 +62,8 @@ const CreateJob: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
+    <DashboardLayout menuItems={employerMenu} role="employer">
+      <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
         
         {/* Breadcrumb / Back button */}
@@ -255,6 +258,7 @@ const CreateJob: React.FC = () => {
         }
       `}</style>
     </div>
+    </DashboardLayout>
   );
 };
 

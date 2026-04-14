@@ -4,6 +4,8 @@ import { userAPI } from '../../utils/api';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import Loading from '../../components/Loading';
+import DashboardLayout from '../../components/DashboardLayout';
+import { candidateMenu } from '../../config/menuConfig';
 import { 
   User, 
   Phone, 
@@ -141,7 +143,8 @@ const CandidateProfile: React.FC = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-white py-10 px-4 md:px-8">
+    <DashboardLayout menuItems={candidateMenu} role="candidate">
+      <div className="min-h-screen bg-white py-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto">
         
         {/* Header with Progress */}
@@ -314,6 +317,7 @@ const CandidateProfile: React.FC = () => {
         }
       `}</style>
     </div>
+    </DashboardLayout>
   );
 };
 
