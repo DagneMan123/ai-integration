@@ -12,13 +12,20 @@ const fileFilter = (req, file, cb) => {
   const allowedVideoTypes = /webm|mp4|mov|avi/;
   
   const extname = path.extname(file.originalname).toLowerCase();
-  const isDocValid = allowedDocTypes.test(extname) && allowedDocTypes.test(file.mimetype);
-  const isVideoValid = allowedVideoTypes.test(extname) && file.mimetype.startsWith('video/');
+  const mimetype = file.mimetype.toLowerCase();
+  
+  const isDocValid = allowedDocTypes.test(extname) && (
+    allowedDocTypes.test(mimetype) || 
+    mimetype.includes('pdf') || 
+    mimetype.includes('word') ||
+    mimetype.includes('document')
+  );
+  const isVideoValid = allowedVideoTypes.test(extname) && mimetype.startsWith('video/');
 
   if (isDocValid || isVideoValid) {
     return cb(null, true);
   } else {
-    cb(new AppError('Invalid file type. Only JPEG, PNG, PDF, DOC, DOCX, WebM, MP4, MOV, AVI allowed', 400));
+    cb(new AppError(`Invalid file type. Only JPEG, PNG, PDF, DOC, DOCX, WebM, MP4, MOV, AVI allowed. Received: ${mimetype}`, 400));
   }
 };
 

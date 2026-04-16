@@ -102,8 +102,7 @@ const InterviewPayment: React.FC = () => {
 
   return (
     <DashboardLayout menuItems={candidateMenu} role="candidate">
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-10 px-4 md:px-8">
-        <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         
         {/* Header */}
         <div className="text-center mb-12">
@@ -288,7 +287,6 @@ const InterviewPayment: React.FC = () => {
           <p className="text-sm text-gray-600 font-medium">
             🔒 Your payment is secure and encrypted. No charges will be made until you confirm.
           </p>
-        </div>
         </div>
       </div>
     </DashboardLayout>

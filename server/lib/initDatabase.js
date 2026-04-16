@@ -102,6 +102,21 @@ async function initDatabase(prisma) {
       );
     `);
 
+    // Create documents table
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "documents" (
+        "id" SERIAL NOT NULL PRIMARY KEY,
+        "user_id" INTEGER NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "name" TEXT NOT NULL,
+        "type" TEXT NOT NULL,
+        "size" INTEGER NOT NULL,
+        "url" TEXT NOT NULL,
+        "is_private" BOOLEAN NOT NULL DEFAULT false,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Create indexes for saved_jobs
     await prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS "saved_jobs_user_id_idx" ON "saved_jobs"("user_id");
@@ -118,6 +133,15 @@ async function initDatabase(prisma) {
 
     await prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS "job_alerts_job_id_idx" ON "job_alerts"("job_id");
+    `);
+
+    // Create indexes for documents
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "documents_user_id_idx" ON "documents"("user_id");
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "documents_created_at_idx" ON "documents"("created_at");
     `);
 
     logger.info('✅ Database tables initialized successfully');

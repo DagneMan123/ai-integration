@@ -95,8 +95,7 @@ const SavedJobs: React.FC = () => {
 
   return (
     <DashboardLayout menuItems={candidateMenu} role="candidate">
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-6">
           {/* Header Section */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -239,7 +238,6 @@ const SavedJobs: React.FC = () => {
               <p>Showing {sortedJobs.length} of {savedJobs.length} saved jobs</p>
             </div>
           )}
-        </div>
       </div>
     </DashboardLayout>
   );

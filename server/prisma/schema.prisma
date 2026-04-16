@@ -48,6 +48,7 @@ model User {
   interviewResponses InterviewResponse[]
   savedJobs        SavedJob[]
   jobAlerts        JobAlert[]
+  documents        Document[]
 
   @@map("users")
 }
@@ -584,4 +585,22 @@ model JobAlert {
   @@index([userId])
   @@index([jobId])
   @@map("job_alerts")
+}
+
+model Document {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  name      String
+  type      String
+  size      Int
+  url       String
+  isPrivate Boolean   @default(false) @map("is_private")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("documents")
 }

@@ -87,10 +87,8 @@ const AdminAnalytics: React.FC = () => {
   
   return (
     <DashboardLayout menuItems={adminMenu} role="admin">
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="space-y-8 animate-in fade-in duration-700 font-sans">
-      {/* Header Section */}
+      <div className="space-y-8 animate-in fade-in duration-700 font-sans">
+        {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Platform Analytics</h1>
@@ -262,8 +260,6 @@ const AdminAnalytics: React.FC = () => {
           </div>
         </>
       )}
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   );

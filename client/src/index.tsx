@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import './index.css';
 import App from './App';
+import './utils/chunkErrorHandler';
 
 // ለወደፊቱ ሪፖርት ለመከታተል (አማራጭ)
 // import reportWebVitals from './reportWebVitals';

@@ -6,6 +6,7 @@ import { SidebarProvider } from './context/SidebarContext';
 import Loading from './components/Loading';
 import GlobalSidebars from './components/GlobalSidebars';
 import Chatbot from './components/Chatbot';
+import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -90,13 +91,14 @@ const App: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <div className="min-h-screen bg-gray-50">
-          <Navbar />
-          <Toaster position="top-right" />
-          <GlobalSidebars />
-        
-          <Routes>
+      <ChunkErrorBoundary>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <div className="min-h-screen bg-gray-50">
+            <Navbar />
+            <Toaster position="top-right" />
+            <GlobalSidebars />
+          
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -701,6 +703,7 @@ const App: React.FC = () => {
           <Chatbot />
         </div>
       </Router>
+      </ChunkErrorBoundary>
     </SidebarProvider>
   );
 };

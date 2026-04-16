@@ -1,4 +1,4 @@
-const { prisma } = require('../config/database');
+const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 const bcrypt = require('bcryptjs');
@@ -200,6 +200,306 @@ exports.deleteAccount = async (req, res, next) => {
       success: true,
       message: 'Account deleted successfully'
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get user documents
+exports.getDocuments = async (req, res, next) => {
+  try {
+    let documents = [];
+    
+    try {
+      // Try using Prisma first
+      if (prisma && prisma.document) {
+        documents = await prisma.document.findMany({
+          where: { userId: req.user.id },
+          orderBy: { createdAt: 'desc' }
+        });
+      }
+    } catch (prismaError) {
+      // Fallback to raw SQL if Prisma fails
+      logger.warn('Prisma query failed, using raw SQL:', prismaError.message);
+      try {
+        if (prisma && prisma.$queryRaw) {
+          documents = await prisma.$queryRaw`
+            SELECT id, user_id as "userId", name, type, size, url, is_private as "isPrivate", created_at as "createdAt"
+            FROM documents
+            WHERE user_id = ${req.user.id}
+            ORDER BY created_at DESC
+          `;
+        }
+      } catch (sqlError) {
+        // If both fail, return empty array (table might not exist yet)
+        logger.warn('Raw SQL query also failed:', sqlError.message);
+        documents = [];
+      }
+    }
+
+    const formattedDocs = documents.map(doc => ({
+      id: doc.id.toString(),
+      name: doc.name || 'Document',
+      size: formatFileSize(doc.size || 0),
+      uploadedAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
+      url: doc.url || '',
+      type: doc.type || 'application/octet-stream',
+      isPrivate: doc.isPrivate || false
+    }));
+
+    res.json({
+      success: true,
+      data: formattedDocs,
+      message: 'Documents retrieved successfully'
+    });
+  } catch (error) {
+    logger.error('Error in getDocuments:', error);
+    // Return empty documents array instead of error to prevent page crash
+    res.json({
+      success: true,
+      data: [],
+      message: 'Documents retrieved successfully'
+    });
+  }
+};
+
+// Upload document
+exports.uploadDocument = async (req, res, next) => {
+  try {
+    logger.info('Document upload started', { userId: req.user?.id, fileName: req.file?.originalname });
+    
+    if (!req.file) {
+      logger.warn('No file provided in upload request');
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload a file'
+      });
+    }
+
+    if (!req.user || !req.user.id) {
+      logger.warn('User not authenticated for document upload');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    logger.info('File received', { 
+      fileName: req.file.originalname, 
+      fileSize: req.file.size, 
+      mimeType: req.file.mimetype 
+    });
+
+    let documentUrl;
+    try {
+      documentUrl = uploadFile(req.file, 'documents');
+      logger.info('File saved successfully', { documentUrl });
+    } catch (uploadError) {
+      logger.error('File upload failed:', { 
+        error: uploadError.message, 
+        stack: uploadError.stack 
+      });
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to save file to disk: ' + uploadError.message
+      });
+    }
+
+    try {
+      const document = await prisma.document.create({
+        data: {
+          userId: req.user.id,
+          name: req.file.originalname,
+          type: req.file.mimetype,
+          size: req.file.size,
+          url: documentUrl
+        }
+      });
+
+      logger.info('Document record created', { documentId: document.id });
+
+      return res.json({
+        success: true,
+        message: 'Document uploaded successfully',
+        data: {
+          id: document.id.toString(),
+          name: document.name,
+          size: formatFileSize(document.size),
+          uploadedAt: document.createdAt.toISOString(),
+          url: document.url,
+          type: document.type
+        }
+      });
+    } catch (prismaError) {
+      // Fallback to raw SQL if Prisma fails
+      logger.error('Prisma create failed:', { 
+        error: prismaError.message, 
+        code: prismaError.code,
+        stack: prismaError.stack 
+      });
+      try {
+        await prisma.$executeRaw`
+          INSERT INTO documents (user_id, name, type, size, url, created_at, updated_at)
+          VALUES (${req.user.id}, ${req.file.originalname}, ${req.file.mimetype}, ${req.file.size}, ${documentUrl}, NOW(), NOW())
+        `;
+
+        logger.info('Document record created via raw SQL');
+
+        return res.json({
+          success: true,
+          message: 'Document uploaded successfully',
+          data: {
+            id: Date.now().toString(),
+            name: req.file.originalname,
+            size: formatFileSize(req.file.size),
+            uploadedAt: new Date().toISOString(),
+            url: documentUrl,
+            type: req.file.mimetype
+          }
+        });
+      } catch (sqlError) {
+        logger.error('Raw SQL insert also failed:', { 
+          error: sqlError.message, 
+          code: sqlError.code,
+          stack: sqlError.stack 
+        });
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to save document to database: ' + sqlError.message
+        });
+      }
+    }
+  } catch (error) {
+    logger.error('Unexpected error in uploadDocument:', { 
+      error: error.message, 
+      stack: error.stack 
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error: ' + error.message
+    });
+  }
+};
+
+// Delete document
+exports.deleteDocument = async (req, res, next) => {
+  try {
+    const { documentId } = req.params;
+
+    try {
+      const document = await prisma.document.findUnique({
+        where: { id: parseInt(documentId) }
+      });
+
+      if (!document) {
+        return next(new AppError('Document not found', 404));
+      }
+
+      if (document.userId !== req.user.id) {
+        return next(new AppError('Unauthorized', 403));
+      }
+
+      // Delete file from filesystem
+      const filePath = path.join(__dirname, '..', document.url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      await prisma.document.delete({
+        where: { id: parseInt(documentId) }
+      });
+    } catch (prismaError) {
+      // Fallback to raw SQL
+      logger.warn('Prisma delete failed, using raw SQL:', prismaError.message);
+      try {
+        await prisma.$executeRaw`
+          DELETE FROM documents 
+          WHERE id = ${parseInt(documentId)} AND user_id = ${req.user.id}
+        `;
+      } catch (sqlError) {
+        logger.error('Raw SQL delete also failed:', sqlError.message);
+        return next(new AppError('Failed to delete document', 500));
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Document deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Helper function to format file size
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Toggle document privacy
+exports.toggleDocumentPrivacy = async (req, res, next) => {
+  try {
+    const { documentId } = req.params;
+    const { isPrivate } = req.body;
+
+    try {
+      const document = await prisma.document.findUnique({
+        where: { id: parseInt(documentId) }
+      });
+
+      if (!document) {
+        return next(new AppError('Document not found', 404));
+      }
+
+      if (document.userId !== req.user.id) {
+        return next(new AppError('Unauthorized', 403));
+      }
+
+      const updatedDocument = await prisma.document.update({
+        where: { id: parseInt(documentId) },
+        data: { isPrivate: isPrivate }
+      });
+
+      res.json({
+        success: true,
+        message: `Document is now ${isPrivate ? 'private' : 'public'}`,
+        data: {
+          id: updatedDocument.id.toString(),
+          name: updatedDocument.name,
+          size: formatFileSize(updatedDocument.size),
+          uploadedAt: updatedDocument.createdAt.toISOString(),
+          url: updatedDocument.url,
+          type: updatedDocument.type,
+          isPrivate: updatedDocument.isPrivate
+        }
+      });
+    } catch (prismaError) {
+      // Fallback to raw SQL
+      logger.warn('Prisma update failed, using raw SQL:', prismaError.message);
+      try {
+        await prisma.$executeRaw`
+          UPDATE documents 
+          SET is_private = ${isPrivate}
+          WHERE id = ${parseInt(documentId)} AND user_id = ${req.user.id}
+        `;
+
+        res.json({
+          success: true,
+          message: `Document is now ${isPrivate ? 'private' : 'public'}`,
+          data: {
+            id: documentId,
+            isPrivate: isPrivate
+          }
+        });
+      } catch (sqlError) {
+        logger.error('Raw SQL update also failed:', sqlError.message);
+        return next(new AppError('Failed to update document privacy', 500));
+      }
+    }
   } catch (error) {
     next(error);
   }

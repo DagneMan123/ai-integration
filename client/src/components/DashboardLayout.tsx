@@ -348,6 +348,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
               <AccountMenu 
                 userName={user?.firstName || 'User'} 
                 userRole={role}
+                userProfilePicture={user?.profilePicture}
               />
             </div>
           </div>

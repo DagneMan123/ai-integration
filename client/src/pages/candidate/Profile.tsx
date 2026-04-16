@@ -15,7 +15,10 @@ import {
   Settings, 
   Camera,
   Save,
-  Info
+  Info,
+  CheckCircle,
+  AlertCircle,
+  Loader
 } from 'lucide-react';
 
 interface ProfileFormData {
@@ -38,8 +41,10 @@ const CandidateProfile: React.FC = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'professional' | 'account'>('personal');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<ProfileFormData | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // ፕሮፋይሉ ምን ያህል እንደተሞላ ለመቁጠር (UX)
   const watchedFields = watch();
@@ -60,7 +65,9 @@ const CandidateProfile: React.FC = () => {
       setValue('experience', u.experience || '');
       setValue('education', u.education || '');
       setValue('bio', u.bio || '');
+      setHasChanges(false);
     } catch (error) {
+      console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
@@ -81,12 +88,15 @@ const CandidateProfile: React.FC = () => {
   const onSubmit = async (data: ProfileFormData) => {
     setSaving(true);
     try {
-      await userAPI.updateProfile(data);
+      const response = await userAPI.updateProfile(data);
       updateUser(data);
+      setLastSaved(new Date());
       toast.success('Profile updated successfully!');
       setHasChanges(false);
+      await fetchProfile();
     } catch (error: any) {
-      toast.error('Failed to update profile');
+      console.error('Error updating profile:', error);
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -113,6 +123,13 @@ const CandidateProfile: React.FC = () => {
       return;
     }
 
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
     setUploadingPhoto(true);
     try {
       const formData = new FormData();
@@ -128,10 +145,15 @@ const CandidateProfile: React.FC = () => {
       const avatarUrl = response.data?.data?.avatarUrl;
       if (avatarUrl) {
         updateUser({ ...user, profilePicture: avatarUrl });
+        setPhotoPreview(null);
       }
+      
+      // Refresh profile to ensure everything is synced
+      await fetchProfile();
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error(error.response?.data?.message || 'Failed to upload photo');
+      setPhotoPreview(null);
     } finally {
       setUploadingPhoto(false);
       if (fileInputRef.current) {
@@ -150,17 +172,26 @@ const CandidateProfile: React.FC = () => {
         {/* Header with Progress */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Profile Settings</h1>
-            <p className="text-gray-500 font-medium">Keep your professional information up to date</p>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight">Profile Settings</h1>
+            <p className="text-gray-600 font-medium mt-2">Keep your professional information up to date</p>
+            {lastSaved && (
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                <CheckCircle className="w-3 h-3 text-green-600" />
+                Last saved {new Date(lastSaved).toLocaleTimeString()}
+              </p>
+            )}
           </div>
-          <div className="w-full md:w-64 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-            <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
+          <div className="w-full md:w-72 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+            <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">
               <span>Profile Completion</span>
-              <span className="text-blue-600">{calculateCompletion()}%</span>
+              <span className="text-blue-600 text-lg">{calculateCompletion()}%</span>
             </div>
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${calculateCompletion()}%` }} />
+            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-500" style={{ width: `${calculateCompletion()}%` }} />
             </div>
+            <p className="text-[11px] text-gray-500 mt-3 font-medium">
+              {calculateCompletion() === 100 ? '✓ Profile complete!' : `${100 - calculateCompletion()} fields remaining`}
+            </p>
           </div>
         </div>
 
@@ -179,22 +210,28 @@ const CandidateProfile: React.FC = () => {
               
               {activeTab === 'personal' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center gap-6 mb-4">
+                  <div className="flex items-center gap-6 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
                     <div className="relative group">
-                      <div className="w-24 h-24 bg-blue-50 rounded-3xl flex items-center justify-center text-blue-600 border-2 border-dashed border-blue-200 group-hover:bg-blue-100 transition-colors overflow-hidden">
-                        {user?.profilePicture ? (
+                      <div className="w-28 h-28 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center text-blue-600 border-2 border-dashed border-blue-300 group-hover:bg-blue-50 transition-colors overflow-hidden shadow-sm">
+                        {photoPreview ? (
+                          <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                        ) : user?.profilePicture ? (
                           <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                          <User className="w-10 h-10" />
+                          <User className="w-12 h-12" />
                         )}
                       </div>
                       <button 
                         type="button" 
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingPhoto}
-                        className="absolute -bottom-2 -right-2 p-2 bg-white rounded-xl shadow-lg border border-gray-100 text-gray-500 hover:text-blue-600 disabled:opacity-50 transition-all"
+                        className="absolute -bottom-2 -right-2 p-3 bg-white rounded-xl shadow-lg border border-gray-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-all hover:shadow-xl"
                       >
-                        <Camera className="w-4 h-4" />
+                        {uploadingPhoto ? (
+                          <Loader className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Camera className="w-5 h-5" />
+                        )}
                       </button>
                       <input
                         ref={fileInputRef}
@@ -204,9 +241,13 @@ const CandidateProfile: React.FC = () => {
                         className="hidden"
                       />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">Profile Photo</h3>
-                      <p className="text-xs text-gray-400 font-medium">{uploadingPhoto ? 'Uploading...' : 'PNG, JPG up to 5MB'}</p>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 text-lg">Profile Photo</h3>
+                      <p className="text-sm text-gray-600 mt-1">Upload a professional photo</p>
+                      <p className="text-xs text-gray-500 font-medium mt-2">{uploadingPhoto ? '⏳ Uploading...' : '✓ PNG, JPG up to 5MB'}</p>
+                      <div className="mt-3 flex gap-2">
+                        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">Recommended: 400x400px</span>
+                      </div>
                     </div>
                   </div>
 
@@ -277,16 +318,36 @@ const CandidateProfile: React.FC = () => {
               )}
 
               {/* Bottom Actions */}
-              <div className="mt-12 pt-8 border-t border-gray-50 flex items-center justify-between">
-                <p className="text-xs font-bold text-gray-400 uppercase italic">
-                  {hasChanges ? "● You have unsaved changes" : "✓ Everything is up to date"}
-                </p>
+              <div className="mt-12 pt-8 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {hasChanges ? (
+                    <>
+                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                      <p className="text-sm font-bold text-amber-600">You have unsaved changes</p>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <p className="text-sm font-bold text-green-600">Everything is up to date</p>
+                    </>
+                  )}
+                </div>
                 <button
                   type="submit"
                   disabled={saving || !hasChanges}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:opacity-50 active:scale-95"
+                  className="flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                 >
-                  {saving ? "Saving..." : <><Save className="w-5 h-5" /> Save Changes</>}
+                  {saving ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -298,22 +359,28 @@ const CandidateProfile: React.FC = () => {
         .form-input-pro {
           width: 100%;
           padding: 0.875rem 1rem;
-          border: 1px solid #e2e8f0;
+          border: 1.5px solid #e5e7eb;
           border-radius: 0.875rem;
           font-size: 0.95rem;
           font-weight: 500;
-          color: #1a202c;
+          color: #1f2937;
           transition: all 0.2s;
           outline: none;
+          background-color: #ffffff;
         }
         .form-input-pro:focus {
           border-color: #2563eb;
-          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
           background-color: #fff;
         }
         .form-input-pro::placeholder {
-          color: #a0aec0;
+          color: #9ca3af;
           font-weight: 400;
+        }
+        .form-input-pro:disabled {
+          background-color: #f3f4f6;
+          color: #9ca3af;
+          cursor: not-allowed;
         }
       `}</style>
     </div>
@@ -327,8 +394,10 @@ const TabButton = ({ active, onClick, icon, label }: any) => (
   <button
     type="button"
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl font-bold transition-all ${
-      active ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+    className={`w-full flex items-center gap-3 px-5 py-4 rounded-xl font-bold transition-all duration-200 ${
+      active 
+        ? 'bg-white text-blue-600 shadow-md border border-blue-200' 
+        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
     }`}
   >
     {icon}
@@ -337,13 +406,18 @@ const TabButton = ({ active, onClick, icon, label }: any) => (
 );
 
 const InputField = ({ label, subLabel, error, children }: any) => (
-  <div className="space-y-1.5 w-full">
-    <div className="flex justify-between items-end ml-1">
-      <label className="text-sm font-bold text-gray-700">{label}</label>
-      {subLabel && <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{subLabel}</span>}
+  <div className="space-y-2 w-full">
+    <div className="flex justify-between items-end">
+      <label className="text-sm font-bold text-gray-800">{label}</label>
+      {subLabel && <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{subLabel}</span>}
     </div>
     {children}
-    {error && <p className="text-xs font-bold text-red-500 ml-1">{error}</p>}
+    {error && (
+      <div className="flex items-center gap-1 text-xs font-bold text-red-600 mt-1">
+        <AlertCircle className="w-3 h-3" />
+        {error}
+      </div>
+    )}
   </div>
 );
 

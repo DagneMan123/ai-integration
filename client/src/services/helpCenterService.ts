@@ -1,4 +1,4 @@
-import api from '../utils/api';
+import apiService from './apiService';
 
 // Fallback data when server is unavailable
 const FALLBACK_ARTICLES = [
@@ -29,55 +29,58 @@ const FALLBACK_CATEGORIES = [
 ];
 
 export const helpCenterAPI = {
-  getArticles: async (category?: string, search?: string) => {
+  getArticles: async (category?: string, search?: string): Promise<any[]> => {
     try {
       const params = new URLSearchParams();
       if (category) params.append('category', category);
       if (search) params.append('search', search);
-      const response = await api.get(`/help-center/articles?${params.toString()}`);
-      return response.data;
+      const response = await apiService.get<any[]>(`/help-center/articles?${params.toString()}`);
+      if (Array.isArray(response)) return response;
+      return FALLBACK_ARTICLES;
     } catch (error) {
       console.warn('Help center unavailable, using fallback data');
-      return { data: FALLBACK_ARTICLES };
+      return FALLBACK_ARTICLES;
     }
   },
 
-  getArticleById: async (id: string) => {
+  getArticleById: async (id: string): Promise<any> => {
     try {
-      const response = await api.get(`/help-center/articles/${id}`);
-      return response.data;
+      const response = await apiService.get(`/help-center/articles/${id}`);
+      if (response) return response;
+      return FALLBACK_ARTICLES.find(a => a.id === id) || null;
     } catch (error) {
-      return { data: FALLBACK_ARTICLES.find(a => a.id === id) || null };
+      return FALLBACK_ARTICLES.find(a => a.id === id) || null;
     }
   },
 
-  markArticleHelpful: async (id: string, helpful: boolean) => {
+  markArticleHelpful: async (id: string, helpful: boolean): Promise<any> => {
     try {
-      const response = await api.post(`/help-center/articles/${id}/helpful`, { helpful });
-      return response.data;
+      const response = await apiService.post(`/help-center/articles/${id}/helpful`, { helpful });
+      return response;
     } catch (error) {
       return { success: true };
     }
   },
 
-  getCategories: async () => {
+  getCategories: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/help-center/categories');
-      return response.data;
+      const response = await apiService.get<any[]>('/help-center/categories');
+      if (Array.isArray(response)) return response;
+      return FALLBACK_CATEGORIES;
     } catch (error) {
       console.warn('Help center unavailable, using fallback categories');
-      return { data: FALLBACK_CATEGORIES };
+      return FALLBACK_CATEGORIES;
     }
   },
 
-  submitSupportTicket: async (subject: string, message: string, category: string) => {
+  submitSupportTicket: async (subject: string, message: string, category: string): Promise<any> => {
     try {
-      const response = await api.post('/help-center/support-ticket', {
+      const response = await apiService.post('/help-center/support-ticket', {
         subject,
         message,
         category
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.warn('Support ticket submission failed, will retry when server is available');
       return { success: false, message: 'Server unavailable' };

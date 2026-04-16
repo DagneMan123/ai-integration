@@ -59,9 +59,7 @@ const JobCandidates: React.FC = () => {
 
   return (
     <DashboardLayout menuItems={employerMenu} role="employer">
-      <div className="min-h-screen bg-[#f8fafc] py-10 px-4 md:px-8">
-        <div className="max-w-6xl mx-auto">
-
+      <div className="space-y-6">
         {/* Header & Back Navigation */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
           <div className="space-y-2">
@@ -182,7 +180,6 @@ const JobCandidates: React.FC = () => {
               <p className="text-gray-500 font-medium">Candidates will appear here once they start applying.</p>
             </div>
           )}
-        </div>
         </div>
       </div>
     </DashboardLayout>

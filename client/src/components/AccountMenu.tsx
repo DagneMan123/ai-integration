@@ -6,9 +6,10 @@ import { User, Settings, LogOut, Mail, Shield, Clock, X } from 'lucide-react';
 interface AccountMenuProps {
   userName: string;
   userRole: 'admin' | 'employer' | 'candidate';
+  userProfilePicture?: string;
 }
 
-const AccountMenu: React.FC<AccountMenuProps> = ({ userName, userRole }) => {
+const AccountMenu: React.FC<AccountMenuProps> = ({ userName, userRole, userProfilePicture }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -68,8 +69,12 @@ const AccountMenu: React.FC<AccountMenuProps> = ({ userName, userRole }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
       >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-          {userName.charAt(0).toUpperCase()}
+        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+          {userProfilePicture ? (
+            <img src={userProfilePicture} alt={userName} className="w-full h-full object-cover" />
+          ) : (
+            userName.charAt(0).toUpperCase()
+          )}
         </div>
         <div className="text-left hidden sm:block">
           <p className="text-sm font-bold text-slate-900">{userName}</p>
@@ -83,8 +88,12 @@ const AccountMenu: React.FC<AccountMenuProps> = ({ userName, userRole }) => {
           {/* Header */}
           <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">
-                {userName.charAt(0).toUpperCase()}
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                {userProfilePicture ? (
+                  <img src={userProfilePicture} alt={userName} className="w-full h-full object-cover" />
+                ) : (
+                  userName.charAt(0).toUpperCase()
+                )}
               </div>
               <div>
                 <p className="font-bold text-sm">{userName}</p>
@@ -202,8 +211,12 @@ const AccountMenu: React.FC<AccountMenuProps> = ({ userName, userRole }) => {
               {/* Profile Info Card */}
               <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-100">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
-                    {userName.charAt(0).toUpperCase()}
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl overflow-hidden">
+                    {userProfilePicture ? (
+                      <img src={userProfilePicture} alt={userName} className="w-full h-full object-cover" />
+                    ) : (
+                      userName.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div>
                     <p className="text-lg font-bold text-slate-900">{userName}</p>

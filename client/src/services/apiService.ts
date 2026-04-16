@@ -127,31 +127,37 @@ class ApiService {
   private handleError(error: AxiosError<ApiErrorResponse>) {
     const status = error.response?.status;
     const message = error.response?.data?.message || error.message;
+    const url = error.config?.url || '';
+
+    // Don't show error toast for certain endpoints that have fallback data
+    const silentErrorEndpoints = ['/help-center/categories', '/users/documents'];
+    const shouldSilence = silentErrorEndpoints.some(endpoint => url.includes(endpoint));
 
     switch (status) {
       case 400:
-        toast.error(message || 'Invalid request');
+        if (!shouldSilence) toast.error(message || 'Invalid request');
         break;
       case 401:
         // Handled by interceptor
         break;
       case 403:
-        toast.error('Access denied');
+        if (!shouldSilence) toast.error('Access denied');
         break;
       case 404:
-        toast.error('Resource not found');
+        if (!shouldSilence) toast.error('Resource not found');
         break;
       case 409:
-        toast.error(message || 'Resource already exists');
+        if (!shouldSilence) toast.error(message || 'Resource already exists');
         break;
       case 429:
-        toast.error('Too many requests. Please try again later.');
+        if (!shouldSilence) toast.error('Too many requests. Please try again later.');
         break;
       case 500:
-        toast.error('Server error. Please try again later.');
+      case 503:
+        if (!shouldSilence) toast.error('Server error. Please try again later.');
         break;
       default:
-        if (message) toast.error(message);
+        if (message && !shouldSilence) toast.error(message);
     }
 
     // Log error in development
@@ -159,6 +165,7 @@ class ApiService {
       logger.error('API Error:', {
         status,
         message,
+        url,
         data: error.response?.data,
       });
     }
@@ -171,7 +178,7 @@ class ApiService {
   }
 
   // POST request
-  async post<T>(url: string, data?: Record<string, unknown>, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(url: string, data?: Record<string, unknown> | FormData, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.post<ApiSuccessResponse<T>>(url, data, config);
     return response.data.data;
   }

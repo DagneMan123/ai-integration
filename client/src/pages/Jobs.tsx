@@ -2,6 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { jobAPI } from '../utils/api';
 import { Job } from '../types';
+import { useAuthStore } from '../store/authStore';
+import DashboardLayout from '../components/DashboardLayout';
+import { candidateMenu } from '../config/menuConfig';
 import { 
   Search, 
   MapPin, 
@@ -9,15 +12,64 @@ import {
   Filter, 
   ChevronRight, 
   ShieldCheck, 
-  Zap
+  Zap,
+  Heart
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import apiService from '../services/apiService';
 
 const Jobs: React.FC = () => {
+  const { user } = useAuthStore();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+  const [savingJobId, setSavingJobId] = useState<string | null>(null);
+
+  const fetchSavedJobs = async () => {
+    if (!user) return;
+    try {
+      const data = await apiService.get<any[]>('/saved-jobs');
+      const ids = new Set((data || []).map(sj => (sj.job?.id || sj.jobId)?.toString()));
+      setSavedJobIds(ids);
+    } catch (error) {
+      console.error('Error fetching saved jobs:', error);
+    }
+  };
+
+  const handleSaveJob = async (e: React.MouseEvent, jobId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error('Please log in to save jobs');
+      return;
+    }
+
+    setSavingJobId(jobId);
+    try {
+      if (savedJobIds.has(jobId)) {
+        await apiService.delete(`/saved-jobs/${jobId}`);
+        setSavedJobIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(jobId);
+          return newSet;
+        });
+        toast.success('Job removed from saved');
+      } else {
+        await apiService.post('/saved-jobs', { jobId });
+        setSavedJobIds(prev => new Set(prev).add(jobId));
+        toast.success('Job saved!');
+      }
+    } catch (error) {
+      console.error('Error saving job:', error);
+      toast.error('Failed to save job');
+    } finally {
+      setSavingJobId(null);
+    }
+  };
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -60,6 +112,9 @@ const Jobs: React.FC = () => {
 
       console.log('Normalized jobs:', normalizedJobs);
       setJobs(normalizedJobs);
+      
+      // Fetch saved jobs status
+      await fetchSavedJobs();
     } catch (error: any) {
       console.error('Error fetching jobs:', error);
       setError('Failed to load jobs. Please try again.');
@@ -67,7 +122,7 @@ const Jobs: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, experienceLevel]);
+  }, [search, experienceLevel, user]);
 
   useEffect(() => {
     // Debounce: wait 500ms after user stops typing before fetching
@@ -78,9 +133,8 @@ const Jobs: React.FC = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [search, experienceLevel, fetchJobs]);
 
-  return (
-    <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
+  const content = (
+    <div className="space-y-6">
         
         {/* Header Section */}
         <div className="mb-12 text-center md:text-left">
@@ -177,6 +231,20 @@ const Jobs: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col items-end gap-4">
+                    <button
+                      onClick={(e) => handleSaveJob(e, job.id)}
+                      disabled={savingJobId === job.id}
+                      className="p-2 rounded-full hover:bg-red-50 transition-colors"
+                      title={savedJobIds.has(job.id) ? 'Remove from saved' : 'Save job'}
+                    >
+                      <Heart
+                        className={`w-6 h-6 transition-all ${
+                          savedJobIds.has(job.id)
+                            ? 'fill-red-500 text-red-500'
+                            : 'text-gray-300 hover:text-red-500'
+                        }`}
+                      />
+                    </button>
                     <div className="hidden md:flex flex-wrap justify-end gap-2 max-w-[300px]">
                       {job.requiredSkills?.slice(0, 3).map((skill, idx) => (
                         <span key={idx} className="px-3 py-1 bg-gray-50 text-gray-400 text-[11px] font-bold rounded-lg border border-gray-100">
@@ -205,6 +273,23 @@ const Jobs: React.FC = () => {
             </div>
           )}
         </div>
+    </div>
+  );
+
+  // If user is logged in as candidate, show with sidebar
+  if (user && user.role === 'candidate') {
+    return (
+      <DashboardLayout menuItems={candidateMenu} role="candidate">
+        {content}
+      </DashboardLayout>
+    );
+  }
+
+  // Otherwise show without sidebar (public view)
+  return (
+    <div className="min-h-screen bg-[#f8fafc] py-12 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        {content}
       </div>
     </div>
   );

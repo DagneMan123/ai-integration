@@ -28,8 +28,7 @@ const HelpCenter: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await helpCenterAPI.getArticles();
-        const articles = response.data || [];
+        const articles = await helpCenterAPI.getArticles();
         setFaqs(articles.map((article: any) => ({
           id: article.id,
           question: article.title,
