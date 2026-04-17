@@ -35,10 +35,6 @@ const SystemCheck: React.FC = () => {
   const [expandedCheck, setExpandedCheck] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(true);
 
-  useEffect(() => {
-    runSystemChecks();
-  }, []);
-
   const testCamera = async () => {
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -107,6 +103,10 @@ const SystemCheck: React.FC = () => {
       setIsChecking(false);
     }
   };
+
+  useEffect(() => {
+    runSystemChecks();
+  }, []);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {

@@ -4,6 +4,8 @@
 
 let chunkFailedMessage = false;
 
+export {};
+
 window.addEventListener('error', (event) => {
   // Check if it's a chunk loading error
   if (/Loading chunk \d+ failed/g.test(event.message)) {

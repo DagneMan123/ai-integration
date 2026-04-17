@@ -21,13 +21,38 @@ const InterviewReport: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchReport = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await interviewAPI.getReport(id!);
-      setReport(response.data.data);
-    } catch (error) {
-      console.error('Failed to fetch report', error);
+      const data = response.data.data as any;
+      
+      if (!data) {
+        setError('No report data found');
+        return;
+      }
+      
+      // If interview is completed but evaluation is missing, trigger evaluation generation
+      if (data?.status === 'COMPLETED' && !data?.evaluation && !data?.aiEvaluation) {
+        try {
+          await interviewAPI.complete(id!);
+          // Fetch again to get the evaluation
+          const retryResponse = await interviewAPI.getReport(id!);
+          setReport(retryResponse.data.data);
+        } catch (completeError) {
+          console.error('Error generating evaluation:', completeError);
+          // Still show the report even if evaluation generation fails
+          setReport(data);
+        }
+      } else {
+        setReport(data);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch report', err);
+      setError(err.response?.data?.message || 'Failed to load report');
     } finally {
       setLoading(false);
     }
@@ -38,6 +63,15 @@ const InterviewReport: React.FC = () => {
   }, [id, fetchReport]);
 
   if (loading) return <Loading />;
+  
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+      <AlertCircle className="w-16 h-16 text-red-300 mb-4" />
+      <p className="text-xl font-bold text-gray-900">{error}</p>
+      <Link to="/candidate/interviews" className="mt-4 text-blue-600 hover:underline">Back to interviews</Link>
+    </div>
+  );
+  
   if (!report) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <AlertCircle className="w-16 h-16 text-gray-300 mb-4" />
@@ -46,9 +80,22 @@ const InterviewReport: React.FC = () => {
     </div>
   );
 
+  // Extract evaluation data with proper defaults
   const interview = report?.interview || report;
-  const evalData = interview?.aiEvaluation || interview?.evaluation || {};
-  const overallScore = evalData?.overallScore || 0;
+  const evalData = interview?.evaluation || interview?.aiEvaluation || {};
+  
+  // Ensure overallScore is a number
+  const overallScore = Math.min(100, Math.max(0, parseInt(evalData?.overall_score || interview?.overallScore || 0)));
+  const technicalScore = Math.min(100, Math.max(0, parseInt(evalData?.technical_score || 0)));
+  const communicationScore = Math.min(100, Math.max(0, parseInt(evalData?.communication_score || 0)));
+  const confidenceScore = Math.min(100, Math.max(0, parseInt(evalData?.confidence_score || 0)));
+  const problemSolvingScore = Math.min(100, Math.max(0, parseInt(evalData?.problem_solving_score || 0)));
+  
+  const strengths = Array.isArray(evalData?.strengths) ? evalData.strengths : [];
+  const weaknesses = Array.isArray(evalData?.weaknesses) ? evalData.weaknesses : [];
+  const recommendation = evalData?.recommendation || 'Processing';
+  const feedbackSummary = evalData?.feedback_summary || 'Interview evaluation in progress...';
+  const hiringDecision = evalData?.hiringDecision || 'under_review';
 
   return (
     <div className="min-h-screen bg-white py-10 px-4 md:px-8">
@@ -99,7 +146,7 @@ const InterviewReport: React.FC = () => {
                 {typeof interview.jobId === 'object' ? interview.jobId.title : 'Interview Results'}
               </h1>
               <p className="text-gray-500 text-lg leading-relaxed max-w-2xl">
-                {evalData?.recommendation || "Our AI has completed the analysis of your performance across technical, communication, and structural benchmarks."}
+                {feedbackSummary}
               </p>
             </div>
           </div>
@@ -107,10 +154,10 @@ const InterviewReport: React.FC = () => {
 
         {/* Detailed Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricCard title="Technical" score={evalData?.technicalScore} icon={<Target className="text-blue-600" />} color="blue" />
-          <MetricCard title="Communication" score={evalData?.communicationScore} icon={<MessageSquare className="text-purple-600" />} color="purple" />
-          <MetricCard title="Confidence" score={evalData?.confidenceScore} icon={<TrendingUp className="text-emerald-600" />} color="emerald" />
-          <MetricCard title="Problem Solving" score={evalData?.problemSolvingScore} icon={<Brain className="text-orange-600" />} color="orange" />
+          <MetricCard title="Technical" score={technicalScore} icon={<Target className="text-blue-600" />} color="blue" />
+          <MetricCard title="Communication" score={communicationScore} icon={<MessageSquare className="text-purple-600" />} color="purple" />
+          <MetricCard title="Confidence" score={confidenceScore} icon={<TrendingUp className="text-emerald-600" />} color="emerald" />
+          <MetricCard title="Problem Solving" score={problemSolvingScore} icon={<Brain className="text-orange-600" />} color="orange" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -121,12 +168,16 @@ const InterviewReport: React.FC = () => {
                 <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Strengths
               </h3>
               <div className="grid md:grid-cols-2 gap-4">
-                {evalData?.strengths?.map((s: string, i: number) => (
-                  <div key={i} className="flex gap-3 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-50">
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 flex-shrink-0" />
-                    <p className="text-sm font-semibold text-emerald-900 leading-relaxed">{s}</p>
-                  </div>
-                ))}
+                {strengths.length > 0 ? (
+                  strengths.map((s: string, i: number) => (
+                    <div key={i} className="flex gap-3 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-50">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 flex-shrink-0" />
+                      <p className="text-sm font-semibold text-emerald-900 leading-relaxed">{s}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 col-span-2">Evaluating strengths...</p>
+                )}
               </div>
             </div>
 
@@ -135,14 +186,18 @@ const InterviewReport: React.FC = () => {
                 <AlertCircle className="w-6 h-6 text-amber-500" /> Areas for Improvement
               </h3>
               <div className="space-y-4">
-                {evalData?.weaknesses?.map((w: string, i: number) => (
-                  <div key={i} className="flex gap-4 p-4 bg-amber-50/50 rounded-2xl border border-amber-50">
-                    <div className="w-6 h-6 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-3.5 h-3.5" />
+                {weaknesses.length > 0 ? (
+                  weaknesses.map((w: string, i: number) => (
+                    <div key={i} className="flex gap-4 p-4 bg-amber-50/50 rounded-2xl border border-amber-50">
+                      <div className="w-6 h-6 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                      </div>
+                      <p className="text-sm font-semibold text-amber-900 leading-relaxed">{w}</p>
                     </div>
-                    <p className="text-sm font-semibold text-amber-900 leading-relaxed">{w}</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">Evaluating areas for improvement...</p>
+                )}
               </div>
             </div>
           </div>
@@ -157,7 +212,7 @@ const InterviewReport: React.FC = () => {
               <div className="p-4 bg-white/10 rounded-2xl mb-8">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
                 <p className="text-xl font-black text-white capitalize">
-                  {evalData?.hiringDecision?.replace('_', ' ') || 'Processing'}
+                  {hiringDecision.replace(/_/g, ' ')}
                 </p>
               </div>
 

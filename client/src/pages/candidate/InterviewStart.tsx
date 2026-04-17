@@ -12,7 +12,6 @@ import {
   Clock,
   BookOpen,
   Shield,
-  ChevronRight,
   ArrowRight
 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -35,11 +34,6 @@ const InterviewStart: React.FC = () => {
     internet: false,
     browser: false
   });
-
-  useEffect(() => {
-    fetchJobDetails();
-    runSystemChecks();
-  }, [jobId]);
 
   const fetchJobDetails = async () => {
     try {
@@ -82,6 +76,11 @@ const InterviewStart: React.FC = () => {
     setChecks(newChecks);
     setSystemReady(Object.values(newChecks).every(v => v));
   };
+
+  useEffect(() => {
+    fetchJobDetails();
+    runSystemChecks();
+  }, [jobId]);
 
   const handleStartInterview = async () => {
     if (!systemReady) {

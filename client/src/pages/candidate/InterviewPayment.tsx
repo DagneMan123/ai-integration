@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { interviewAPI, paymentAPI } from '../../utils/api';
+import { paymentAPI } from '../../utils/api';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import Loading from '../../components/Loading';
@@ -32,28 +32,28 @@ const InterviewPayment: React.FC = () => {
   const COST_ETB = 5; // 1 credit = 5 ETB
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch interview details
+        const interviewRes = await api.get(`/interviews/${interviewId}`);
+        setInterview(interviewRes.data.data || interviewRes.data);
+
+        // Fetch wallet balance
+        const walletRes = await api.get('/wallet/balance');
+        setWallet(walletRes.data.data || walletRes.data);
+      } catch (err: any) {
+        console.error('Fetch error:', err);
+        setError('Failed to load interview details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
   }, [interviewId]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch interview details
-      const interviewRes = await api.get(`/interviews/${interviewId}`);
-      setInterview(interviewRes.data.data || interviewRes.data);
-
-      // Fetch wallet balance
-      const walletRes = await api.get('/wallet/balance');
-      setWallet(walletRes.data.data || walletRes.data);
-    } catch (err: any) {
-      console.error('Fetch error:', err);
-      setError('Failed to load interview details');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInitiatePayment = async () => {
     try {

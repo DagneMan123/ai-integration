@@ -28,7 +28,7 @@ const Jobs: React.FC = () => {
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
 
-  const fetchSavedJobs = async () => {
+  const fetchSavedJobs = useCallback(async () => {
     if (!user) return;
     try {
       const data = await apiService.get<any[]>('/saved-jobs');
@@ -37,7 +37,7 @@ const Jobs: React.FC = () => {
     } catch (error) {
       console.error('Error fetching saved jobs:', error);
     }
-  };
+  }, [user]);
 
   const handleSaveJob = async (e: React.MouseEvent, jobId: string) => {
     e.preventDefault();
@@ -81,10 +81,7 @@ const Jobs: React.FC = () => {
       if (search) params.search = search;
       if (experienceLevel) params.experienceLevel = experienceLevel;
 
-      console.log('Fetching jobs with params:', params);
       const response = await jobAPI.getAll(params);
-      
-      console.log('API Response:', response);
       
       // Extract data from response - handle multiple response formats
       let jobsArray: any[] = [];
@@ -94,8 +91,6 @@ const Jobs: React.FC = () => {
       } else if (Array.isArray(response.data)) {
         jobsArray = response.data;
       }
-
-      console.log('Jobs array:', jobsArray);
 
       // Normalize jobs
       const normalizedJobs = jobsArray
@@ -110,11 +105,7 @@ const Jobs: React.FC = () => {
           createdAt: job.createdAt || new Date().toISOString()
         }));
 
-      console.log('Normalized jobs:', normalizedJobs);
       setJobs(normalizedJobs);
-      
-      // Fetch saved jobs status
-      await fetchSavedJobs();
     } catch (error: any) {
       console.error('Error fetching jobs:', error);
       setError('Failed to load jobs. Please try again.');
@@ -122,7 +113,7 @@ const Jobs: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, experienceLevel, user]);
+  }, [search, experienceLevel]);
 
   useEffect(() => {
     // Debounce: wait 500ms after user stops typing before fetching
@@ -132,6 +123,13 @@ const Jobs: React.FC = () => {
 
     return () => clearTimeout(delayDebounceFn);
   }, [search, experienceLevel, fetchJobs]);
+
+  // Separate effect to fetch saved jobs after jobs are loaded
+  useEffect(() => {
+    if (jobs.length > 0 && user) {
+      fetchSavedJobs();
+    }
+  }, [jobs.length, user, fetchSavedJobs]);
 
   const content = (
     <div className="space-y-6">

@@ -20,14 +20,12 @@ interface SessionInfo {
 const AdminSessionMonitoring: React.FC<AdminSessionMonitoringProps> = ({ isOpen, onClose }) => {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       const fetchSessions = async () => {
         try {
           setLoading(true);
-          setError(null);
           const response = await api.get('/admin/sessions');
           const data = response.data?.data || [];
           
@@ -44,7 +42,6 @@ const AdminSessionMonitoring: React.FC<AdminSessionMonitoringProps> = ({ isOpen,
           setSessions(formattedSessions);
         } catch (err: any) {
           console.error('Error fetching sessions:', err);
-          setError('Failed to load sessions');
         } finally {
           setLoading(false);
         }

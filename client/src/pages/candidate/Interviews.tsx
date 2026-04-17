@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { interviewAPI, jobAPI } from '../../utils/api';
 import { Interview, Job } from '../../types';
 import Loading from '../../components/Loading';
-import toast from 'react-hot-toast';
 import { 
   CheckCircle2, 
   Clock, 
@@ -31,7 +30,12 @@ const CandidateInterviews: React.FC = () => {
 
       // 1. Fetch interviews from your automated backend
       const response = await interviewAPI.getCandidateInterviews();
-      const interviewsData = response.data?.data || [];
+      let interviewsData = response.data?.data || [];
+      
+      // Deduplicate by jobId to remove redundant invitations
+      interviewsData = Array.from(
+        new Map(interviewsData.map((inv: any) => [inv.jobId, inv])).values()
+      );
       
       // 2. Map Job IDs
       const jobIds = new Set<string>();

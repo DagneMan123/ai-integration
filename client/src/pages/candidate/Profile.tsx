@@ -43,7 +43,6 @@ const CandidateProfile: React.FC = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<ProfileFormData | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // ፕሮፋይሉ ምን ያህል እንደተሞላ ለመቁጠር (UX)
@@ -78,8 +77,7 @@ const CandidateProfile: React.FC = () => {
 
   // Real-time sync across all form fields
   useEffect(() => {
-    const subscription = watch((data) => {
-      setFormData(data as ProfileFormData);
+    const subscription = watch(() => {
       setHasChanges(true);
     });
     return () => subscription.unsubscribe();
@@ -88,7 +86,7 @@ const CandidateProfile: React.FC = () => {
   const onSubmit = async (data: ProfileFormData) => {
     setSaving(true);
     try {
-      const response = await userAPI.updateProfile(data);
+      await userAPI.updateProfile(data);
       updateUser(data);
       setLastSaved(new Date());
       toast.success('Profile updated successfully!');

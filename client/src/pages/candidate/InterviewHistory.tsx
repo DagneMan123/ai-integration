@@ -17,7 +17,11 @@ const InterviewHistory: React.FC = () => {
     try {
       const response = await interviewAPI.getCandidateInterviews();
       if (response.data.success) {
-        const completed = response.data.data?.filter((i: any) => i.status === 'COMPLETED') || [];
+        let completed = response.data.data?.filter((i: any) => i.status === 'COMPLETED') || [];
+        // Deduplicate by jobId to remove redundant records
+        completed = Array.from(
+          new Map(completed.map((inv: any) => [inv.jobId, inv])).values()
+        );
         setHistory(completed);
       }
     } catch (error) {

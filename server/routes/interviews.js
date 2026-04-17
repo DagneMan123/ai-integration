@@ -7,9 +7,10 @@ router.use(authenticateToken);
 
 // Candidate routes - MUST come before /:id route
 router.post('/start', authorizeRoles('candidate'), interviewController.startInterview);
+router.post('/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
+router.post('/:id/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.get('/candidate/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews);
 router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);
-router.post('/:id/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.post('/:id/complete', authorizeRoles('candidate'), interviewController.completeInterview);
 router.post('/:id/anti-cheat-event', authorizeRoles('candidate'), interviewController.recordAntiCheatEvent);
 router.post('/:id/identity-snapshot', authorizeRoles('candidate'), interviewController.recordIdentitySnapshot);

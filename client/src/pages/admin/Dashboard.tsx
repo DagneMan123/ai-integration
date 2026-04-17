@@ -18,8 +18,7 @@ import {
   TrendingUp,
   AlertCircle,
   Activity,
-  CheckCircle2,
-  Power
+  CheckCircle2
 } from 'lucide-react';
 
 import { dashboardDataService } from '../../services/dashboardDataService';

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 interface InterviewProcessingProps {
   responseId: number;

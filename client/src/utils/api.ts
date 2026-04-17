@@ -69,6 +69,21 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // 429 Too Many Requests - Rate Limit with Exponential Backoff
+    if (error.response?.status === 429 && !originalRequest._retryCount) {
+      originalRequest._retryCount = 0;
+    }
+
+    if (error.response?.status === 429 && originalRequest._retryCount < 5) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      const delayMs = Math.pow(2, originalRequest._retryCount) * 1000; // 2s, 4s, 8s, 16s, 32s
+      
+      console.warn(`Rate limited. Retrying in ${delayMs}ms (attempt ${originalRequest._retryCount}/5)`);
+      
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      return api(originalRequest);
+    }
+
     // 401 Unauthorized - Token Expired
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -109,9 +124,10 @@ api.interceptors.response.use(
       }
     }
 
-    // ስህተቶችን ለተጠቃሚው ማሳያ (Toast)
+    // ስህተቶችን ለተጠቃሚው ማሳያ (Toast) - but not for rate limits (already handled)
     const isAuthEndpoint = originalRequest.url?.includes('/auth/');
-    if (!isAuthEndpoint && error.response?.status !== 401) {
+    const isRateLimitError = error.response?.status === 429;
+    if (!isAuthEndpoint && error.response?.status !== 401 && !isRateLimitError) {
       const message = error.response?.data?.message || 'Something went wrong. Please try again.';
       toast.error(message);
     }
@@ -158,12 +174,13 @@ export const jobAPI = {
 
 export const interviewAPI = {
   start: (data: object) => request.post<Interview>('/interviews/start', data),
-  submitAnswer: (id: string, data: object) => request.post(`/interviews/${id}/submit-answer`, data),
+  submitAnswer: (data: object) => request.post('/interviews/submit-answer', data),
   complete: (id: string) => request.post(`/interviews/${id}/complete`),
   getReport: (id: string) => request.get(`/interviews/${id}/report`),
   getCandidateInterviews: () => request.get<Interview[]>('/interviews/candidate/my-interviews'),
   recordAntiCheatEvent: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data),
   recordIdentitySnapshot: (id: string, data: object) => request.post(`/interviews/${id}/identity-snapshot`, data),
+  submitProctorReport: (data: object) => request.post('/interviews/proctor-report', data),
 };
 
 export const paymentAPI = {

@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   ChevronRight,
@@ -21,7 +21,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Loading from './Loading';
 
 interface AdminSidebarProps {
   isOpen: boolean;

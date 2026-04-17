@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Video, CheckCircle2, AlertCircle, Clock, BookOpen, Shield, Settings, Zap } from 'lucide-react';
+import { Mic, Video, CheckCircle2, AlertCircle, Clock, BookOpen, Shield, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface InterviewLobbyProps {
@@ -85,13 +85,12 @@ const InterviewLobby: React.FC<InterviewLobbyProps> = ({
         toast.success('Microphone ready');
 
         // Monitor microphone volume
-        let animationId: number;
         const monitorVolume = () => {
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
           analyser.getByteFrequencyData(dataArray);
           const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
           setMicVolume(Math.round(average));
-          animationId = requestAnimationFrame(monitorVolume);
+          requestAnimationFrame(monitorVolume);
         };
         monitorVolume();
       } catch (audioError) {

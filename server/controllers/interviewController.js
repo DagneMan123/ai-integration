@@ -3,13 +3,14 @@ const aiService = require('../services/aiService');
 const antiCheatService = require('../services/antiCheatService');
 const { AppError } = require('../middleware/errorHandler');
 const { fetchInterviewWithJob, fetchInterviewsWithJob } = require('../utils/queryHelpers');
+const { logger } = require('../utils/logger');
+
+// Interview Controller - 10 Question System v2.0
 
 const checkAndDeductCredit = async (userId) => {
-  // Ensure wallet exists
   let wallet = await prisma.wallet.findUnique({ where: { userId } });
   
   if (!wallet) {
-    // Create wallet for new user
     wallet = await prisma.wallet.create({
       data: {
         userId,
@@ -19,7 +20,6 @@ const checkAndDeductCredit = async (userId) => {
     });
   }
   
-  // Convert balance to number for comparison (Prisma returns Decimal)
   const balanceAmount = parseFloat(wallet.balance);
   
   if (balanceAmount < 1) {
@@ -43,19 +43,108 @@ exports.startInterview = async (req, res, next) => {
     if (isNaN(parsedJobId) || isNaN(parsedApplicationId)) {
       return next(new AppError('jobId and applicationId must be valid numbers', 400));
     }
+
+    logger.info(`[startInterview] Starting new interview`, {
+      jobId: parsedJobId,
+      applicationId: parsedApplicationId,
+      userId,
+      interviewMode,
+      strictnessLevel
+    });
     
-    const job = await prisma.job.findUnique({ where: { id: parsedJobId } });
-    if (!job) return next(new AppError('Job not found', 404));
+    // Fetch job with company details
+    const job = await prisma.job.findUnique({ 
+      where: { id: parsedJobId },
+      include: { company: true }
+    });
+    if (!job) {
+      logger.error(`[startInterview] Job not found`, { jobId: parsedJobId });
+      return next(new AppError('Job not found', 404));
+    }
     
-    const step = await aiService.getNextInterviewStep(job);
-    const questions = [
-      { question: step.message || `Tell me about your experience with ${job.title}`, type: 'technical' },
-      { question: 'What is your greatest strength?', type: 'behavioral' },
-      { question: 'Describe a challenging project you worked on', type: 'technical' },
-      { question: 'How do you handle team conflicts?', type: 'behavioral' },
-      { question: 'What are your career goals?', type: 'behavioral' }
-    ];
+    // Check if interview already exists for this application
+    const existingInterview = await prisma.interview.findFirst({
+      where: {
+        applicationId: parsedApplicationId,
+        candidateId: userId,
+        status: 'IN_PROGRESS'
+      },
+      include: { job: { include: { company: true } } }
+    });
+
+    if (existingInterview) {
+      logger.warn(`[startInterview] Interview already in progress`, {
+        existingInterviewId: existingInterview.id,
+        applicationId: parsedApplicationId,
+        userId
+      });
+      
+      // Return the existing interview with all necessary data
+      const allQuestions = existingInterview.questions || [];
+      const currentResponseCount = (existingInterview.responses || []).length;
+      const nextQuestionIndex = currentResponseCount;
+      const nextQuestion = allQuestions[nextQuestionIndex] || allQuestions[0];
+      
+      return res.status(200).json({
+        success: true,
+        data: {
+          interviewId: existingInterview.id,
+          jobDetails: {
+            jobId: existingInterview.job.id,
+            title: existingInterview.job.title,
+            company: existingInterview.job.company?.name || 'Company',
+            experienceLevel: existingInterview.job.experienceLevel || 'mid-level',
+            requiredSkills: existingInterview.job.requiredSkills || []
+          },
+          firstQuestion: nextQuestion?.text || 'Please answer the following question',
+          questionType: nextQuestion?.type || 'technical',
+          stepNumber: nextQuestionIndex + 1,
+          totalSteps: allQuestions.length,
+          status: existingInterview.status,
+          allQuestions: allQuestions,
+          message: 'Interview already in progress - resuming from where you left off',
+          isExisting: true,
+          resumeFromStep: nextQuestionIndex + 1
+        }
+      });
+    }
     
+    // Prepare job details for AI
+    const jobDetails = {
+      jobId: job.id,
+      title: job.title,
+      company: job.company?.name || 'Company',
+      experienceLevel: job.experienceLevel || 'mid-level',
+      requiredSkills: job.requiredSkills || []
+    };
+    
+    // Generate all 10 questions using the InterviewPhaseManager
+    const allQuestions = [];
+    const jobTitle = job.title || 'Senior Full Stack Developer';
+    
+    // Generate questions for turns 1-10
+    for (let turn = 1; turn <= 10; turn++) {
+      const question = aiService.interviewPhaseManager.getQuestionForTurn(turn, jobTitle);
+      if (question) {
+        allQuestions.push({
+          text: question.text,
+          type: question.type,
+          phase: question.phase,
+          turn: question.turn,
+          timeLimit: question.timeLimit,
+          minLength: question.minLength,
+          isFinished: question.isFinished || false
+        });
+      }
+    }
+
+    logger.info(`[startInterview] Generated ${allQuestions.length} questions`, {
+      jobId: parsedJobId,
+      jobTitle: jobTitle,
+      questionCount: allQuestions.length
+    });
+
+    // Create interview record with explicit IN_PROGRESS status
     const interview = await prisma.interview.create({
       data: {
         jobId: parsedJobId, 
@@ -64,10 +153,34 @@ exports.startInterview = async (req, res, next) => {
         status: 'IN_PROGRESS',
         startedAt: new Date(), 
         interviewMode, 
-        strictnessLevel, 
-        questions: questions,
+        strictnessLevel,
+        questions: allQuestions,
+        responses: [],
         antiCheatData: { tabSwitches: 0, copyPasteAttempts: 0, suspiciousActivities: [] }
       }
+    });
+
+    // Verify the status was set correctly in the database
+    if (interview.status !== 'IN_PROGRESS') {
+      logger.error(`[startInterview] Interview created but status not IN_PROGRESS`, {
+        interviewId: interview.id,
+        expectedStatus: 'IN_PROGRESS',
+        actualStatus: interview.status
+      });
+      // Force update to correct status
+      await prisma.interview.update({
+        where: { id: interview.id },
+        data: { status: 'IN_PROGRESS' }
+      });
+    }
+
+    logger.info(`[startInterview] Interview created successfully`, {
+      interviewId: interview.id,
+      applicationId: parsedApplicationId,
+      userId,
+      status: interview.status,
+      totalQuestions: allQuestions.length,
+      startedAt: interview.startedAt
     });
     
     antiCheatService.initializeSession(parsedApplicationId, userId);
@@ -75,67 +188,277 @@ exports.startInterview = async (req, res, next) => {
     res.status(201).json({ 
       success: true, 
       data: { 
-        interviewId: interview.id, 
-        currentQuestion: questions[0] 
+        interviewId: interview.id,
+        jobDetails,
+        firstQuestion: allQuestions[0].text,
+        questionType: allQuestions[0].type,
+        stepNumber: 1,
+        totalSteps: allQuestions.length,
+        status: interview.status,
+        allQuestions: allQuestions
       } 
     });
   } catch (error) { 
+    logger.error(`[startInterview] Unexpected error`, {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
     next(error); 
   }
 };
 
 exports.submitAnswer = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
-    const { questionIndex, answer, audioTranscript } = req.body;
-    const interview = await prisma.interview.findUnique({ where: { id }, include: { job: true } });
-    if (!interview) return next(new AppError('Interview not found', 404));
-    if (interview.status !== 'IN_PROGRESS') return next(new AppError('Interview not in progress', 400));
-    
-    const textToEvaluate = audioTranscript || answer;
-    if (!textToEvaluate) return next(new AppError('Answer is required', 400));
-    
-    const questions = interview.questions || [];
-    const currentQuestion = questions[questionIndex] || { question: 'General Question', type: 'general' };
-    
-    try {
-      const evaluation = await aiService.evaluateFinalPerformance(interview.job, [
-        { role: 'assistant', content: currentQuestion.question || 'General Question' },
-        { role: 'user', content: textToEvaluate }
-      ]);
-      
-      const followUp = await aiService.getNextInterviewStep(interview.job, [
-        { role: 'assistant', content: currentQuestion.question || 'General' },
-        { role: 'user', content: textToEvaluate }
-      ]);
-      
-      const plagiarism = { isAIGenerated: false, confidence: 0.1, indicators: [] };
-      
-      const responses = interview.responses || [];
-      responses.push({ 
-        questionIndex, 
-        question: currentQuestion.question || 'General Question', 
-        answer: textToEvaluate, 
-        score: evaluation.overall_score || 0, 
-        feedback: evaluation.feedback_summary || 'Good response', 
-        isAI: plagiarism.isAIGenerated 
-      });
-      await prisma.interview.update({ where: { id }, data: { responses } });
-      
-      res.json({ 
-        success: true, 
-        data: { 
-          nextQuestion: followUp?.message ? { question: followUp.message, type: 'follow-up' } : questions[questionIndex + 1], 
-          isLastQuestion: !followUp?.message && questionIndex + 1 >= questions.length 
-        } 
-      });
-    } catch (aiError) {
-      const responses = interview.responses || [];
-      responses.push({ questionIndex, question: currentQuestion.question || 'General Question', answer: textToEvaluate, score: 0, feedback: 'Response recorded', isAI: false });
-      await prisma.interview.update({ where: { id }, data: { responses } });
-      res.json({ success: true, data: { nextQuestion: questions[questionIndex + 1], isLastQuestion: questionIndex + 1 >= questions.length } });
+    // Support both old and new API signatures
+    const { interviewId, response, questionIndex, answer, timeTaken } = req.body;
+    const id = parseInt(req.params.id || interviewId);
+    const userResponse = response || answer;
+    const userId = req.user?.id;
+
+    if (!id || !userResponse) {
+      return next(new AppError('interviewId and response are required', 400));
     }
-  } catch (error) { next(error); }
+
+    logger.info(`[submitAnswer] Starting submission for interview ${id} by user ${userId}`, {
+      interviewId: id,
+      userId,
+      responseLength: userResponse.length
+    });
+
+    // Fetch interview with fresh data
+    const interview = await prisma.interview.findUnique({ 
+      where: { id },
+      include: { job: { include: { company: true } } }
+    });
+    
+    if (!interview) {
+      logger.error(`[submitAnswer] Interview not found: ${id}`, { interviewId: id });
+      return next(new AppError('Interview not found', 404));
+    }
+
+    logger.info(`[submitAnswer] Interview fetched from DB`, {
+      interviewId: id,
+      status: interview.status,
+      candidateId: interview.candidateId,
+      startedAt: interview.startedAt,
+      completedAt: interview.completedAt
+    });
+
+    // Verify ownership - candidate can only submit to their own interviews
+    if (interview.candidateId !== userId) {
+      logger.warn(`[submitAnswer] Unauthorized access attempt`, {
+        interviewId: id,
+        interviewCandidateId: interview.candidateId,
+        requestUserId: userId
+      });
+      return next(new AppError('Unauthorized: This is not your interview', 403));
+    }
+
+    // Only allow submissions for IN_PROGRESS interviews
+    if (interview.status !== 'IN_PROGRESS') {
+      logger.warn(`[submitAnswer] Interview not in progress`, {
+        interviewId: id,
+        currentStatus: interview.status,
+        userId,
+        startedAt: interview.startedAt,
+        completedAt: interview.completedAt,
+        dbCheck: `Status from DB is: ${interview.status}`
+      });
+      
+      let errorMessage = `Interview is ${interview.status.toLowerCase()}. Cannot submit answers.`;
+      if (interview.status === 'COMPLETED') {
+        errorMessage = 'This interview has already been completed. View your results instead.';
+      } else if (interview.status === 'PENDING') {
+        errorMessage = 'Interview has not started yet. Please wait for the interview to begin.';
+      }
+      
+      return next(new AppError(errorMessage, 400));
+    }
+
+    // Get job details
+    const jobData = {
+      jobId: interview.job.id,
+      title: interview.job.title,
+      company: interview.job.company?.name || 'Company',
+      experienceLevel: interview.job.experienceLevel || 'mid-level',
+      requiredSkills: interview.job.requiredSkills || []
+    };
+
+    // Build conversation history from responses
+    const conversationHistory = [];
+    const currentResponses = interview.responses || [];
+    const allQuestions = interview.questions || [];
+
+    currentResponses.forEach((resp) => {
+      if (resp.question) {
+        conversationHistory.push({ role: 'assistant', content: resp.question });
+      }
+      if (resp.answer) {
+        conversationHistory.push({ role: 'user', content: resp.answer });
+      }
+    });
+
+    // Add current response
+    conversationHistory.push({ role: 'user', content: userResponse });
+
+    logger.info(`[submitAnswer] Conversation history built`, {
+      interviewId: id,
+      conversationLength: conversationHistory.length,
+      responseCount: currentResponses.length
+    });
+
+    // Get current question for context
+    const currentQuestionIndex = currentResponses.length;
+    const currentQuestion = allQuestions[currentQuestionIndex];
+    const isLastQuestion = currentQuestionIndex >= allQuestions.length - 1;
+
+    // Score the response based on question type and content
+    let responseScore = 0;
+    let scoreBreakdown = {
+      relevance: 0,
+      clarity: 0,
+      completeness: 0,
+      confidence: 0
+    };
+
+    try {
+      // Enhanced scoring logic
+      const responseLength = userResponse.trim().split(' ').length;
+      const charLength = userResponse.trim().length;
+      
+      // Relevance (0-30) - based on length and keywords
+      if (charLength > 500) responseScore += 30;
+      else if (charLength > 300) responseScore += 25;
+      else if (charLength > 150) responseScore += 20;
+      else if (charLength > 50) responseScore += 15;
+      else responseScore += 8;
+      scoreBreakdown.relevance = Math.min(30, responseScore);
+
+      // Clarity (0-25) - check for structure and punctuation
+      const sentences = userResponse.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+      const hasGoodStructure = sentences >= 2 && responseLength > 15;
+      if (hasGoodStructure) responseScore += 20;
+      else if (sentences >= 1) responseScore += 12;
+      else responseScore += 5;
+      scoreBreakdown.clarity = Math.min(25, responseScore - scoreBreakdown.relevance);
+
+      // Completeness (0-25) - check for examples, details, and specificity
+      const hasExamples = /example|project|experience|worked|built|created|implemented|developed|designed|managed|led|achieved|accomplished/i.test(userResponse);
+      const hasDetails = /specific|particular|detail|aspect|approach|method|process|strategy|technique/i.test(userResponse);
+      if (hasExamples && hasDetails) responseScore += 25;
+      else if (hasExamples || hasDetails) responseScore += 18;
+      else responseScore += 10;
+      scoreBreakdown.completeness = Math.min(25, responseScore - scoreBreakdown.relevance - scoreBreakdown.clarity);
+
+      // Confidence (0-20) - check for assertive and professional language
+      const hasConfidence = /confident|strong|expertise|skilled|proficient|experienced|capable|competent|excellent|strong|proven/i.test(userResponse);
+      const hasProactive = /proactive|initiative|leadership|responsibility|ownership|drive|motivated|passionate/i.test(userResponse);
+      if (hasConfidence && hasProactive) responseScore += 20;
+      else if (hasConfidence || hasProactive) responseScore += 14;
+      else responseScore += 8;
+      scoreBreakdown.confidence = Math.min(20, responseScore - scoreBreakdown.relevance - scoreBreakdown.clarity - scoreBreakdown.completeness);
+
+      // Normalize to 0-100
+      responseScore = Math.min(100, Math.max(0, responseScore));
+
+      logger.info(`[submitAnswer] Response scored`, {
+        interviewId: id,
+        score: responseScore,
+        breakdown: scoreBreakdown,
+        questionType: currentQuestion?.type,
+        responseLength: charLength,
+        wordCount: responseLength
+      });
+    } catch (scoringError) {
+      logger.warn(`[submitAnswer] Scoring error, using default`, {
+        interviewId: id,
+        error: scoringError.message
+      });
+      responseScore = 75; // Default score
+    }
+
+    // Store the response with score
+    const updatedResponses = [...currentResponses];
+    updatedResponses.push({
+      question: currentQuestion?.text || 'Question',
+      questionType: currentQuestion?.type || 'general',
+      answer: userResponse,
+      score: responseScore,
+      scoreBreakdown: scoreBreakdown,
+      timestamp: new Date()
+    });
+
+    // Determine if interview is finished
+    const isFinished = isLastQuestion;
+    const newStatus = isFinished ? 'COMPLETED' : 'IN_PROGRESS';
+
+    // Calculate overall score if interview is complete
+    let overallScore = 0;
+    if (isFinished) {
+      const scores = updatedResponses.map(r => r.score || 0);
+      overallScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      logger.info(`[submitAnswer] Interview complete, calculating overall score`, {
+        interviewId: id,
+        responseCount: updatedResponses.length,
+        overallScore: overallScore
+      });
+    }
+
+    const updateData = {
+      responses: updatedResponses,
+      status: newStatus,
+      updatedAt: new Date()
+    };
+
+    if (isFinished) {
+      updateData.completedAt = new Date();
+      updateData.overallScore = overallScore;
+    }
+
+    // Update interview
+    const updatedInterview = await prisma.interview.update({
+      where: { id },
+      data: updateData,
+      include: { job: true }
+    });
+
+    logger.info(`[submitAnswer] Interview updated successfully`, {
+      interviewId: id,
+      newStatus: updatedInterview.status,
+      responseCount: updatedResponses.length,
+      isFinished: isFinished,
+      overallScore: overallScore
+    });
+
+    // Prepare next question or completion message
+    let nextQuestion = 'Thank you for completing the interview!';
+    if (!isFinished && currentQuestionIndex + 1 < allQuestions.length) {
+      nextQuestion = allQuestions[currentQuestionIndex + 1].text;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        responseScore: responseScore,
+        scoreBreakdown: scoreBreakdown,
+        nextQuestion: nextQuestion,
+        isFinished: isFinished,
+        stepNumber: currentQuestionIndex + 2,
+        totalSteps: allQuestions.length,
+        interviewStatus: updatedInterview.status,
+        overallScore: isFinished ? overallScore : null,
+        questionType: currentQuestion?.type
+      }
+    });
+  } catch (error) { 
+    logger.error(`[submitAnswer] Unexpected error`, {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
+    next(error); 
+  }
 };
 
 exports.getCandidateInterviews = async (req, res, next) => {
@@ -149,28 +472,119 @@ exports.getCandidateInterviews = async (req, res, next) => {
 exports.completeInterview = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const interview = await prisma.interview.findUnique({ where: { id }, include: { job: true } });
+    const interview = await prisma.interview.findUnique({ 
+      where: { id }, 
+      include: { job: true } 
+    });
     
+    if (!interview) {
+      return next(new AppError('Interview not found', 404));
+    }
+
+    // Build transcript from responses
     const responses = interview.responses || [];
-    const totalScore = responses.reduce((sum, r) => sum + (r.score || 0), 0);
-    const averageScore = responses.length > 0 ? Math.round(totalScore / responses.length) : 0;
-    
-    const report = {
-      overallScore: averageScore,
-      totalQuestions: responses.length,
-      responses: responses,
-      strengths: ['Clear communication', 'Problem-solving ability'],
-      weaknesses: ['Could provide more detail'],
-      recommendation: averageScore >= 70 ? 'Recommend' : 'Consider',
-      feedback_summary: `Interview completed with ${responses.length} questions. Overall performance: ${averageScore}%`,
+    const transcript = responses.map((r) => ({
+      question: r.question,
+      answer: r.answer,
+      score: r.score
+    }));
+
+    // Get job details for evaluation
+    const jobDetails = {
+      jobId: interview.job.id,
+      title: interview.job.title,
+      company: interview.job.company?.name || 'Company',
+      experienceLevel: interview.job.experienceLevel || 'mid-level',
+      requiredSkills: interview.job.requiredSkills || []
+    };
+
+    // Call AI evaluation service
+    let evaluation = null;
+    try {
+      evaluation = await aiService.evaluateFinalPerformance(jobDetails, transcript);
+    } catch (aiError) {
+      logger.warn(`[completeInterview] AI evaluation failed, using fallback`, {
+        interviewId: id,
+        error: aiError.message
+      });
+      // Fallback evaluation if AI fails
+      const totalScore = responses.reduce((sum, r) => sum + (r.score || 0), 0);
+      const averageScore = responses.length > 0 ? Math.round(totalScore / responses.length) : 0;
+      
+      evaluation = {
+        overall_score: averageScore,
+        technical_score: Math.round(averageScore * 0.9),
+        communication_score: Math.round(averageScore * 0.85),
+        confidence_score: Math.round(averageScore * 0.8),
+        problem_solving_score: Math.round(averageScore * 0.88),
+        strengths: [
+          'Clear communication',
+          'Problem-solving ability',
+          'Technical knowledge'
+        ],
+        weaknesses: [
+          'Could provide more specific examples',
+          'Could elaborate on technical details'
+        ],
+        recommendation: averageScore >= 70 ? 'Recommend' : averageScore >= 60 ? 'Consider' : 'Reject',
+        feedback_summary: `Interview completed with ${responses.length} questions. Overall performance: ${averageScore}%`,
+        hiringDecision: averageScore >= 70 ? 'recommended' : averageScore >= 60 ? 'under_review' : 'not_recommended'
+      };
+    }
+
+    // Ensure all scores are numbers
+    const finalEvaluation = {
+      overall_score: parseInt(evaluation.overall_score) || 0,
+      technical_score: parseInt(evaluation.technical_score) || 0,
+      communication_score: parseInt(evaluation.communication_score) || 0,
+      confidence_score: parseInt(evaluation.confidence_score) || 0,
+      problem_solving_score: parseInt(evaluation.problem_solving_score) || 0,
+      strengths: Array.isArray(evaluation.strengths) ? evaluation.strengths : [],
+      weaknesses: Array.isArray(evaluation.weaknesses) ? evaluation.weaknesses : [],
+      recommendation: evaluation.recommendation || 'Consider',
+      feedback_summary: evaluation.feedback_summary || 'Interview completed',
+      hiringDecision: evaluation.hiringDecision || 'under_review',
       timestamp: new Date()
     };
-    
-    const integrity = antiCheatService.calculateIntegrityScore(id);
-    await prisma.interview.update({ where: { id }, data: { status: 'COMPLETED', completedAt: new Date(), overallScore: report.overallScore, evaluation: report, integrityScore: integrity.score } });
+
+    // Update interview with evaluation
+    const updatedInterview = await prisma.interview.update({ 
+      where: { id }, 
+      data: { 
+        status: 'COMPLETED', 
+        completedAt: new Date(), 
+        overallScore: finalEvaluation.overall_score,
+        evaluation: finalEvaluation,
+        integrityScore: antiCheatService.calculateIntegrityScore(id).score
+      },
+      include: { job: true }
+    });
+
     antiCheatService.endSession(id);
-    res.json({ success: true, data: { overallScore: report.overallScore } });
-  } catch (error) { next(error); }
+
+    logger.info(`[completeInterview] Interview completed successfully`, {
+      interviewId: id,
+      overallScore: finalEvaluation.overall_score,
+      status: updatedInterview.status
+    });
+
+    res.json({ 
+      success: true, 
+      data: { 
+        interviewId: id,
+        overallScore: finalEvaluation.overall_score,
+        evaluation: finalEvaluation,
+        status: 'COMPLETED'
+      } 
+    });
+  } catch (error) {
+    logger.error(`[completeInterview] Unexpected error`, {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
+    next(error);
+  }
 };
 
 exports.createInterviewWithPersona = async (req, res, next) => {
@@ -181,7 +595,6 @@ exports.createInterviewWithPersona = async (req, res, next) => {
     
     await checkAndDeductCredit(userId);
     
-    // Execute transaction properly
     const result = await prisma.$transaction([
       prisma.wallet.update({ where: { userId }, data: { balance: { decrement: 1 } } }),
       prisma.interview.create({
@@ -235,7 +648,15 @@ exports.getInterviewReport = async (req, res, next) => {
     const id = parseInt(req.params.id);
     const interview = await fetchInterviewWithJob(id);
     if (!interview) return res.status(404).json({ success: false, message: 'Interview not found' });
-    res.json({ success: true, data: interview });
+    
+    // Ensure questions are properly formatted in the response
+    const responseData = {
+      ...interview,
+      questions: interview.questions || [],
+      allQuestions: interview.questions || []
+    };
+    
+    res.json({ success: true, data: responseData });
   } catch (error) { next(error); }
 };
 

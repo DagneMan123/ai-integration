@@ -19,7 +19,12 @@ const Invitations: React.FC = () => {
     try {
       const response = await interviewAPI.getCandidateInterviews();
       if (response.data.success) {
-        setInvitations(response.data.data || []);
+        const data = response.data.data || [];
+        // Deduplicate by jobId to remove redundant invitations
+        const uniqueInvitations = Array.from(
+          new Map(data.map(inv => [inv.jobId, inv])).values()
+        );
+        setInvitations(uniqueInvitations);
       }
     } catch (error) {
       console.error('Error fetching invitations:', error);

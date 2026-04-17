@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Download, RotateCcw, Home, TrendingUp, MessageSquare, Lightbulb, Volume2, Eye } from 'lucide-react';
+import { Download, RotateCcw, Home, TrendingUp, MessageSquare, Lightbulb, Volume2, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface FeedbackData {
@@ -49,7 +49,6 @@ const InterviewFeedbackDashboard: React.FC<InterviewFeedbackDashboardProps> = ({
   showRetryButton = true
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'transcript' | 'video'>('overview');
-  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
   const getScoreColor = (score: number) => {
     if (score >= 85) return 'text-emerald-600';
@@ -374,8 +373,6 @@ Generated: ${new Date(feedback.analyzedAt).toLocaleString()}
                 src={feedback.videoUrl}
                 controls
                 className="w-full h-full"
-                onPlay={() => setIsPlayingVideo(true)}
-                onPause={() => setIsPlayingVideo(false)}
               />
             </div>
             <p className="text-sm text-gray-600">

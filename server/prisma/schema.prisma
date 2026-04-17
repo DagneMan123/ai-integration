@@ -181,7 +181,7 @@ model Interview {
   interviewMode       String          @default("text") @map("interview_mode") // text, audio, video
   strictnessLevel     String?         @map("strictness_level") // lenient, moderate, strict
   
-  status              InterviewStatus @default(PENDING)
+  status              InterviewStatus @default(IN_PROGRESS)
   feedback            String?
   startedAt           DateTime?       @map("started_at")
   completedAt         DateTime?       @map("completed_at")

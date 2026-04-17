@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Clock, Mic, MicOff, Square, Send, ChevronRight, AlertCircle, CheckCircle2, Volume2, Zap } from 'lucide-react';
+import { Clock, Mic, Square, Send, ChevronRight, AlertCircle, CheckCircle2, Volume2, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Question {
@@ -98,6 +98,13 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
     };
   }, [demoMode]);
 
+  const handleEndSession = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    onComplete(responses);
+  };
+
   // Timer
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -110,7 +117,7 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft, handleEndSession]);
 
   // Recording timer
   useEffect(() => {
@@ -264,13 +271,6 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
       console.error('Error submitting response:', error);
       toast.error('Failed to submit response');
     }
-  };
-
-  const handleEndSession = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    onComplete(responses);
   };
 
   const formatTime = (seconds: number) => {

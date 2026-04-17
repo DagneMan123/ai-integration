@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Play, BookOpen, Zap, Clock, Target, Lightbulb, ArrowRight, CheckCircle2 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
-import { practiceAPI } from '../../utils/api';
 import InterviewLobby from '../../components/InterviewLobby';
 import PracticeInterviewEnvironment from '../../components/PracticeInterviewEnvironment';
 import InterviewResults from '../../components/InterviewResults';

@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   ChevronRight,
@@ -10,7 +10,6 @@ import {
   FileText,
   Briefcase,
   Clock,
-  DollarSign,
   BookOpen,
   MessageSquare,
   Heart,
@@ -23,7 +22,6 @@ import {
   Eye
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Loading from './Loading';
 
 interface CandidateSidebarProps {
   isOpen: boolean;

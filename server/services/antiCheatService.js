@@ -235,9 +235,17 @@ class AntiCheatService {
 
     // Deduct for suspicious activities
     session.suspiciousActivities.forEach(activity => {
-      if (activity.severity === 'HIGH') score -= 10;
-      else if (activity.severity === 'MEDIUM') score -= 5;
-      else score -= 2;
+      if (activity.type === 'AI_GENERATED_CONTENT') {
+        score -= 30; // Heavy penalty for AI content
+      } else if (activity.severity === 'CRITICAL') {
+        score -= 20;
+      } else if (activity.severity === 'HIGH') {
+        score -= 10;
+      } else if (activity.severity === 'MEDIUM') {
+        score -= 5;
+      } else {
+        score -= 2;
+      }
     });
 
     // Deduct if no identity snapshots
@@ -249,6 +257,11 @@ class AntiCheatService {
     const failedSnapshots = session.identitySnapshots.filter(s => !s.faceDetected).length;
     score -= failedSnapshots * 10;
 
+    // Deduct for proctor risk score
+    if (session.proctorReport) {
+      score -= (session.proctorReport.riskScore / 100) * 30;
+    }
+
     const finalScore = Math.max(0, Math.min(100, score));
     const riskLevel = finalScore > 75 ? 'LOW' : finalScore > 50 ? 'MEDIUM' : 'HIGH';
 
@@ -259,9 +272,68 @@ class AntiCheatService {
         tabSwitches: session.tabSwitches,
         copyPasteAttempts: session.copyPasteAttempts,
         suspiciousActivities: session.suspiciousActivities.length,
-        identityVerified: session.identitySnapshots.length > 0 && failedSnapshots === 0
+        aiDetections: session.suspiciousActivities.filter(a => a.type === 'AI_GENERATED_CONTENT').length,
+        identityVerified: session.identitySnapshots.length > 0 && failedSnapshots === 0,
+        proctorRiskScore: session.proctorReport?.riskScore || 0
       }
     };
+  }
+
+  /**
+   * Record AI-generated text detection
+   */
+  recordAIDetection(interviewId, timestamp, confidence, patterns) {
+    const session = this.sessions.get(interviewId);
+    if (!session) return;
+
+    session.events.push({
+      type: 'AI_DETECTION',
+      timestamp,
+      confidence,
+      patterns,
+      severity: 'CRITICAL'
+    });
+
+    session.suspiciousActivities.push({
+      type: 'AI_GENERATED_CONTENT',
+      timestamp,
+      severity: 'CRITICAL',
+      confidence,
+      patterns,
+      note: `AI-generated content detected with ${confidence.toFixed(1)}% confidence`
+    });
+
+    logger.error(`AI-generated content detected for interview ${interviewId} (confidence: ${confidence}%)`);
+  }
+
+  /**
+   * Record proctor report
+   */
+  recordProctorReport(interviewId, report) {
+    const session = this.sessions.get(interviewId);
+    if (!session) return;
+
+    session.proctorReport = {
+      timestamp: new Date(),
+      riskScore: report.riskScore,
+      flagged: report.flagged,
+      events: report.events,
+      totalEvents: report.events.length
+    };
+
+    // Add high-risk events to suspicious activities
+    report.events.forEach(event => {
+      if (event.severity === 'high' || event.severity === 'critical') {
+        session.suspiciousActivities.push({
+          type: event.type.toUpperCase(),
+          timestamp: event.timestamp,
+          severity: event.severity.toUpperCase(),
+          details: event.details
+        });
+      }
+    });
+
+    logger.warn(`Proctor report recorded for interview ${interviewId}. Risk score: ${report.riskScore}`);
   }
 
   /**

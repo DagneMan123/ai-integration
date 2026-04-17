@@ -20,11 +20,6 @@ interface Document {
   isPrivate?: boolean;
 }
 
-interface UploadProgress {
-  fileName: string;
-  progress: number;
-}
-
 const Resume: React.FC = () => {
   // --- State ---
   const [documents, setDocuments] = useState<Document[]>([]);

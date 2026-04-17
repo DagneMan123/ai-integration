@@ -48,20 +48,49 @@ const InterviewSession: React.FC = () => {
         try {
           const jobResponse = await jobAPI.getOne(data.jobId);
           setJob(jobResponse.data?.data);
-          console.log('Job fetched:', jobResponse.data?.data);
         } catch (jobError) {
-          console.error('Failed to fetch job:', jobError);
+          // Silently fail - job details are optional
         }
       }
       
-      if (data?.questions && data.questions.length > 0) {
-        setCurrentQuestion(data.questions[0]);
+      // Set the first question from the interview data
+      // Questions can be in data.questions or data.allQuestions
+      const questionsArray = data?.questions || data?.allQuestions || [];
+      
+      if (Array.isArray(questionsArray) && questionsArray.length > 0) {
+        // Handle both old format (text field) and new format (message field)
+        const firstQ = questionsArray[0];
+        
+        // Ensure text is a string, not an object
+        let questionText = '';
+        if (typeof firstQ === 'string') {
+          questionText = firstQ;
+        } else if (typeof firstQ === 'object' && firstQ !== null) {
+          questionText = firstQ.text || firstQ.message || firstQ.question || 'Please answer the following question';
+        } else {
+          questionText = 'Please answer the following question';
+        }
+        
+        // Ensure text is actually a string (not an object)
+        if (typeof questionText !== 'string') {
+          questionText = JSON.stringify(questionText);
+        }
+        
+        const questionObj = {
+          text: questionText,
+          type: (typeof firstQ === 'object' && firstQ?.type) || 'technical',
+          difficulty: (typeof firstQ === 'object' && firstQ?.difficulty) || 'medium'
+        };
+        setCurrentQuestion(questionObj);
         setCurrentQuestionIndex(0);
         setTimeLeft(data.timeLimit ? data.timeLimit * 60 : 3600); // Default 1 hour
+      } else {
+        // If no questions found, this is an error state
+        toast.error('No questions found for this interview. Please contact support.');
+        navigate('/candidate/interviews');
       }
     } catch (error) {
-      console.error('Session loading error:', error);
-      toast.error('Session loading failed');
+      toast.error('Failed to load interview session');
       navigate('/candidate/interviews');
     } finally {
       setLoading(false);
@@ -81,30 +110,99 @@ const InterviewSession: React.FC = () => {
 
   const handleSubmitAnswer = async () => {
     if (!answer.trim()) {
-      toast.error('Answer cannot be empty');
+      toast.error('Please provide an answer before submitting');
+      return;
+    }
+
+    // Prevent double submissions
+    if (submitting) {
+      return;
+    }
+
+    // Verify interview is in progress
+    if (!interview) {
+      toast.error('Interview data not loaded. Please refresh the page.');
+      return;
+    }
+
+    if (interview.status !== 'IN_PROGRESS') {
+      toast.error(`Interview is ${interview.status.toLowerCase()}. Cannot submit answers.`);
+      // Redirect to report if completed
+      if (interview.status === 'COMPLETED') {
+        setTimeout(() => {
+          navigate(`/candidate/interview/${id}/report`);
+        }, 2000);
+      }
       return;
     }
 
     setSubmitting(true);
     try {
-      await interviewAPI.submitAnswer(id!, {
-        questionIndex: currentQuestionIndex,
-        answer,
-        timeTaken: (interview.timeLimit ? interview.timeLimit * 60 : 3600) - timeLeft
+      const response = await interviewAPI.submitAnswer({
+        interviewId: parseInt(id!),
+        response: answer
       });
 
-      if (currentQuestionIndex + 1 >= interview.questions.length) {
-        await interviewAPI.complete(id!);
-        toast.success('Interview completed!');
-        navigate(`/candidate/interview/${id}/report`);
-      } else {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setCurrentQuestion(interview.questions[currentQuestionIndex + 1]);
+      if (response.data.success) {
+        const data = response.data.data as any;
+        
+        // Clear the answer textarea
         setAnswer('');
+        
+        // Update the current question with the next question
+        if (data.nextQuestion) {
+          // Ensure nextQuestion is a string
+          let nextQuestionText = data.nextQuestion;
+          if (typeof nextQuestionText !== 'string') {
+            nextQuestionText = JSON.stringify(nextQuestionText);
+          }
+          
+          setCurrentQuestion({
+            text: nextQuestionText,
+            type: data.questionType || 'technical',
+            difficulty: 'medium'
+          });
+        }
+        
+        // Update step counter
+        setCurrentQuestionIndex(data.stepNumber - 1);
+        
+        // Check if interview is finished
+        if (data.isFinished) {
+          toast.success('Interview completed successfully! Generating evaluation...');
+          // Update interview status locally
+          setInterview({ ...interview, status: 'COMPLETED' });
+          
+          // Call completeInterview to generate evaluation
+          try {
+            await interviewAPI.complete(id!);
+          } catch (completeError) {
+            console.error('Error completing interview:', completeError);
+            // Still navigate to report even if evaluation generation fails
+          }
+          
+          setTimeout(() => {
+            navigate(`/candidate/interview/${id}/report`);
+          }, 2000);
+        } else {
+          toast.success('Response submitted! Loading next question...');
+          // Update interview status to ensure it's still IN_PROGRESS
+          if (data.interviewStatus) {
+            setInterview({ ...interview, status: data.interviewStatus });
+          }
+        }
       }
     } catch (error: any) {
       console.error('Submit error:', error);
-      toast.error(error.response?.data?.message || 'Submission failed');
+      const errorMsg = error.response?.data?.message || 'Failed to submit response';
+      toast.error(errorMsg);
+      
+      // If interview status issue, refresh data
+      if (errorMsg.includes('not in progress') || errorMsg.includes('COMPLETED') || errorMsg.includes('Unauthorized')) {
+        setTimeout(() => {
+          fetchInterview();
+        }, 1500);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -237,7 +335,7 @@ const InterviewSession: React.FC = () => {
             </div>
 
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-8">
-              {currentQuestion?.text}
+              {currentQuestion?.text || (submitting ? 'Loading next question...' : 'Loading question...')}
             </h1>
 
             <div className="space-y-4">

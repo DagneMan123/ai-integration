@@ -83,6 +83,7 @@ app.use('/api/video-analysis', require('./routes/videoAnalysis'));
 app.use('/api/webhook', require('./routes/chapaWebhook'));
 app.use('/api/help-center', require('./routes/helpCenter'));
 app.use('/api', require('./routes/interviewPersona'));
+app.use('/api/interview-session', require('./routes/interviewSession'));
 
 try {
   if (prisma.message) {

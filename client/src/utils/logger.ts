@@ -5,13 +5,6 @@
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-interface LogEntry {
-  level: LogLevel;
-  message: string;
-  data?: unknown;
-  timestamp: string;
-}
-
 class ClientLogger {
   private isDevelopment = process.env.NODE_ENV === 'development';
 
