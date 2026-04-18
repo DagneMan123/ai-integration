@@ -208,65 +208,74 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
 
       const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
       
-      // Convert blob to base64 for transmission
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Video = reader.result as string;
+      // Use FormData for efficient binary upload
+      const formData = new FormData();
+      formData.append('video', videoBlob, 'response.webm');
+      formData.append('recordingTime', recordingTime.toString());
 
-        try {
-          // Submit video to backend
-          const response = await fetch(`/api/video-analysis/responses/1/${currentQuestion.id}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({
-              videoBlob: base64Video,
-              recordingTime
-            })
-          });
+      try {
+        // Submit video to backend using FormData (more efficient than base64)
+        const response = await fetch(`/api/video-analysis/responses/1/${currentQuestion.id}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
 
-          if (!response.ok) {
-            throw new Error('Failed to upload video');
-          }
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+        }
 
-          const data = await response.json();
-          const responseId = data.data.responseId;
+        const data = await response.json();
+        const responseId = data.data.responseId;
 
-          toast.dismiss();
-          toast.success('Video uploaded! Processing started...');
+        toast.dismiss();
+        toast.success('Video uploaded! Processing started...');
 
-          // Notify parent about processing
-          onProcessing?.(responseId);
+        // Notify parent about processing
+        onProcessing?.(responseId);
 
-          // Store response locally
-          const newResponse = {
-            questionId: currentQuestion.id,
-            questionText: currentQuestion.text,
-            videoBlob,
-            recordingTime,
-            responseId,
-            timestamp: new Date()
-          };
+        // Store response locally
+        const newResponse = {
+          questionId: currentQuestion.id,
+          questionText: currentQuestion.text,
+          videoBlob,
+          recordingTime,
+          responseId,
+          timestamp: new Date()
+        };
 
-          setResponses([...responses, newResponse]);
-          chunksRef.current = [];
-          setRecordingTime(0);
+        setResponses([...responses, newResponse]);
+        chunksRef.current = [];
+        setRecordingTime(0);
 
-          if (currentQuestionIndex + 1 < questions.length) {
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
-            toast.success('Response saved. Moving to next question.');
+        if (currentQuestionIndex + 1 < questions.length) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          toast.success('Response saved. Moving to next question.');
+        } else {
+          handleEndSession();
+        }
+      } catch (error) {
+        toast.dismiss();
+        console.error('Upload error:', error);
+        
+        // Provide specific error messages
+        if (error instanceof Error) {
+          if (error.message.includes('401')) {
+            toast.error('Authentication failed. Please log in again.');
+          } else if (error.message.includes('413')) {
+            toast.error('Video file is too large (max 100MB)');
+          } else if (error.message.includes('400')) {
+            toast.error('Invalid video format. Use WebM, MP4, MOV, or AVI');
           } else {
-            handleEndSession();
+            toast.error(`Upload failed: ${error.message}`);
           }
-        } catch (error) {
-          toast.dismiss();
-          console.error('Upload error:', error);
+        } else {
           toast.error('Failed to upload video. Please try again.');
         }
-      };
-      reader.readAsDataURL(videoBlob);
+      }
     } catch (error) {
       console.error('Error submitting response:', error);
       toast.error('Failed to submit response');

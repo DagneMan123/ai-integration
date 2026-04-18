@@ -5,7 +5,7 @@ const aiInterviewController = require('../controllers/aiInterviewController');
 const { authenticateToken } = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
-const { upload } = require('../middleware/upload');
+const { upload, uploadOptional } = require('../middleware/upload');
 
 // Check AI service availability
 router.get('/status', async (req, res, next) => {
@@ -222,7 +222,7 @@ router.post('/video-interview/start', authenticateToken, async (req, res, next) 
 });
 
 // Submit video response
-router.post('/video-interview/submit-response', authenticateToken, upload.single('video'), async (req, res, next) => {
+router.post('/video-interview/submit-response', authenticateToken, uploadOptional, async (req, res, next) => {
   try {
     await aiInterviewController.submitVideoResponse(req, res, next);
   } catch (error) {

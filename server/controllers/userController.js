@@ -62,15 +62,26 @@ exports.getProfile = async (req, res, next) => {
 // Update user profile
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { firstName, lastName, phone, email, bio, skills, experience, education, ...otherFields } = req.body;
+    const { firstName, lastName, phone, email, bio, skills, experience, education, password, ...otherFields } = req.body;
 
     // Update User table with user-level fields
     const userData = {};
     if (firstName) userData.firstName = firstName;
     if (lastName) userData.lastName = lastName;
     if (phone) userData.phone = phone;
-    if (email) userData.email = email;
+    
+    // Normalize email to lowercase for consistency with login
+    if (email) {
+      userData.email = email.toLowerCase().trim();
+    }
+    
     if (bio) userData.bio = bio;
+    
+    // Hash password if provided
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      userData.passwordHash = await bcrypt.hash(password, 12);
+    }
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
@@ -121,10 +132,13 @@ exports.updateProfile = async (req, res, next) => {
       }
     }
 
-    res.json({
+    // Return updated user without password hash
+    const { passwordHash, ...userWithoutPassword } = user;
+
+    res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      data: user
+      data: userWithoutPassword
     });
   } catch (error) {
     next(error);
@@ -152,9 +166,12 @@ exports.updatePassword = async (req, res, next) => {
       data: { passwordHash: hashedPassword }
     });
 
+    // Force re-authentication by invalidating current session
+    // Return response indicating user must re-login
     res.json({
       success: true,
-      message: 'Password updated successfully'
+      message: 'Password updated successfully. Please log in again with your new password.',
+      requiresReauth: true
     });
   } catch (error) {
     next(error);

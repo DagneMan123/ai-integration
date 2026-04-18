@@ -27,6 +27,7 @@ import Navbar from './components/Navbar';
 
 // Lazy load dashboard pages for better performance
 const CandidateDashboard = lazy(() => import('./pages/candidate/Dashboard'));
+const CandidateEnhancedDashboard = lazy(() => import('./pages/candidate/EnhancedDashboard'));
 const CandidateProfile = lazy(() => import('./pages/candidate/Profile'));
 const CandidateSettings = lazy(() => import('./pages/candidate/Settings'));
 const CandidateSecurity = lazy(() => import('./pages/candidate/Security'));
@@ -56,6 +57,7 @@ const Troubleshooting = lazy(() => import('./pages/candidate/Troubleshooting'));
 const InterviewStart = lazy(() => import('./pages/candidate/InterviewStart'));
 
 const EmployerDashboard = lazy(() => import('./pages/employer/Dashboard'));
+const EmployerEnhancedDashboard = lazy(() => import('./pages/employer/EnhancedDashboard'));
 const EmployerProfile = lazy(() => import('./pages/employer/Profile'));
 const EmployerSettings = lazy(() => import('./pages/employer/Settings'));
 const EmployerSecurity = lazy(() => import('./pages/employer/Security'));
@@ -72,6 +74,7 @@ const InterviewCalendar = lazy(() => import('./pages/employer/InterviewCalendar'
 const Inbox = lazy(() => import('./pages/employer/Inbox'));
 
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminEnhancedDashboard = lazy(() => import('./pages/admin/EnhancedDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
 const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
@@ -137,6 +140,16 @@ const App: React.FC = () => {
                 <PrivateRoute role="candidate">
                   <Suspense fallback={<Loading />}>
                     <CandidateDashboard />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/candidate/dashboard-enhanced" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <CandidateEnhancedDashboard />
                   </Suspense>
                 </PrivateRoute>
               } 
@@ -425,6 +438,16 @@ const App: React.FC = () => {
               } 
             />
             <Route 
+              path="/employer/dashboard-enhanced" 
+              element={
+                <PrivateRoute role="employer">
+                  <Suspense fallback={<Loading />}>
+                    <EmployerEnhancedDashboard />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
               path="/employer/profile" 
               element={
                 <PrivateRoute role="employer">
@@ -572,6 +595,16 @@ const App: React.FC = () => {
                 <PrivateRoute role="admin">
                   <Suspense fallback={<Loading />}>
                     <AdminDashboard />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/admin/dashboard-enhanced" 
+              element={
+                <PrivateRoute role="admin">
+                  <Suspense fallback={<Loading />}>
+                    <AdminEnhancedDashboard />
                   </Suspense>
                 </PrivateRoute>
               } 

@@ -24,6 +24,26 @@ function createPrismaClient() {
   });
 }
 
+// Connection pool configuration
+function getConnectionPoolConfig() {
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  
+  return {
+    // Connection pool size
+    max: isDevelopment ? 10 : 20,
+    // Minimum connections to maintain
+    min: isDevelopment ? 2 : 5,
+    // Connection timeout in milliseconds
+    idleTimeoutMillis: isDevelopment ? 30000 : 60000,
+    // Connection acquisition timeout
+    connectionTimeoutMillis: 5000,
+    // Statement timeout
+    statement_timeout: 30000,
+    // Query timeout
+    query_timeout: 30000,
+  };
+}
+
 async function connectWithRetry(maxRetries = 5) {
   let retries = 0;
   let lastError;

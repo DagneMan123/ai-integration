@@ -14,22 +14,39 @@ const path = require('path');
 exports.submitVideoResponse = async (req, res) => {
   try {
     const { sessionId, questionId } = req.params;
-    const { videoBlob, recordingTime } = req.body;
+    const { recordingTime } = req.body;
+    const videoFile = req.file;
     const userId = req.user.id;
 
-    if (!videoBlob) {
+    // Handle both FormData (file upload) and JSON (base64) for backward compatibility
+    let videoBuffer;
+
+    if (videoFile) {
+      // FormData upload - use buffer directly
+      videoBuffer = videoFile.buffer;
+    } else if (req.body.videoBlob) {
+      // JSON base64 upload - convert from base64
+      const videoBlob = req.body.videoBlob;
+      if (typeof videoBlob === 'string') {
+        // Remove data URL prefix if present
+        const base64Data = videoBlob.replace(/^data:video\/\w+;base64,/, '');
+        videoBuffer = Buffer.from(base64Data, 'base64');
+      } else {
+        videoBuffer = Buffer.from(videoBlob);
+      }
+    } else {
       return res.status(400).json({
         success: false,
-        message: 'Video blob is required'
+        message: 'Video file or blob is required'
       });
     }
 
-    // Convert base64 to buffer if needed
-    let videoBuffer;
-    if (typeof videoBlob === 'string') {
-      videoBuffer = Buffer.from(videoBlob, 'base64');
-    } else {
-      videoBuffer = Buffer.from(videoBlob);
+    // Validate video buffer
+    if (!videoBuffer || videoBuffer.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Video file is empty'
+      });
     }
 
     // Validate video
@@ -58,7 +75,12 @@ exports.submitVideoResponse = async (req, res) => {
       }
     });
 
-    logger.info(`Video response submitted: ${response.id}`);
+    logger.info(`Video response submitted: ${response.id}`, {
+      sessionId,
+      questionId,
+      videoSize: videoInfo.size,
+      uploadMethod: videoFile ? 'FormData' : 'base64'
+    });
 
     // Start async processing
     processVideoAsync(response.id, videoInfo.filepath, sessionId, questionId, userId);

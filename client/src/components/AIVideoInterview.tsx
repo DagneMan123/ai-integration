@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { aiInterviewService } from '../services/aiInterviewService';
+import VideoPreviewModal from './VideoPreviewModal';
+import VideoProcessingOverlay from './VideoProcessingOverlay';
+import { uploadVideoToCloudinary, createVideoPreviewUrl, revokeVideoPreviewUrl } from '../services/cloudinaryService';
 
 interface AIVideoInterviewProps {
   interviewId: number;
@@ -42,14 +45,26 @@ const AIVideoInterview: React.FC<AIVideoInterviewProps> = ({
   const [recordingTime, setRecordingTime] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  
+  // New state for preview and processing
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+  const [processingStage, setProcessingStage] = useState<'uploading' | 'analyzing' | 'complete'>('uploading');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showProcessing, setShowProcessing] = useState(false);
+  const [cloudinaryUrl, setCloudinaryUrl] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (previewUrl) {
+        revokeVideoPreviewUrl(previewUrl);
+      }
     };
-  }, []);
+  }, [previewUrl]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -107,8 +122,13 @@ const AIVideoInterview: React.FC<AIVideoInterviewProps> = ({
     };
 
     mediaRecorder.onstop = () => {
-      const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
-      onComplete(videoBlob);
+      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      setVideoBlob(blob);
+      
+      // Create preview URL
+      const url = createVideoPreviewUrl(blob);
+      setPreviewUrl(url);
+      setShowPreview(true);
     };
 
     mediaRecorderRef.current = mediaRecorder;
@@ -143,25 +163,115 @@ const AIVideoInterview: React.FC<AIVideoInterviewProps> = ({
     }
   };
 
-  const submitResponse = async () => {
-    if (chunksRef.current.length === 0) {
-      toast.error('No video recorded');
+  const handleRetake = () => {
+    setShowPreview(false);
+    if (previewUrl) {
+      revokeVideoPreviewUrl(previewUrl);
+      setPreviewUrl(null);
+    }
+    setVideoBlob(null);
+    chunksRef.current = [];
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!videoBlob) {
+      toast.error('No video to submit');
       return;
     }
 
+    setShowPreview(false);
+    setShowProcessing(true);
+    setProcessingStage('uploading');
+    setUploadProgress(0);
     setIsSubmitting(true);
+
     try {
-      const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
-      await aiInterviewService.submitVideoResponse(interviewId, questionId, videoBlob);
+      const hasCloudinaryConfig = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME && 
+                                  process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
       
+      let videoUrl: string | null = null;
+      let uploadedToCloudinary = false;
+
+      // Try Cloudinary upload if configured
+      if (hasCloudinaryConfig) {
+        try {
+          console.log('Attempting Cloudinary upload...');
+          const cloudinaryResponse = await uploadVideoToCloudinary(videoBlob, (event) => {
+            setUploadProgress(event.percentage);
+          });
+          
+          videoUrl = cloudinaryResponse.secure_url;
+          uploadedToCloudinary = true;
+          setCloudinaryUrl(videoUrl);
+          console.log('Cloudinary upload successful');
+        } catch (cloudinaryError) {
+          console.warn('Cloudinary upload failed, falling back to direct upload:', cloudinaryError);
+          toast.error('Using direct upload (Cloudinary unavailable)');
+          // Fall through to direct upload
+        }
+      } else {
+        console.log('Cloudinary not configured, using direct upload');
+      }
+
+      // If Cloudinary failed or not configured, use direct backend upload
+      if (!videoUrl) {
+        console.log('Uploading video directly to backend...');
+        setUploadProgress(0);
+        
+        const response = await aiInterviewService.submitVideoResponse(
+          interviewId,
+          questionId,
+          videoBlob
+        );
+        
+        videoUrl = response.data.videoUrl;
+        uploadedToCloudinary = false;
+        console.log('Direct upload successful:', videoUrl);
+      }
+
+      setProcessingStage('analyzing');
+
+      // If we haven't submitted yet (Cloudinary path), submit now
+      if (uploadedToCloudinary && videoUrl) {
+        await aiInterviewService.submitVideoResponse(
+          interviewId,
+          questionId,
+          videoUrl
+        );
+      }
+
       // Get AI analysis
-      const analysis = await aiInterviewService.analyzeVideoResponse(interviewId, questionId);
-      setAiAnalysis(analysis.data);
+      try {
+        const analysis = await aiInterviewService.analyzeVideoResponse(interviewId, questionId);
+        setAiAnalysis(analysis.data);
+      } catch (analysisError) {
+        console.warn('AI analysis failed:', analysisError);
+        // Continue even if analysis fails
+      }
+
+      setProcessingStage('complete');
       
-      toast.success('Response submitted for AI analysis');
+      setTimeout(() => {
+        setShowProcessing(false);
+        toast.success('Response submitted successfully');
+        onComplete(videoBlob);
+      }, 1500);
     } catch (error) {
       console.error('Error submitting response:', error);
-      toast.error('Failed to submit response');
+      setShowProcessing(false);
+      
+      // Provide specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('File too large')) {
+          toast.error('Video file is too large (max 100MB)');
+        } else if (error.message.includes('Invalid file type')) {
+          toast.error('Invalid video format. Use WebM, MP4, MOV, or AVI');
+        } else {
+          toast.error(`Upload failed: ${error.message}`);
+        }
+      } else {
+        toast.error('Failed to submit response. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -294,16 +404,6 @@ const AIVideoInterview: React.FC<AIVideoInterviewProps> = ({
               </button>
             )}
 
-            {!isRecording && chunksRef.current.length > 0 && (
-              <button
-                onClick={submitResponse}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all disabled:opacity-50"
-              >
-                <Send size={20} /> {isSubmitting ? 'Submitting...' : 'Submit Response'}
-              </button>
-            )}
-
             {onSkip && (
               <button
                 onClick={onSkip}
@@ -336,6 +436,30 @@ const AIVideoInterview: React.FC<AIVideoInterviewProps> = ({
           </ul>
         </div>
       </div>
+
+      {/* Video Preview Modal */}
+      <VideoPreviewModal
+        isOpen={showPreview}
+        videoUrl={previewUrl || ''}
+        onClose={handleRetake}
+        onConfirm={handleConfirmSubmit}
+        onRetake={handleRetake}
+        isLoading={isSubmitting}
+      />
+
+      {/* Processing Overlay */}
+      <VideoProcessingOverlay
+        isVisible={showProcessing}
+        stage={processingStage}
+        uploadProgress={uploadProgress}
+        message={
+          processingStage === 'uploading'
+            ? 'Uploading your video to secure storage...'
+            : processingStage === 'analyzing'
+            ? 'AI is analyzing your response...'
+            : 'Processing complete!'
+        }
+      />
     </div>
   );
 };

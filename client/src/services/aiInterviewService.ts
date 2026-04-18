@@ -40,13 +40,25 @@ export const aiInterviewService = {
     }
   },
 
-  // Submit video response
-  submitVideoResponse: async (interviewId: number, questionId: number, videoBlob: Blob) => {
+  // Submit video response (supports both Blob and Cloudinary URL)
+  submitVideoResponse: async (interviewId: number, questionId: number, videoInput: Blob | string) => {
     try {
+      // If it's a string (Cloudinary URL), send it directly
+      if (typeof videoInput === 'string') {
+        const response = await api.post('/ai/video-interview/submit-response', {
+          interviewId,
+          questionId,
+          videoUrl: videoInput,
+          uploadedToCloudinary: true
+        });
+        return response.data;
+      }
+
+      // If it's a Blob, upload as FormData (direct backend upload)
       const formData = new FormData();
       formData.append('interviewId', interviewId.toString());
       formData.append('questionId', questionId.toString());
-      formData.append('video', videoBlob, 'response.webm');
+      formData.append('video', videoInput, 'response.webm');
 
       const response = await api.post('/ai/video-interview/submit-response', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }

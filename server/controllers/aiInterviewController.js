@@ -67,16 +67,12 @@ class AIInterviewController {
    */
   async submitVideoResponse(req, res, next) {
     try {
-      const { interviewId, questionId } = req.body;
+      const { interviewId, questionId, videoUrl, uploadedToCloudinary } = req.body;
       const userId = req.user.id;
       const videoFile = req.file;
 
       if (!interviewId || !questionId) {
         return next(new AppError('Interview ID and Question ID are required', 400));
-      }
-
-      if (!videoFile) {
-        return next(new AppError('Video file is required', 400));
       }
 
       // Verify interview exists and belongs to user
@@ -93,23 +89,74 @@ class AIInterviewController {
         return next(new AppError('Unauthorized access to this interview', 403));
       }
 
-      // Store video file path (in production, use cloud storage like S3)
-      const videoDir = path.join(__dirname, '../uploads/videos');
-      if (!fs.existsSync(videoDir)) {
-        fs.mkdirSync(videoDir, { recursive: true });
-      }
+      let finalVideoUrl;
+      let videoMetadata = {
+        submittedAt: new Date(),
+        uploadedToCloudinary: uploadedToCloudinary || false
+      };
 
-      const videoFileName = `interview_${interviewId}_q${questionId}_${Date.now()}.webm`;
-      const videoPath = path.join(videoDir, videoFileName);
-      fs.copyFileSync(videoFile.path, videoPath);
+      // Handle Cloudinary URL submission
+      if (uploadedToCloudinary && videoUrl) {
+        finalVideoUrl = videoUrl;
+        videoMetadata.cloudinaryUrl = videoUrl;
+        logger.info(`Video response submitted via Cloudinary for interview ${interviewId}, question ${questionId}`);
+      }
+      // Handle direct file upload
+      else if (videoFile) {
+        try {
+          const videoDir = path.join(__dirname, '../uploads/videos');
+          
+          // Create directory if it doesn't exist
+          if (!fs.existsSync(videoDir)) {
+            fs.mkdirSync(videoDir, { recursive: true });
+          }
+
+          // Generate unique filename
+          const videoFileName = `interview_${interviewId}_q${questionId}_${Date.now()}.webm`;
+          const videoPath = path.join(videoDir, videoFileName);
+          
+          // Write file using stream for better memory efficiency
+          await new Promise((resolve, reject) => {
+            const writeStream = fs.createWriteStream(videoPath);
+            
+            writeStream.on('error', (err) => {
+              logger.error('Stream write error:', err);
+              reject(err);
+            });
+            
+            writeStream.on('finish', () => {
+              logger.debug(`Video file written successfully: ${videoFileName}`);
+              resolve();
+            });
+            
+            // Write buffer to stream
+            writeStream.write(videoFile.buffer);
+            writeStream.end();
+          });
+
+          finalVideoUrl = `/uploads/videos/${videoFileName}`;
+          videoMetadata.localPath = videoPath;
+          videoMetadata.fileSize = videoFile.size;
+          
+          logger.info(`Video response submitted via direct upload for interview ${interviewId}, question ${questionId}`, {
+            fileSize: videoFile.size,
+            fileName: videoFileName
+          });
+        } catch (fileError) {
+          logger.error('Error saving video file:', fileError);
+          return next(new AppError(`Failed to save video file: ${fileError.message}`, 500));
+        }
+      }
+      // No video provided
+      else {
+        return next(new AppError('Video file or Cloudinary URL is required', 400));
+      }
 
       // Update interview responses
       const currentResponses = interview.responses || {};
       currentResponses[`question_${questionId}`] = {
-        videoPath: videoPath,
-        videoUrl: `/uploads/videos/${videoFileName}`,
-        submittedAt: new Date(),
-        duration: videoFile.size // Approximate duration based on file size
+        videoUrl: finalVideoUrl,
+        ...videoMetadata
       };
 
       const updatedInterview = await prisma.interview.update({
@@ -124,7 +171,8 @@ class AIInterviewController {
         data: {
           interviewId: updatedInterview.id,
           questionId,
-          videoUrl: `/uploads/videos/${videoFileName}`,
+          videoUrl: finalVideoUrl,
+          uploadedToCloudinary: uploadedToCloudinary || false,
           message: 'Video response submitted successfully'
         }
       });

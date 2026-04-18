@@ -17,7 +17,7 @@ const Invitations: React.FC = () => {
 
   const fetchInvitations = async () => {
     try {
-      const response = await interviewAPI.getCandidateInterviews();
+      const response = await interviewAPI.getPendingInvitations();
       if (response.data.success) {
         const data = response.data.data || [];
         // Deduplicate by jobId to remove redundant invitations

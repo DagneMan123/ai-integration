@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const { uploadOptional } = require('../middleware/upload');
 const videoAnalysisController = require('../controllers/videoAnalysisController');
 
 // All routes require authentication
 router.use(authenticateToken);
 
 // Submit video response
-router.post('/responses/:sessionId/:questionId', videoAnalysisController.submitVideoResponse);
+router.post('/responses/:sessionId/:questionId', uploadOptional, videoAnalysisController.submitVideoResponse);
 
 // Get analysis status
 router.get('/responses/:responseId/status', videoAnalysisController.getAnalysisStatus);

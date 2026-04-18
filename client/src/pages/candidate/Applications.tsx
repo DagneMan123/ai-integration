@@ -31,13 +31,21 @@ const CandidateApplications: React.FC = () => {
   const fetchApplications = async () => {
     try {
       const response = await applicationAPI.getCandidateApplications();
-      setApplications(response.data.data || []);
+      const appData = response.data.data || [];
+      setApplications(appData);
     } catch (error) {
       console.error('Failed to fetch applications', error);
+      setApplications([]);
     } finally {
       setLoading(false);
     }
   };
+
+  // Derived state: Calculate stats directly from applications array
+  const totalApplied = applications.length;
+  const pendingCount = applications.filter(app => app.status.toUpperCase() === 'PENDING').length;
+  const interviewingCount = applications.filter(app => app.status.toUpperCase() === 'INTERVIEWING').length;
+  const offersCount = applications.filter(app => app.status.toUpperCase() === 'ACCEPTED' || app.status.toUpperCase() === 'HIRED').length;
 
   const getStatusDetails = (status: string) => {
     const statusMap: Record<string, { color: string, icon: any, label: string }> = {
@@ -45,9 +53,10 @@ const CandidateApplications: React.FC = () => {
       reviewing: { color: 'bg-blue-50 text-blue-700 border-blue-100', icon: <Search className="w-4 h-4" />, label: 'Under Review' },
       interviewing: { color: 'bg-purple-50 text-purple-700 border-purple-100', icon: <Calendar className="w-4 h-4" />, label: 'Interviewing' },
       accepted: { color: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: <CheckCircle2 className="w-4 h-4" />, label: 'Hired' },
+      hired: { color: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: <CheckCircle2 className="w-4 h-4" />, label: 'Hired' },
       rejected: { color: 'bg-rose-50 text-rose-700 border-rose-100', icon: <XCircle className="w-4 h-4" />, label: 'Not Selected' },
     };
-    return statusMap[status] || { color: 'bg-gray-50 text-gray-700 border-gray-100', icon: <AlertCircle className="w-4 h-4" />, label: status };
+    return statusMap[status.toLowerCase()] || { color: 'bg-gray-50 text-gray-700 border-gray-100', icon: <AlertCircle className="w-4 h-4" />, label: status };
   };
 
   if (loading) return <Loading />;
@@ -79,12 +88,12 @@ const CandidateApplications: React.FC = () => {
           </Link>
         </div>
 
-        {/* Stats Summary */}
+        {/* Stats Summary - Derived from applications array */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          <StatCard label="Total Applied" value={applications.length} color="blue" />
-          <StatCard label="Interviewing" value={applications.filter(a => a.status === 'interviewing').length} color="purple" />
-          <StatCard label="Offers" value={applications.filter(a => a.status === 'accepted').length} color="emerald" />
-          <StatCard label="Pending" value={applications.filter(a => a.status === 'pending').length} color="amber" />
+          <StatCard label="Total Applied" value={totalApplied} color="blue" />
+          <StatCard label="Interviewing" value={interviewingCount} color="purple" />
+          <StatCard label="Offers" value={offersCount} color="emerald" />
+          <StatCard label="Pending" value={pendingCount} color="amber" />
         </div>
 
         {/* Search & Filter Bar */}
@@ -111,6 +120,12 @@ const CandidateApplications: React.FC = () => {
               const { color, icon, label } = getStatusDetails(app.status);
               const jobData = typeof app.job === 'object' ? app.job : null;
               const appKey = app.id || app._id || `app-${Math.random()}`;
+              
+              // Fix Invalid Date: Check if date field exists and use fallback
+              const appliedDate = app.createdAt;
+              const formattedDate = appliedDate 
+                ? new Date(appliedDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'Recently';
 
               return (
                 <div key={appKey} className="group bg-white rounded-[2rem] border border-gray-100 p-6 md:p-8 hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300 relative overflow-hidden">
@@ -133,7 +148,7 @@ const CandidateApplications: React.FC = () => {
                           </span>
                           <span className="flex items-center gap-1.5">
                             <Clock className="w-4 h-4" />
-                            Applied {new Date(app.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            Applied {formattedDate}
                           </span>
                         </div>
                       </div>
@@ -177,7 +192,7 @@ const CandidateApplications: React.FC = () => {
       </div>
     </DashboardLayout>
   );
-}
+};
 
 // Sub-component for Stats
 const StatCard = ({ label, value, color }: { label: string, value: number, color: string }) => {

@@ -469,6 +469,17 @@ exports.getCandidateInterviews = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+exports.getPendingInvitations = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const invitations = await fetchInterviewsWithJob(
+      { candidateId: userId, status: 'PENDING' },
+      { orderBy: { createdAt: 'desc' } }
+    );
+    res.json({ success: true, data: invitations });
+  } catch (error) { next(error); }
+};
+
 exports.completeInterview = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);

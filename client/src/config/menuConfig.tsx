@@ -49,6 +49,12 @@ export const candidateMenu: MenuItem[] = [
     icon: <LayoutDashboard size={20} />,
     description: 'Your career overview'
   },
+  { 
+    path: '/candidate/dashboard-enhanced', 
+    label: 'Enhanced Dashboard', 
+    icon: <TrendingUp size={20} />,
+    description: 'AI scores & applications'
+  },
   
   {
     label: 'Job Search',
@@ -111,6 +117,12 @@ export const employerMenu: MenuItem[] = [
     icon: <BarChart3 size={20} />,
     description: 'Overview & metrics'
   },
+  { 
+    path: '/employer/dashboard-enhanced', 
+    label: 'Talent Discovery', 
+    icon: <TrendingUp size={20} />,
+    description: 'AI-sorted applicants'
+  },
   
   {
     label: 'Hiring Management',
@@ -170,6 +182,12 @@ export const adminMenu: MenuItem[] = [
     label: 'Command Center', 
     icon: <LayoutDashboard size={20} />,
     description: 'System overview'
+  },
+  { 
+    path: '/admin/dashboard-enhanced', 
+    label: 'System Health', 
+    icon: <TrendingUp size={20} />,
+    description: 'Monitoring & analytics'
   },
   
   {

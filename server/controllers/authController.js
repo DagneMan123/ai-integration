@@ -94,10 +94,13 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    
+    // Normalize email: lowercase and trim
     const normalizedEmail = email.toLowerCase().trim();
 
     logActivity(null, 'login_attempt', 'auth', normalizedEmail, { email: normalizedEmail }, req.ip, req.get('User-Agent'));
 
+    // Query with normalized email
     const user = await prisma.user.findUnique({ 
       where: { email: normalizedEmail },
       select: {
@@ -177,7 +180,9 @@ exports.login = async (req, res, next) => {
 exports.forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) return next(new AppError('No user found with this email', 404));
 
     const rawToken = crypto.randomBytes(32).toString('hex');
@@ -256,7 +261,9 @@ exports.verifyEmail = async (req, res, next) => {
 exports.resendVerification = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
     if (!user) return next(new AppError('User not found', 404));
     if (user.isVerified) return next(new AppError('Email already verified', 400));

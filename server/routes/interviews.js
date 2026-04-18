@@ -10,6 +10,7 @@ router.post('/start', authorizeRoles('candidate'), interviewController.startInte
 router.post('/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.post('/:id/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.get('/candidate/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews);
+router.get('/candidate/pending-invitations', authorizeRoles('candidate'), interviewController.getPendingInvitations);
 router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);
 router.post('/:id/complete', authorizeRoles('candidate'), interviewController.completeInterview);
 router.post('/:id/anti-cheat-event', authorizeRoles('candidate'), interviewController.recordAntiCheatEvent);

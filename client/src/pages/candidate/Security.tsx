@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
 import { Shield, Lock, Smartphone, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { userAPI } from '../../utils/api';
+import { useAuthStore } from '../../store/authStore';
 import { candidateMenu } from '../../config/menuConfig';
 
 const CandidateSecurity: React.FC = () => {
+  const navigate = useNavigate();
+  const logout = useAuthStore(state => state.logout);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
@@ -19,14 +26,51 @@ const CandidateSecurity: React.FC = () => {
     }));
   };
 
-  const handleUpdatePassword = () => {
-    if (passwords.new !== passwords.confirm) {
-      alert('Passwords do not match');
+  const handleUpdatePassword = async () => {
+    if (!passwords.current || !passwords.new || !passwords.confirm) {
+      toast.error('Please fill in all password fields');
       return;
     }
-    alert('Password updated successfully');
-    setPasswords({ current: '', new: '', confirm: '' });
-    setShowPasswordForm(false);
+
+    if (passwords.new !== passwords.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwords.new.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response: any = await userAPI.changePassword({
+        currentPassword: passwords.current,
+        newPassword: passwords.new
+      });
+
+      // Check if re-authentication is required
+      if (response.data?.requiresReauth) {
+        toast.success('Password updated successfully. Please log in again.');
+        
+        // Clear auth state
+        logout();
+        
+        // Redirect to login
+        setTimeout(() => {
+          navigate('/login?passwordChanged=true');
+        }, 1500);
+      } else {
+        toast.success('Password updated successfully');
+        setPasswords({ current: '', new: '', confirm: '' });
+        setShowPasswordForm(false);
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to update password';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -82,7 +126,8 @@ const CandidateSecurity: React.FC = () => {
                   name="current"
                   value={passwords.current}
                   onChange={handlePasswordChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
                   placeholder="Enter current password"
                 />
               </div>
@@ -95,8 +140,9 @@ const CandidateSecurity: React.FC = () => {
                   name="new"
                   value={passwords.new}
                   onChange={handlePasswordChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Enter new password"
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
+                  placeholder="Enter new password (min 8 characters)"
                 />
               </div>
               <div>
@@ -108,20 +154,26 @@ const CandidateSecurity: React.FC = () => {
                   name="confirm"
                   value={passwords.confirm}
                   onChange={handlePasswordChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
                   placeholder="Confirm new password"
                 />
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={handleUpdatePassword}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 transition-colors font-medium"
                 >
-                  Update Password
+                  {isLoading ? 'Updating...' : 'Update Password'}
                 </button>
                 <button
-                  onClick={() => setShowPasswordForm(false)}
-                  className="px-4 py-2 bg-slate-200 text-slate-900 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setPasswords({ current: '', new: '', confirm: '' });
+                  }}
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-slate-200 text-slate-900 rounded-lg hover:bg-slate-300 disabled:bg-slate-100 transition-colors font-medium"
                 >
                   Cancel
                 </button>

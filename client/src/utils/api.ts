@@ -23,7 +23,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 60000, // Increased from 30s to 60s to handle Chapa verification
+  timeout: 300000, // 5 minutes for large video uploads (100MB+)
 });
 
 // Remove Content-Type header for FormData requests
@@ -178,6 +178,7 @@ export const interviewAPI = {
   complete: (id: string) => request.post(`/interviews/${id}/complete`),
   getReport: (id: string) => request.get(`/interviews/${id}/report`),
   getCandidateInterviews: () => request.get<Interview[]>('/interviews/candidate/my-interviews'),
+  getPendingInvitations: () => request.get<Interview[]>('/interviews/candidate/pending-invitations'),
   recordAntiCheatEvent: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data),
   recordIdentitySnapshot: (id: string, data: object) => request.post(`/interviews/${id}/identity-snapshot`, data),
   submitProctorReport: (data: object) => request.post('/interviews/proctor-report', data),
