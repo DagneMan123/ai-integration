@@ -309,7 +309,65 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
-// 8. Logout
+// 8. Verify Token (Backend Sync - Verify token is valid in database)
+exports.verifyToken = async (req, res, next) => {
+  try {
+    // Token is already verified by authenticateToken middleware
+    // This endpoint confirms the token is valid and user exists in database
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        isVerified: true,
+        isActive: true,
+        isLocked: true
+      }
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated'
+      });
+    }
+
+    if (user.isLocked) {
+      return res.status(423).json({
+        success: false,
+        message: 'Account is temporarily locked'
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: String(user.id),
+        email: user.email,
+        role: user.role.toLowerCase(),
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        isEmailVerified: user.isVerified,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    logger.error('Token verification error', { error: error.message });
+    next(error);
+  }
+};
+
+// 9. Logout
 exports.logout = async (req, res) => {
   res.json({ success: true, message: 'Logged out successfully' });
 };

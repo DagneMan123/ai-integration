@@ -48,7 +48,6 @@ const uploadVideo = async (videoBuffer, fileName, options = {}) => {
       // Configure upload options
       const uploadOptions = {
         resource_type: 'video',
-        upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET_VIDEO || 'simuai_video_preset',
         public_id: `simuai_video_${Date.now()}_${Math.random().toString(36).substring(7)}`,
         folder: 'simuai/videos',
         overwrite: false,
@@ -106,7 +105,7 @@ const uploadVideo = async (videoBuffer, fileName, options = {}) => {
 };
 
 /**
- * Upload document (PDF, Word, etc.) with raw resource type
+ * Upload document using stream to prevent RAM overload
  * @param {Buffer} docBuffer - Document file buffer
  * @param {string} fileName - Original file name
  * @param {Object} options - Additional options
@@ -139,7 +138,6 @@ const uploadDocument = async (docBuffer, fileName, options = {}) => {
       // Configure upload options - CRITICAL: resource_type: 'raw' for documents
       const uploadOptions = {
         resource_type: 'raw', // CRUCIAL: Stores as document, not image
-        upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET_DOCUMENT || 'simuai_document_preset',
         public_id: `simuai_doc_${Date.now()}_${Math.random().toString(36).substring(7)}`,
         folder: 'simuai/documents',
         overwrite: false,
@@ -188,6 +186,97 @@ const uploadDocument = async (docBuffer, fileName, options = {}) => {
 
     } catch (error) {
       logger.error('Document upload exception:', error);
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Upload image using stream with optimization
+ * @param {Buffer} imageBuffer - Image file buffer
+ * @param {string} fileName - Original file name
+ * @param {Object} options - Additional options
+ * @returns {Promise<Object>} - Cloudinary response with secure_url
+ */
+const uploadImage = async (imageBuffer, fileName, options = {}) => {
+  return new Promise((resolve, reject) => {
+    try {
+      if (!imageBuffer || imageBuffer.length === 0) {
+        return reject(new Error('Image buffer is empty'));
+      }
+
+      // Validate file size
+      const maxSize = parseInt(process.env.CLOUDINARY_MAX_IMAGE_SIZE) || 10485760; // 10MB default
+      if (imageBuffer.length > maxSize) {
+        return reject(new Error(`Image file too large. Maximum size is ${(maxSize / 1024 / 1024).toFixed(2)}MB`));
+      }
+
+      // Extract file extension
+      const fileExt = fileName.split('.').pop().toLowerCase();
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      
+      if (!validExtensions.includes(fileExt)) {
+        return reject(new Error(`Invalid image type. Allowed: ${validExtensions.join(', ')}`));
+      }
+
+      // Create readable stream from buffer
+      const stream = Readable.from(imageBuffer);
+
+      // Configure upload options
+      const uploadOptions = {
+        resource_type: 'image',
+        public_id: `simuai_img_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        folder: 'simuai/images',
+        overwrite: false,
+        quality: 'auto',
+        fetch_format: 'auto',
+        timeout: 60000,
+        ...options
+      };
+
+      // Use upload_stream for memory-efficient streaming
+      const uploadStream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+        if (error) {
+          logger.error('Cloudinary image upload error:', {
+            error: error.message,
+            fileName,
+            statusCode: error.http_code
+          });
+          return reject(new Error(`Image upload failed: ${error.message}`));
+        }
+
+        logger.info('Image uploaded successfully to Cloudinary', {
+          publicId: result.public_id,
+          url: result.secure_url,
+          size: result.bytes,
+          width: result.width,
+          height: result.height
+        });
+
+        resolve({
+          success: true,
+          secure_url: result.secure_url,
+          url: result.secure_url,
+          public_id: result.public_id,
+          size: result.bytes,
+          width: result.width,
+          height: result.height,
+          format: result.format,
+          resource_type: result.resource_type
+        });
+      });
+
+      // Handle stream errors
+      uploadStream.on('error', (error) => {
+        logger.error('Upload stream error:', error);
+        reject(new Error(`Stream error: ${error.message}`));
+      });
+
+      // Pipe buffer to upload stream
+      stream.pipe(uploadStream);
+
+    } catch (error) {
+      logger.error('Image upload exception:', error);
       reject(error);
     }
   });
@@ -281,6 +370,7 @@ module.exports = {
   initializeCloudinary,
   uploadVideo,
   uploadDocument,
+  uploadImage,
   deleteFile,
   getFileInfo,
   generateSignedUrl

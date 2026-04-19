@@ -1,6 +1,7 @@
 /**
  * Professional API Service
  * Centralized API communication with error handling and logging
+ * HARD AUTH RESET: Force logout on 401 with immediate localStorage.clear()
  */
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
@@ -45,12 +46,18 @@ class ApiService {
   }
 
   private setupInterceptors() {
-    // Request interceptor
+    // Request interceptor - FETCH TOKEN AT REQUEST TIME from localStorage
     this.api.interceptors.request.use(
       (config) => {
-        const token = useAuthStore.getState().token;
+        // CRITICAL: Fetch token directly from localStorage at request time
+        // This ensures we always have the latest token after login
+        const token = localStorage.getItem('token');
+        
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('[API Service] Token injected at request time:', token.substring(0, 20) + '...');
+        } else {
+          console.log('[API Service] No token found in localStorage');
         }
 
         // Handle FormData
@@ -69,44 +76,29 @@ class ApiService {
       async (error: AxiosError<ApiErrorResponse>) => {
         const originalRequest = error.config as any;
 
-        // Handle 401 - Token expired
+        // HARD AUTH RESET: Handle 401 - Token expired or invalid
+        // MUST call localStorage.removeItem('token') FIRST, then redirect
         if (error.response?.status === 401 && !originalRequest._retry) {
-          if (this.isRefreshing) {
-            return new Promise((resolve, reject) => {
-              this.failedQueue.push({ resolve, reject });
-            })
-              .then((token) => {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
-                return this.api(originalRequest);
-              })
-              .catch((err) => Promise.reject(err));
-          }
-
-          originalRequest._retry = true;
-          this.isRefreshing = true;
-
-          try {
-            const refreshToken = useAuthStore.getState().refreshToken;
-            if (!refreshToken) throw new Error('No refresh token');
-
-            const response = await axios.post(`${API_URL}/auth/refresh-token`, {
-              refreshToken,
-            });
-
-            const { token, refreshToken: newRefreshToken } = response.data.data;
-            useAuthStore.getState().setAuth(useAuthStore.getState().user!, token, newRefreshToken);
-
-            this.processQueue(null, token);
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return this.api(originalRequest);
-          } catch (refreshError) {
-            this.processQueue(refreshError instanceof Error ? refreshError : new Error(String(refreshError)), null);
-            useAuthStore.getState().logout();
-            window.location.href = '/login?expired=true';
-            return Promise.reject(refreshError);
-          } finally {
-            this.isRefreshing = false;
-          }
+          console.error('[API Service] 401 Unauthorized - HARD AUTH RESET TRIGGERED');
+          
+          // CRITICAL: Remove token from localStorage FIRST
+          console.log('[API Service] Removing token from localStorage');
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          
+          // Clear auth store
+          console.log('[API Service] Clearing auth store');
+          useAuthStore.getState().logout();
+          
+          // Reset refresh flag
+          this.isRefreshing = false;
+          this.failedQueue = [];
+          
+          // CRITICAL: Redirect to login immediately
+          console.log('[API Service] Redirecting to /login');
+          window.location.href = '/login';
+          
+          return Promise.reject(error);
         }
 
         // Handle other errors
@@ -130,7 +122,7 @@ class ApiService {
     const url = error.config?.url || '';
 
     // Don't show error toast for certain endpoints that have fallback data
-    const silentErrorEndpoints = ['/help-center/categories', '/users/documents'];
+    const silentErrorEndpoints = ['/help-center/categories', '/help-center/articles', '/users/documents'];
     const shouldSilence = silentErrorEndpoints.some(endpoint => url.includes(endpoint));
 
     switch (status) {
@@ -150,6 +142,7 @@ class ApiService {
         if (!shouldSilence) toast.error(message || 'Resource already exists');
         break;
       case 429:
+        // Don't show toast for 429 on help center - it has fallback data
         if (!shouldSilence) toast.error('Too many requests. Please try again later.');
         break;
       case 500:

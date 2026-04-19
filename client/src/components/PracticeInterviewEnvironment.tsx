@@ -204,35 +204,49 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
 
     try {
       setIsRecording(false);
-      toast.loading('Uploading video...');
+      toast.loading('Uploading video to Cloudinary...');
 
       const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
+      const videoFile = new File([videoBlob], `response_${Date.now()}.webm`, { type: 'video/webm' });
       
-      // Use FormData for efficient binary upload
-      const formData = new FormData();
-      formData.append('video', videoBlob, 'response.webm');
-      formData.append('recordingTime', recordingTime.toString());
-
       try {
-        // Submit video to backend using FormData (more efficient than base64)
+        // Import and use direct Cloudinary upload
+        const { uploadVideoDirectToCloudinary } = await import('../services/directCloudinaryUpload');
+        
+        // Upload directly to Cloudinary
+        const uploadResult = await uploadVideoDirectToCloudinary(videoFile, (progress) => {
+          toast.loading(`Uploading video... ${progress.progress}%`);
+        });
+
+        console.log('[Practice Interview] Video uploaded to Cloudinary:', uploadResult.secure_url);
+
+        // Now save the URL to backend
+        toast.loading('Saving to database...');
+        
         const response = await fetch(`/api/video-analysis/responses/1/${currentQuestion.id}`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
           },
-          body: formData
+          body: JSON.stringify({
+            videoUrl: uploadResult.secure_url,
+            publicId: uploadResult.public_id,
+            recordingTime: recordingTime,
+            duration: uploadResult.duration
+          })
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+          throw new Error(errorData.message || `Save failed with status ${response.status}`);
         }
 
         const data = await response.json();
         const responseId = data.data.responseId;
 
         toast.dismiss();
-        toast.success('Video uploaded! Processing started...');
+        toast.success('Video uploaded and saved successfully!');
 
         // Notify parent about processing
         onProcessing?.(responseId);
@@ -241,7 +255,7 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
         const newResponse = {
           questionId: currentQuestion.id,
           questionText: currentQuestion.text,
-          videoBlob,
+          videoUrl: uploadResult.secure_url,
           recordingTime,
           responseId,
           timestamp: new Date()
@@ -269,6 +283,8 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
             toast.error('Video file is too large (max 100MB)');
           } else if (error.message.includes('400')) {
             toast.error('Invalid video format. Use WebM, MP4, MOV, or AVI');
+          } else if (error.message.includes('503')) {
+            toast.error('Server temporarily unavailable. Please try again.');
           } else {
             toast.error(`Upload failed: ${error.message}`);
           }

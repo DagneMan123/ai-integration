@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authAPI } from '../../utils/api';
@@ -23,8 +23,16 @@ const Login: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { setAuth } = useAuthStore();
+  const { setAuth, setIsLoading } = useAuthStore();
   const navigate = useNavigate();
+
+  // HARDCODED STOP: Kill the redirect loop - nuke ALL stale data immediately
+  useEffect(() => {
+    console.log('[Login Page] HARDCODED STOP - Nuking all stale data');
+    localStorage.clear();
+    sessionStorage.clear();
+    console.log('[Login Page] All storage cleared');
+  }, []); // Empty dependency array - runs once on mount
 
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);

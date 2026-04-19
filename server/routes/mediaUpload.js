@@ -1,13 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { uploadStream } = require('../middleware/upload');
-const { authenticate } = require('../middleware/auth');
-const {
-  uploadInterviewVideo,
-  uploadResume,
-  uploadProfilePicture,
-  getUploadProgress
-} = require('../controllers/mediaUploadController');
+const { authenticateToken } = require('../middleware/auth');
+const mediaUploadController = require('../controllers/mediaUploadController');
 
 /**
  * POST /api/media/interview-video/:interviewId
@@ -16,9 +11,9 @@ const {
  */
 router.post(
   '/interview-video/:interviewId',
-  authenticate,
+  authenticateToken,
   uploadStream,
-  uploadInterviewVideo
+  mediaUploadController.uploadInterviewVideo
 );
 
 /**
@@ -28,9 +23,9 @@ router.post(
  */
 router.post(
   '/resume',
-  authenticate,
+  authenticateToken,
   uploadStream,
-  uploadResume
+  mediaUploadController.uploadResume
 );
 
 /**
@@ -40,9 +35,9 @@ router.post(
  */
 router.post(
   '/profile-picture',
-  authenticate,
+  authenticateToken,
   uploadStream,
-  uploadProfilePicture
+  mediaUploadController.uploadProfilePicture
 );
 
 /**
@@ -52,8 +47,8 @@ router.post(
  */
 router.get(
   '/upload-progress/:uploadId',
-  authenticate,
-  getUploadProgress
+  authenticateToken,
+  mediaUploadController.getUploadProgress
 );
 
 module.exports = router;

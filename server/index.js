@@ -44,12 +44,14 @@ app.use(cors({
 }));
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000, // Increased from 500 to 1000 to handle development
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5000, // Increased from 1000 to 5000 for development
   message: { message: 'Too many requests from this IP' },
   skip: (req) => {
-    // Skip rate limiting for health checks
-    return req.path === '/health';
+    // Skip rate limiting for health checks, media uploads, and help center endpoints
+    return req.path === '/health' || 
+           req.path.includes('/media') ||
+           req.path.includes('/help-center');
   }
 });
 app.use('/api/', limiter);
@@ -83,6 +85,7 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/media-link', require('./routes/mediaLink'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/dashboard-enhanced', require('./routes/enhancedDashboard'));
 app.use('/api/dashboard-data', require('./routes/dashboardData'));
@@ -125,14 +128,30 @@ app.get('/health', async (req, res) => {
     // Check database connection
     const dbHealth = await prisma.checkConnectionHealth();
     
+    // Get memory usage
+    const memUsage = process.memoryUsage();
+    const memUsagePercent = Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100);
+    
+    // Log memory usage if above 80%
+    if (memUsagePercent > 80) {
+      logger.warn('⚠️ High memory usage detected:', {
+        heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
+        percentage: `${memUsagePercent}%`
+      });
+    }
+    
     res.json({ 
       status: 'OK', 
       timestamp: new Date(),
       database: dbHealth ? 'connected' : 'disconnected',
       uptime: process.uptime(),
       memory: {
-        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+        external: Math.round(memUsage.external / 1024 / 1024),
+        rss: Math.round(memUsage.rss / 1024 / 1024),
+        percentage: memUsagePercent
       }
     });
   } catch (error) {
@@ -168,6 +187,10 @@ const server = app.listen(PORT, () => {
   logger.info(`💻 Frontend available at http://localhost:3000`);
 });
 
+// Set server timeout to 10 minutes for large file uploads
+server.timeout = 600000;
+logger.info('Server timeout set to 10 minutes (600000ms) for large file uploads');
+
 // Graceful shutdown handler
 const gracefulShutdown = async (signal) => {
   logger.info(`\n${signal} received. Starting graceful shutdown...`);
@@ -200,7 +223,25 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception:', error);
+  logger.error('🚨 UNCAUGHT EXCEPTION:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+    code: error.code,
+    errno: error.errno,
+    syscall: error.syscall,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Log memory usage at time of crash
+  const memUsage = process.memoryUsage();
+  logger.error('Memory usage at crash:', {
+    heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
+    heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
+    external: `${Math.round(memUsage.external / 1024 / 1024)}MB`,
+    rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`
+  });
+  
   gracefulShutdown('uncaughtException');
 });
 

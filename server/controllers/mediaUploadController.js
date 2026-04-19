@@ -1,5 +1,5 @@
 const prisma = require('../lib/prisma');
-const { uploadVideo, uploadDocument } = require('../services/cloudinaryService');
+const { uploadVideo, uploadDocument, uploadImage } = require('../services/cloudinaryService');
 const { logger } = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -11,6 +11,13 @@ const uploadInterviewVideo = async (req, res, next) => {
   try {
     const { interviewId } = req.params;
     const userId = req.user?.id;
+    
+    // Log memory before upload
+    const memBefore = process.memoryUsage();
+    logger.info('📊 Memory before video upload:', {
+      heapUsed: `${Math.round(memBefore.heapUsed / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(memBefore.heapTotal / 1024 / 1024)}MB`
+    });
 
     if (!req.file) {
       return next(new AppError('No video file provided', 400));
@@ -34,11 +41,12 @@ const uploadInterviewVideo = async (req, res, next) => {
       return next(new AppError('Unauthorized to upload video for this interview', 403));
     }
 
-    logger.info('Starting interview video upload', {
+    logger.info('🎥 Starting interview video upload', {
       interviewId,
       userId,
-      fileSize: req.file.size,
-      fileName: req.file.originalname
+      fileSize: `${(req.file.size / 1024 / 1024).toFixed(2)}MB`,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype
     });
 
     // Upload to Cloudinary using stream
@@ -65,10 +73,17 @@ const uploadInterviewVideo = async (req, res, next) => {
       }
     });
 
-    logger.info('Interview video uploaded and database updated', {
+    // Log memory after upload
+    const memAfter = process.memoryUsage();
+    logger.info('✅ Interview video uploaded successfully', {
       interviewId,
       videoUrl: uploadResult.secure_url,
-      duration: uploadResult.duration
+      duration: uploadResult.duration,
+      memoryAfter: {
+        heapUsed: `${Math.round(memAfter.heapUsed / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(memAfter.heapTotal / 1024 / 1024)}MB`,
+        delta: `${Math.round((memAfter.heapUsed - memBefore.heapUsed) / 1024 / 1024)}MB`
+      }
     });
 
     return res.status(200).json({
@@ -83,7 +98,11 @@ const uploadInterviewVideo = async (req, res, next) => {
     });
 
   } catch (error) {
-    logger.error('Interview video upload error:', error);
+    logger.error('❌ Interview video upload error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
 
     // Provide specific error messages
     if (error.message.includes('too large')) {
@@ -107,6 +126,13 @@ const uploadInterviewVideo = async (req, res, next) => {
 const uploadResume = async (req, res, next) => {
   try {
     const userId = req.user?.id;
+    
+    // Log memory before upload
+    const memBefore = process.memoryUsage();
+    logger.info('📊 Memory before resume upload:', {
+      heapUsed: `${Math.round(memBefore.heapUsed / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(memBefore.heapTotal / 1024 / 1024)}MB`
+    });
 
     if (!req.file) {
       return next(new AppError('No document file provided', 400));
@@ -125,10 +151,11 @@ const uploadResume = async (req, res, next) => {
       return next(new AppError('User not found', 404));
     }
 
-    logger.info('Starting resume upload', {
+    logger.info('📄 Starting resume upload', {
       userId,
-      fileSize: req.file.size,
-      fileName: req.file.originalname
+      fileSize: `${(req.file.size / 1024 / 1024).toFixed(2)}MB`,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype
     });
 
     // Upload to Cloudinary using stream with resource_type: 'raw'
@@ -154,10 +181,17 @@ const uploadResume = async (req, res, next) => {
       }
     });
 
-    logger.info('Resume uploaded and database updated', {
+    // Log memory after upload
+    const memAfter = process.memoryUsage();
+    logger.info('✅ Resume uploaded successfully', {
       userId,
       resumeUrl: uploadResult.secure_url,
-      fileName: uploadResult.fileName
+      fileName: uploadResult.fileName,
+      memoryAfter: {
+        heapUsed: `${Math.round(memAfter.heapUsed / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(memAfter.heapTotal / 1024 / 1024)}MB`,
+        delta: `${Math.round((memAfter.heapUsed - memBefore.heapUsed) / 1024 / 1024)}MB`
+      }
     });
 
     return res.status(200).json({
@@ -172,7 +206,11 @@ const uploadResume = async (req, res, next) => {
     });
 
   } catch (error) {
-    logger.error('Resume upload error:', error);
+    logger.error('❌ Resume upload error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
 
     // Provide specific error messages
     if (error.message.includes('too large')) {
@@ -199,6 +237,13 @@ const uploadResume = async (req, res, next) => {
 const uploadProfilePicture = async (req, res, next) => {
   try {
     const userId = req.user?.id;
+    
+    // Log memory before upload
+    const memBefore = process.memoryUsage();
+    logger.info('📊 Memory before profile picture upload:', {
+      heapUsed: `${Math.round(memBefore.heapUsed / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(memBefore.heapTotal / 1024 / 1024)}MB`
+    });
 
     if (!req.file) {
       return next(new AppError('No image file provided', 400));
@@ -217,23 +262,24 @@ const uploadProfilePicture = async (req, res, next) => {
       return next(new AppError('User not found', 404));
     }
 
-    logger.info('Starting profile picture upload', {
+    logger.info('🖼️ Starting profile picture upload', {
       userId,
-      fileSize: req.file.size,
-      fileName: req.file.originalname
+      fileSize: `${(req.file.size / 1024 / 1024).toFixed(2)}MB`,
+      fileName: req.file.originalname,
+      mimeType: req.file.mimetype
     });
 
     // Upload to Cloudinary with image optimization
-    const uploadResult = await uploadDocument(
+    const uploadResult = await uploadImage(
       req.file.buffer,
       req.file.originalname,
       {
-        resource_type: 'image',
         tags: ['profile', `user_${userId}`],
-        transformation: [
-          { width: 500, height: 500, crop: 'fill', gravity: 'face' },
-          { quality: 'auto' }
-        ]
+        width: 500,
+        height: 500,
+        crop: 'fill',
+        gravity: 'face',
+        quality: 'auto'
       }
     );
 
@@ -247,9 +293,16 @@ const uploadProfilePicture = async (req, res, next) => {
       }
     });
 
-    logger.info('Profile picture uploaded and database updated', {
+    // Log memory after upload
+    const memAfter = process.memoryUsage();
+    logger.info('✅ Profile picture uploaded successfully', {
       userId,
-      profilePictureUrl: uploadResult.secure_url
+      profilePictureUrl: uploadResult.secure_url,
+      memoryAfter: {
+        heapUsed: `${Math.round(memAfter.heapUsed / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(memAfter.heapTotal / 1024 / 1024)}MB`,
+        delta: `${Math.round((memAfter.heapUsed - memBefore.heapUsed) / 1024 / 1024)}MB`
+      }
     });
 
     return res.status(200).json({
@@ -263,7 +316,11 @@ const uploadProfilePicture = async (req, res, next) => {
     });
 
   } catch (error) {
-    logger.error('Profile picture upload error:', error);
+    logger.error('❌ Profile picture upload error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
 
     if (error.message.includes('too large')) {
       return next(new AppError(error.message, 413));

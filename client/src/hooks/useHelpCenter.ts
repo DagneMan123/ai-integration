@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { helpCenterAPI } from '../services/helpCenterService';
 
 interface Article {
@@ -22,10 +22,15 @@ export const useHelpCenter = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loadingRef = useRef(false);
 
   // Fetch articles
   const fetchArticles = useCallback(async (category?: string, search?: string) => {
+    // Prevent duplicate requests
+    if (loadingRef.current) return;
+    
     try {
+      loadingRef.current = true;
       setLoading(true);
       setError(null);
       const articles = await helpCenterAPI.getArticles(category, search);
@@ -36,6 +41,7 @@ export const useHelpCenter = () => {
       setArticles([]);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   }, []);
 
@@ -75,10 +81,20 @@ export const useHelpCenter = () => {
     }
   }, []);
 
-  // Initial load
+  // Initial load - non-blocking with timeout
   useEffect(() => {
-    fetchArticles();
-    fetchCategories();
+    // Use setTimeout to defer loading until after page render
+    const timer = setTimeout(() => {
+      // Load help center data in background without blocking
+      Promise.all([
+        fetchArticles().catch(() => {}),
+        fetchCategories().catch(() => {})
+      ]).catch(() => {
+        // Silently fail - fallback data will be used
+      });
+    }, 500); // Delay to allow page to render first
+
+    return () => clearTimeout(timer);
   }, [fetchArticles, fetchCategories]);
 
   return {
