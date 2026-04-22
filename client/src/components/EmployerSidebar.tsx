@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { 
   X,
   ChevronRight,
@@ -15,14 +15,9 @@ import {
   FileText,
   CheckCircle,
   Target,
-  Zap,
-  ChevronLeft
+  Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import EmployerInboxWrapper from './EmployerInboxWrapper';
-import EmployerInterviewCalendarWrapper from './EmployerInterviewCalendarWrapper';
-import EmployerApplicantTrackingWrapper from './EmployerApplicantTrackingWrapper';
-import Loading from './Loading';
 
 interface EmployerSidebarProps {
   isOpen: boolean;
@@ -32,7 +27,6 @@ interface EmployerSidebarProps {
 const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const [expandedSection, setExpandedSection] = useState<string | null>('hiring');
-  const [currentView, setCurrentView] = useState<string | null>(null);
 
   const sections = [
     {
@@ -79,22 +73,8 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, onClose }) =>
   ];
 
   const handleNavigation = (path: string) => {
-    // Check if this is an inline content page
-    if (path === '/employer/inbox') {
-      setCurrentView('inbox');
-    } else if (path === '/employer/interview-calendar') {
-      setCurrentView('interview-calendar');
-    } else if (path === '/employer/applicant-tracking') {
-      setCurrentView('applicant-tracking');
-    } else {
-      // Navigate to full page for other routes
-      navigate(path);
-      onClose();
-    }
-  };
-
-  const handleBackToMenu = () => {
-    setCurrentView(null);
+    navigate(path);
+    onClose();
   };
 
   const toggleSection = (sectionId: string) => {
@@ -113,9 +93,9 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, onClose }) =>
 
       {/* Employer Sidebar */}
       <div
-        className={`fixed right-0 top-0 h-screen bg-white shadow-2xl transform transition-transform duration-300 z-50 overflow-y-auto ${
+        className={`fixed right-0 top-0 h-screen w-96 bg-white shadow-2xl transform transition-transform duration-300 z-50 overflow-y-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
-        } ${currentView ? 'w-full md:w-[90%] lg:w-[75%]' : 'w-96'}`}
+        }`}
       >
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex items-center justify-between">
@@ -138,39 +118,8 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, onClose }) =>
 
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 100px)' }}>
-          {currentView ? (
-            <>
-              {/* Back Button */}
-              <button
-                onClick={handleBackToMenu}
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 font-medium"
-              >
-                <ChevronLeft size={20} />
-                Back to Menu
-              </button>
-
-              {/* Inline Content */}
-              {currentView === 'inbox' && (
-                <Suspense fallback={<Loading />}>
-                  <EmployerInboxWrapper onBack={handleBackToMenu} />
-                </Suspense>
-              )}
-
-              {currentView === 'interview-calendar' && (
-                <Suspense fallback={<Loading />}>
-                  <EmployerInterviewCalendarWrapper onBack={handleBackToMenu} />
-                </Suspense>
-              )}
-
-              {currentView === 'applicant-tracking' && (
-                <Suspense fallback={<Loading />}>
-                  <EmployerApplicantTrackingWrapper onBack={handleBackToMenu} />
-                </Suspense>
-              )}
-            </>
-          ) : (
-            <>
-              {/* Quick Stats */}
+          <>
+            {/* Quick Stats */}
               <div>
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
                   Quick Stats
@@ -318,18 +267,17 @@ const EmployerSidebar: React.FC<EmployerSidebarProps> = ({ isOpen, onClose }) =>
                 </div>
               </div>
 
-              {/* Help & Support */}
-              <div className="border-t border-slate-200 pt-4">
-                <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle size={18} className="text-slate-400" />
-                    <span className="text-sm font-medium text-slate-700">Help & Support</span>
-                  </div>
-                  <ChevronRight size={16} className="text-slate-400" />
-                </button>
-              </div>
-            </>
-          )}
+            {/* Help & Support */}
+            <div className="border-t border-slate-200 pt-4">
+              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left">
+                <div className="flex items-center gap-3">
+                  <AlertCircle size={18} className="text-slate-400" />
+                  <span className="text-sm font-medium text-slate-700">Help & Support</span>
+                </div>
+                <ChevronRight size={16} className="text-slate-400" />
+              </button>
+            </div>
+          </>
         </div>
       </div>
     </>

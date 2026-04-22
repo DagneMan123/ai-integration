@@ -243,10 +243,8 @@ exports.getJobAnalytics = async (req, res, next) => {
   }
 };
 
-// Admin dashboard analytics - OPTIMIZED
 exports.getAdminDashboard = async (req, res, next) => {
   try {
-    // Fetch all counts and role breakdown in parallel
     const [usersCount, jobsCount, applicationsCount, interviewsCount, completedInterviewsCount, paymentsCount, usersByRole, recentActivity] = await Promise.all([
       prisma.user.count(),
       prisma.job.count(),
@@ -308,7 +306,6 @@ exports.getAdminDashboard = async (req, res, next) => {
   }
 };
 
-// Revenue analytics for admin
 exports.getRevenueAnalytics = async (req, res, next) => {
   try {
     const payments = await prisma.payment.findMany({
@@ -352,7 +349,6 @@ exports.getRevenueAnalytics = async (req, res, next) => {
   }
 };
 
-// User analytics for admin
 exports.getUserAnalytics = async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
@@ -364,7 +360,6 @@ exports.getUserAnalytics = async (req, res, next) => {
       orderBy: { createdAt: 'asc' }
     });
 
-    // Group by month
     const userGrowth = users.reduce((acc, user) => {
       const month = user.createdAt.toISOString().slice(0, 7);
       if (!acc[month]) {

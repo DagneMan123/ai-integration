@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Play, BookOpen, Zap, Clock, Target, Lightbulb, ArrowRight, CheckCircle2 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
@@ -52,6 +53,7 @@ interface FeedbackData {
 }
 
 const Practice: React.FC = () => {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<InterviewPhase>('selection');
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -105,6 +107,31 @@ const Practice: React.FC = () => {
 
     setSelectedSession(session);
     setDemoMode(false);
+    
+    // ROUTE HANDLING: Navigate to assessment page with category and difficulty as URL parameters
+    const category = session.title.includes('Technical') ? 'Technical' :
+                     session.title.includes('Behavioral') ? 'Behavioral' : 'Case';
+    const difficulty = session.difficulty;
+    const duration = session.duration;
+    
+    console.log('[Practice Mode] Starting practice session', {
+      category,
+      difficulty,
+      duration,
+      questionCount: session.questionCount
+    });
+
+    // Navigate to assessment page with parameters
+    navigate(`/assessment?category=${encodeURIComponent(category)}&difficulty=${encodeURIComponent(difficulty)}&duration=${duration}`, {
+      state: {
+        sessionType: session.title,
+        duration: session.duration,
+        questionCount: session.questionCount,
+        category,
+        difficulty
+      }
+    });
+
     setPhase('lobby');
   };
 

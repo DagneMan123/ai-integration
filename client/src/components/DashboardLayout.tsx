@@ -12,7 +12,6 @@ import {
   Bell, 
   Search,
   Settings,
-  Activity,
   MessageSquare,
   HelpCircle
 } from 'lucide-react';
@@ -36,15 +35,12 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, role }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [helpCenterOpen, setHelpCenterOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const {
-    setSessionMonitoringOpen,
-    setGlobalSettingsOpen,
     setSupportTicketsOpen,
-    setSettingsOpen,
-    setHelpCenterOpen,
     setAdminSidebarOpen,
     setCandidateSidebarOpen,
     setEmployerSidebarOpen,
@@ -275,20 +271,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
                   <LayoutDashboard size={20} />
                 </button>
                 <button
-                  onClick={() => setSessionMonitoringOpen(true)}
-                  className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors flex-shrink-0 hover:text-blue-700"
-                  title="Session Monitoring"
-                >
-                  <Activity size={20} />
-                </button>
-                <button
-                  onClick={() => setGlobalSettingsOpen(true)}
-                  className="p-2 text-purple-500 hover:bg-purple-50 rounded-full transition-colors flex-shrink-0 hover:text-purple-700"
-                  title="Global Settings"
-                >
-                  <Settings size={20} />
-                </button>
-                <button
                   onClick={() => setSupportTicketsOpen(true)}
                   className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0 hover:text-red-700"
                   title="Support Tickets"
@@ -323,7 +305,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
             {/* Settings Button - For non-admin users */}
             {role !== 'admin' && (
               <button
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => {}}
                 className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0 hover:text-slate-600"
                 title="Settings"
               >
@@ -361,6 +343,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, menuItems, 
           </div>
         </main>
       </div>
+
+      {/* Help Center Panel */}
     </div>
   );
 };

@@ -740,3 +740,117 @@ exports.getPersonaDetails = async (req, res, next) => {
     res.json({ success: true, data: details });
   } catch (error) { next(error); }
 };
+
+
+// SAVE RECORDING: Save video URL from Cloudinary to database
+exports.saveRecording = async (req, res, next) => {
+  try {
+    const { videoUrl, questionId, recordingTime } = req.body;
+    const userId = req.user.id;
+
+    console.log('[saveRecording] Request received', {
+      userId,
+      questionId,
+      recordingTime,
+      videoUrl: videoUrl ? 'provided' : 'missing',
+      hasBody: !!req.body
+    });
+
+    logger.info('[saveRecording] Saving video recording', {
+      userId,
+      questionId,
+      recordingTime,
+      videoUrl: videoUrl ? 'provided' : 'missing'
+    });
+
+    // Validate input
+    if (!videoUrl) {
+      console.error('[saveRecording] Missing videoUrl');
+      return next(new AppError('videoUrl is required', 400));
+    }
+
+    if (!questionId) {
+      console.error('[saveRecording] Missing questionId');
+      return next(new AppError('questionId is required', 400));
+    }
+
+    // Find the most recent in-progress interview for this user
+    const interview = await prisma.interview.findFirst({
+      where: {
+        candidateId: userId,
+        status: 'IN_PROGRESS'
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!interview) {
+      console.error('[saveRecording] No active interview found', { userId });
+      logger.error('[saveRecording] No active interview found', { userId });
+      return next(new AppError('No active interview found', 404));
+    }
+
+    console.log('[saveRecording] Found interview', {
+      interviewId: interview.id,
+      status: interview.status
+    });
+
+    // Store recording in interview responses array (in-memory storage)
+    // This bypasses the database table requirement temporarily
+    const responses = interview.responses || [];
+    const newResponse = {
+      id: responses.length + 1,
+      sessionId: interview.id,
+      questionId: parseInt(questionId),
+      userId: userId,
+      videoUrl: videoUrl,
+      videoPath: videoUrl,
+      recordingTime: parseInt(recordingTime) || 0,
+      status: 'completed',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    responses.push(newResponse);
+
+    // Update interview with new response
+    const updatedInterview = await prisma.interview.update({
+      where: { id: interview.id },
+      data: {
+        responses: responses,
+        updatedAt: new Date()
+      }
+    });
+
+    console.log('[saveRecording] Response saved successfully', {
+      responseId: newResponse.id,
+      interviewId: interview.id,
+      totalResponses: responses.length
+    });
+
+    logger.info('[saveRecording] Recording saved successfully', {
+      responseId: newResponse.id,
+      interviewId: interview.id,
+      userId,
+      totalResponses: responses.length
+    });
+
+    res.status(201).json({
+      success: true,
+      statusCode: 201,
+      data: {
+        responseId: newResponse.id,
+        videoUrl: newResponse.videoUrl,
+        message: 'Recording saved successfully'
+      },
+      message: 'Recording saved successfully'
+    });
+  } catch (error) {
+    console.error('[saveRecording] Error:', error.message);
+    logger.error('[saveRecording] Error saving recording', {
+      error: error.message,
+      userId: req.user?.id,
+      stack: error.stack
+    });
+    next(error);
+  }
+};

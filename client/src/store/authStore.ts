@@ -15,13 +15,19 @@ interface ExtendedAuthState extends AuthState {
 export const useAuthStore = create<ExtendedAuthState>()(
   persist(
     (set, get) => ({
+      // STEP 1: HARD DEFAULT - Do not auto-load from localStorage
+      // isAuthenticated is false and token is null by default
       user: null,
       token: null,
       refreshToken: null,
       _hasHydrated: false,
-      isLoading: false, // CRITICAL: Default to false - disable automatic redirect
+      isLoading: false,
 
       setAuth: (user: User, token: string, refreshToken: string) => {
+        console.log('[Auth Store] Setting auth with token:', token.substring(0, 20) + '...');
+        // CRITICAL: Save token to localStorage immediately for request-time injection
+        localStorage.setItem('token', token);
+        localStorage.setItem('refreshToken', refreshToken);
         set({ user, token, refreshToken, isLoading: false });
       },
 
@@ -36,7 +42,6 @@ export const useAuthStore = create<ExtendedAuthState>()(
 
       logout: () => {
         // HARD AUTH RESET: Clear ALL auth-related data from localStorage
-        // This prevents redirect loops when token expires
         console.log('[Auth Store] HARD LOGOUT - Clearing all auth data');
         
         // Clear specific keys
@@ -44,7 +49,7 @@ export const useAuthStore = create<ExtendedAuthState>()(
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('auth-storage');
         
-        // Clear any other auth-related keys that might exist
+        // Clear any other auth-related keys
         const keysToRemove = Object.keys(localStorage).filter(key => 
           key.toLowerCase().includes('auth') || 
           key.toLowerCase().includes('token') || 
@@ -56,10 +61,10 @@ export const useAuthStore = create<ExtendedAuthState>()(
           localStorage.removeItem(key);
         });
         
-        // Clear state
+        // Clear state - CRITICAL: Set to hard defaults
         set({ user: null, token: null, refreshToken: null, isLoading: false });
         
-        console.log('[Auth Store] All auth data cleared');
+        console.log('[Auth Store] All auth data cleared - back to hard defaults');
       },
 
       isAuthenticated: () => !!get().token && !!get().user,
@@ -85,15 +90,8 @@ export const useAuthStore = create<ExtendedAuthState>()(
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
+        console.log('[Auth Store] Hydration complete');
         state?.setHasHydrated(true);
-        // After hydration, verify token if it exists
-        if (state?.token) {
-          console.log('[Auth Store] Token found after hydration, verifying...');
-          // Token verification will happen in PrivateRoute
-        } else {
-          console.log('[Auth Store] No token found after hydration');
-          state?.setIsLoading(false);
-        }
       },
     }
   )

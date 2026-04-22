@@ -133,10 +133,25 @@ const InterviewLobby: React.FC<InterviewLobbyProps> = ({
     setMicStatus('demo');
     setMicVolume(45);
     toast.success('Demo mode enabled - you can now practice without hardware');
+    // Call the demo mode callback
     onDemoMode?.();
   };
 
+  const handleBeginClick = () => {
+    console.log('[InterviewLobby] Begin Interview clicked');
+    console.log('[InterviewLobby] Current state:', {
+      demoMode,
+      micStatus,
+      cameraStatus,
+      isReady: (micStatus === 'ready' && cameraStatus === 'ready') || demoMode
+    });
+    
+    // Call the onBegin callback
+    onBegin();
+  };
+
   const isReady = (micStatus === 'ready' && cameraStatus === 'ready') || demoMode;
+  const canStart = isReady || true; // Allow starting even without hardware check
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -299,7 +314,7 @@ const InterviewLobby: React.FC<InterviewLobbyProps> = ({
             {!demoMode && !isReady && (
               <button
                 onClick={checkHardware}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 transition-all flex items-center justify-center gap-2"
               >
                 <Video className="w-5 h-5" />
                 {(micStatus === 'error' || cameraStatus === 'error') ? 'Retry' : 'Check Hardware'}
@@ -315,16 +330,11 @@ const InterviewLobby: React.FC<InterviewLobbyProps> = ({
               </button>
             )}
             <button
-              onClick={onBegin}
-              disabled={!isReady}
-              className={`flex-1 px-6 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
-                isReady
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              onClick={handleBeginClick}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <Clock className="w-5 h-5" />
-              Begin Interview
+              Start Interview
             </button>
           </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Clock, Mic, Square, Send, ChevronRight, AlertCircle, CheckCircle2, Volume2, Zap } from 'lucide-react';
+import { Clock, Mic, Square, Send, ChevronRight, AlertCircle, CheckCircle2, Volume2, Zap, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 interface Question {
   id: number;
@@ -19,6 +20,9 @@ interface PracticeInterviewEnvironmentProps {
   onProcessing?: (responseId: number) => void;
 }
 
+// STATE MACHINE: Recording states
+type RecordingState = 'IDLE' | 'RECORDING' | 'PROCESSING' | 'READY_TO_UPLOAD';
+
 const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> = ({
   sessionType,
   questions,
@@ -30,19 +34,31 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
 }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(duration * 60);
-  const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [responses, setResponses] = useState<any[]>([]);
   const [micVolume, setMicVolume] = useState(0);
+  const [recordedVideo, setRecordedVideo] = useState<Blob | null>(null);
+  const [recordingMimeType, setRecordingMimeType] = useState<string>('video/webm');
+  
+  // STATE MACHINE: Recording state
+  const [recordingState, setRecordingState] = useState<RecordingState>('IDLE');
+  
+  // UPLOAD STATE: Track upload progress
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const recordingPromiseRef = useRef<Promise<Blob> | null>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const isRecording = recordingState === 'RECORDING';
 
   // Initialize camera
   useEffect(() => {
@@ -130,9 +146,17 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
     return () => clearInterval(timer);
   }, [isRecording]);
 
+  // AUTO-UPLOAD TRIGGER: When blob is ready, automatically upload
+  useEffect(() => {
+    if (recordingState === 'READY_TO_UPLOAD' && recordedVideo && !isUploading) {
+      console.log('[Practice Interview] Blob ready - triggering auto-upload');
+      uploadToCloudinaryAndSync();
+    }
+  }, [recordingState, recordedVideo, isUploading]);
+
   const startRecording = () => {
     if (demoMode) {
-      setIsRecording(true);
+      setRecordingState('RECORDING');
       setRecordingTime(0);
       toast.success('Demo recording started');
       return;
@@ -143,159 +167,306 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
       return;
     }
 
+    // CLEANUP: Clear chunks array before starting new recording
     chunksRef.current = [];
-    const mediaRecorder = new MediaRecorder(streamRef.current, {
-      mimeType: 'video/webm;codecs=vp9'
+    setRecordedVideo(null);
+    setUploadError(null);
+    
+    console.log('[Practice Interview] Starting recording - chunks cleared');
+
+    // EXPLICIT MIME TYPE: Check for supported types
+    let mimeType = 'video/webm';
+    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+      mimeType = 'video/webm;codecs=vp9';
+    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+      mimeType = 'video/webm;codecs=vp8';
+    } else if (MediaRecorder.isTypeSupported('video/webm')) {
+      mimeType = 'video/webm';
+    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+      mimeType = 'video/mp4';
+    }
+
+    console.log('[Practice Interview] MediaRecorder MIME type selected:', mimeType);
+
+    const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType });
+    setRecordingMimeType(mimeType);
+
+    // CREATE PROMISE: Wrap onstop in a Promise
+    const recordingPromise = new Promise<Blob>((resolve, reject) => {
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+          console.log('[Practice Interview] Chunk added:', {
+            chunkSize: `${(event.data.size / 1024).toFixed(2)}KB`,
+            totalChunks: chunksRef.current.length
+          });
+        }
+      };
+
+      // BLOB CREATION: In onstop event, create final Blob
+      mediaRecorder.onstop = () => {
+        console.log('[Practice Interview] MediaRecorder stopped - creating blob', {
+          chunksCount: chunksRef.current.length,
+          totalSize: `${(chunksRef.current.reduce((sum, chunk) => sum + chunk.size, 0) / 1024 / 1024).toFixed(2)}MB`
+        });
+
+        if (chunksRef.current.length === 0) {
+          console.error('[Practice Interview] No chunks available');
+          setRecordingState('IDLE');
+          reject(new Error('Recording failed: No chunks collected'));
+          return;
+        }
+
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        
+        console.log('[Practice Interview] Blob created successfully', {
+          blobSize: `${(blob.size / 1024 / 1024).toFixed(2)}MB`,
+          blobType: blob.type
+        });
+
+        if (blob.size === 0) {
+          console.error('[Practice Interview] Blob is empty');
+          setRecordingState('IDLE');
+          reject(new Error('Recording failed: Blob is empty'));
+          return;
+        }
+
+        // CRITICAL: Set blob and mark as ready
+        setRecordedVideo(blob);
+        console.log('[Practice Interview] Blob ready for upload');
+        setRecordingState('READY_TO_UPLOAD');
+        resolve(blob);
+      };
+
+      mediaRecorder.onerror = (event: Event) => {
+        const errorEvent = event as any;
+        console.error('[Practice Interview] MediaRecorder error:', errorEvent.error);
+        setRecordingState('IDLE');
+        reject(new Error(`Recording error: ${errorEvent.error}`));
+      };
     });
 
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunksRef.current.push(event.data);
-      }
-    };
-
+    recordingPromiseRef.current = recordingPromise;
     mediaRecorderRef.current = mediaRecorder;
     mediaRecorder.start();
-    setIsRecording(true);
+    setRecordingState('RECORDING');
     setRecordingTime(0);
+    console.log('[Practice Interview] Recording started');
     toast.success('Recording started');
   };
 
   const stopRecording = () => {
     if (demoMode) {
-      setIsRecording(false);
+      setRecordingState('PROCESSING');
+      setTimeout(() => {
+        setRecordedVideo(new Blob(['demo'], { type: 'video/webm' }));
+        setRecordingState('READY_TO_UPLOAD');
+      }, 500);
       toast.success('Demo recording stopped');
       return;
     }
 
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && recordingState === 'RECORDING') {
+      console.log('[Practice Interview] Stopping recording');
+      setRecordingState('PROCESSING');
+      
+      if (mediaRecorderRef.current.state === 'recording') {
+        console.log('[Practice Interview] Flushing buffer with requestData()');
+        mediaRecorderRef.current.requestData();
+      }
+      
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
+      console.log('[Practice Interview] Recording stopped - waiting for onstop event');
     }
   };
 
-  const submitResponse = async () => {
+  // DIRECT CLOUDINARY UPLOAD: Upload blob directly to Cloudinary, then sync with backend
+  const uploadToCloudinaryAndSync = async () => {
+    if (!recordedVideo) {
+      console.error('[Practice Interview] No blob available');
+      setRecordingState('IDLE');
+      toast.error('No recording available. Please try again.');
+      return;
+    }
+
     if (demoMode) {
-      // In demo mode, create a mock response
+      // Demo mode: simulate upload
       const newResponse = {
         questionId: currentQuestion.id,
         questionText: currentQuestion.text,
-        videoBlob: new Blob(['demo'], { type: 'video/webm' }),
+        videoUrl: 'https://demo.cloudinary.com/video.webm',
         recordingTime,
         timestamp: new Date()
       };
-
       setResponses([...responses, newResponse]);
       setRecordingTime(0);
-
-      if (currentQuestionIndex + 1 < questions.length) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        toast.success('Response saved. Moving to next question.');
+      setRecordedVideo(null);
+      setRecordingState('IDLE');
+      
+      if (!isLastQuestion) {
+        setCurrentQuestionIndex(prev => prev + 1);
       } else {
         handleEndSession();
       }
       return;
     }
 
-    if (chunksRef.current.length === 0) {
-      toast.error('Please record an answer first');
-      return;
-    }
-
     try {
-      setIsRecording(false);
-      toast.loading('Uploading video to Cloudinary...');
+      setIsUploading(true);
+      setUploadError(null);
+      console.log('[Practice Interview] Starting Cloudinary upload');
 
-      const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
-      const videoFile = new File([videoBlob], `response_${Date.now()}.webm`, { type: 'video/webm' });
-      
-      try {
-        // Import and use direct Cloudinary upload
-        const { uploadVideoDirectToCloudinary } = await import('../services/directCloudinaryUpload');
-        
-        // Upload directly to Cloudinary
-        const uploadResult = await uploadVideoDirectToCloudinary(videoFile, (progress) => {
-          toast.loading(`Uploading video... ${progress.progress}%`);
-        });
+      // STEP 1: Upload to Cloudinary directly
+      const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'dm5rf4yzc';
+      const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET_VIDEO || 'simuai_video_preset';
 
-        console.log('[Practice Interview] Video uploaded to Cloudinary:', uploadResult.secure_url);
+      // Determine file extension
+      let fileExtension = '.webm';
+      if (recordingMimeType.includes('mp4')) {
+        fileExtension = '.mp4';
+      } else if (recordingMimeType.includes('ogg')) {
+        fileExtension = '.ogg';
+      }
 
-        // Now save the URL to backend
-        toast.loading('Saving to database...');
-        
-        const response = await fetch(`/api/video-analysis/responses/1/${currentQuestion.id}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
+      const formData = new FormData();
+      formData.append('file', recordedVideo, `response_${Date.now()}${fileExtension}`);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('resource_type', 'video');
+      formData.append('folder', 'simuai/videos');
+
+      console.log('[Practice Interview] Uploading to Cloudinary', {
+        cloudName,
+        uploadPreset,
+        fileSize: `${(recordedVideo.size / 1024 / 1024).toFixed(2)}MB`
+      });
+
+      const uploadResponse = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(percentCompleted);
+              console.log(`[Practice Interview] Upload progress: ${percentCompleted}%`);
+            }
           },
-          body: JSON.stringify({
-            videoUrl: uploadResult.secure_url,
-            publicId: uploadResult.public_id,
-            recordingTime: recordingTime,
-            duration: uploadResult.duration
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Save failed with status ${response.status}`);
+          timeout: 600000
         }
+      );
 
-        const data = await response.json();
-        const responseId = data.data.responseId;
+      const videoUrl = uploadResponse.data.secure_url;
+      console.log('[Practice Interview] Cloudinary upload complete:', videoUrl);
 
-        toast.dismiss();
-        toast.success('Video uploaded and saved successfully!');
+      // STEP 2: Sync with backend - send only URL and token
+      console.log('[Practice Interview] Syncing with backend');
+      
+      // TOKEN INJECTION: Get token from localStorage at exact moment of upload
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
 
-        // Notify parent about processing
-        onProcessing?.(responseId);
+      console.log('[Practice Interview] Calling backend endpoint:', {
+        endpoint: '/api/interviews/save-recording',
+        videoUrl: videoUrl ? 'provided' : 'missing',
+        questionId: currentQuestion.id,
+        recordingTime,
+        hasToken: !!token
+      });
 
-        // Store response locally
-        const newResponse = {
+      const backendResponse = await axios.post(
+        '/api/interviews/save-recording',
+        {
+          videoUrl,
           questionId: currentQuestion.id,
-          questionText: currentQuestion.text,
-          videoUrl: uploadResult.secure_url,
-          recordingTime,
-          responseId,
-          timestamp: new Date()
-        };
-
-        setResponses([...responses, newResponse]);
-        chunksRef.current = [];
-        setRecordingTime(0);
-
-        if (currentQuestionIndex + 1 < questions.length) {
-          setCurrentQuestionIndex(currentQuestionIndex + 1);
-          toast.success('Response saved. Moving to next question.');
-        } else {
-          handleEndSession();
-        }
-      } catch (error) {
-        toast.dismiss();
-        console.error('Upload error:', error);
-        
-        // Provide specific error messages
-        if (error instanceof Error) {
-          if (error.message.includes('401')) {
-            toast.error('Authentication failed. Please log in again.');
-          } else if (error.message.includes('413')) {
-            toast.error('Video file is too large (max 100MB)');
-          } else if (error.message.includes('400')) {
-            toast.error('Invalid video format. Use WebM, MP4, MOV, or AVI');
-          } else if (error.message.includes('503')) {
-            toast.error('Server temporarily unavailable. Please try again.');
-          } else {
-            toast.error(`Upload failed: ${error.message}`);
+          recordingTime
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        } else {
-          toast.error('Failed to upload video. Please try again.');
         }
+      );
+
+      console.log('[Practice Interview] Backend sync complete:', backendResponse.data);
+      console.log('[Practice Interview] Response status:', backendResponse.status);
+      console.log('[Practice Interview] Response headers:', backendResponse.headers);
+
+      // STEP 3: Update UI and move to next question
+      const newResponse = {
+        questionId: currentQuestion.id,
+        questionText: currentQuestion.text,
+        videoUrl,
+        recordingTime,
+        timestamp: new Date()
+      };
+
+      setResponses([...responses, newResponse]);
+      setRecordingTime(0);
+      setRecordedVideo(null);
+      setRecordingState('IDLE');
+      setUploadProgress(0);
+      setIsUploading(false);
+
+      toast.success('Response saved!');
+
+      // Move to next question or complete
+      if (!isLastQuestion) {
+        setCurrentQuestionIndex(prev => prev + 1);
+      } else {
+        console.log('[Practice Interview] All questions completed');
+        handleEndSession();
       }
     } catch (error) {
-      console.error('Error submitting response:', error);
-      toast.error('Failed to submit response');
+      console.error('[Practice Interview] Upload error:', error);
+      const err = error as any;
+      console.error('[Practice Interview] Error details:', {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        url: err.config?.url,
+        method: err.config?.method,
+        data: err.response?.data,
+        headers: err.response?.headers
+      });
+      setIsUploading(false);
+      setRecordingState('READY_TO_UPLOAD');
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          setUploadError('Authentication failed. Please log in again.');
+          toast.error('Authentication failed. Please log in again.');
+        } else if (error.response?.status === 404) {
+          setUploadError('Backend endpoint not found. Please check server is running.');
+          toast.error('Backend endpoint not found. Please check server is running.');
+          console.error('[Practice Interview] 404 Error - Backend endpoint not found at:', error.config?.url);
+        } else if (error.response?.status === 413) {
+          setUploadError('Video file too large (max 100MB)');
+          toast.error('Video file too large (max 100MB)');
+        } else if (error.response?.status === 400) {
+          const errorMsg = error.response.data?.error?.message || 'Invalid video format';
+          setUploadError(errorMsg);
+          toast.error(`Upload failed: ${errorMsg}`);
+        } else {
+          setUploadError(error.message);
+          toast.error(`Upload failed: ${error.message}`);
+        }
+      } else {
+        setUploadError('Upload failed. Please try again.');
+        toast.error('Upload failed. Please try again.');
+      }
     }
+  };
+
+  // MANUAL SUBMIT: For manual submission or retry
+  const handleSubmit = async () => {
+    if (recordingState !== 'READY_TO_UPLOAD') {
+      toast.error('Video is not ready. Please wait...');
+      return;
+    }
+    await uploadToCloudinaryAndSync();
   };
 
   const formatTime = (seconds: number) => {
@@ -308,6 +479,7 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col">
+
       {/* Header */}
       <div className="bg-gray-900 border-b border-gray-700 px-6 py-4 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -346,7 +518,7 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
         {/* Video Feed - Left Side */}
         <div className="lg:col-span-2 space-y-6">
           {/* Question Card */}
-          <div className="bg-white rounded-2xl p-8 border border-gray-200">
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 transition-all duration-500">
             <div className="flex items-center gap-3 mb-6">
               <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold uppercase">
                 {currentQuestion.type}
@@ -401,9 +573,28 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
             </div>
           </div>
 
+          {/* Upload Progress Bar */}
+          {isUploading && (
+            <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              <div className="flex items-center gap-4">
+                <Loader className="w-5 h-5 text-blue-400 animate-spin" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-white mb-2">Uploading to Cloudinary...</p>
+                  <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">{uploadProgress}%</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Controls */}
           <div className="flex flex-wrap gap-3 justify-center">
-            {!isRecording ? (
+            {recordingState === 'IDLE' ? (
               <button
                 onClick={startRecording}
                 className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all"
@@ -411,7 +602,7 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
                 <Mic className="w-5 h-5" />
                 Start Recording
               </button>
-            ) : (
+            ) : recordingState === 'RECORDING' ? (
               <button
                 onClick={stopRecording}
                 className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition-all"
@@ -419,22 +610,54 @@ const PracticeInterviewEnvironment: React.FC<PracticeInterviewEnvironmentProps> 
                 <Square className="w-5 h-5" />
                 Stop Recording
               </button>
-            )}
-
-            {!isRecording && chunksRef.current.length > 0 && (
+            ) : recordingState === 'PROCESSING' ? (
               <button
-                onClick={submitResponse}
-                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all"
+                disabled
+                className="flex items-center gap-2 bg-gray-500 text-white px-6 py-3 rounded-xl font-bold cursor-not-allowed"
               >
-                <Send className="w-5 h-5" />
-                Submit & Next
-                <ChevronRight className="w-5 h-5" />
+                <Loader className="w-4 h-4 animate-spin mr-2" />
+                Processing Video...
               </button>
-            )}
+            ) : recordingState === 'READY_TO_UPLOAD' && recordedVideo ? (
+              <>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isUploading}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
+                    isUploading
+                      ? 'bg-blue-500 text-white cursor-wait'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+                  }`}
+                >
+                  <Send className="w-5 h-5" />
+                  {isUploading ? `Uploading... ${uploadProgress}%` : 'Submit Response'}
+                  {isUploading ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+                {uploadError && (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isUploading}
+                    className="flex items-center gap-2 bg-amber-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-amber-700 transition-all"
+                  >
+                    <AlertCircle className="w-5 h-5" />
+                    Retry Upload
+                  </button>
+                )}
+              </>
+            ) : null}
 
             <button
               onClick={onCancel}
-              className="flex items-center gap-2 bg-gray-700 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-600 transition-all"
+              disabled={isUploading}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
+                isUploading
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
             >
               End Session
             </button>

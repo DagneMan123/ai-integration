@@ -27,7 +27,6 @@ import Navbar from './components/Navbar';
 
 // Lazy load dashboard pages for better performance
 const CandidateDashboard = lazy(() => import('./pages/candidate/Dashboard'));
-const CandidateEnhancedDashboard = lazy(() => import('./pages/candidate/EnhancedDashboard'));
 const CandidateProfile = lazy(() => import('./pages/candidate/Profile'));
 const CandidateSettings = lazy(() => import('./pages/candidate/Settings'));
 const CandidateSecurity = lazy(() => import('./pages/candidate/Security'));
@@ -47,6 +46,7 @@ const JobAlerts = lazy(() => import('./pages/candidate/JobAlerts'));
 const Resume = lazy(() => import('./pages/candidate/Resume'));
 const Invitations = lazy(() => import('./pages/candidate/Invitations'));
 const Practice = lazy(() => import('./pages/candidate/Practice'));
+const Assessment = lazy(() => import('./pages/candidate/Assessment'));
 const SystemCheck = lazy(() => import('./pages/candidate/SystemCheck'));
 const InterviewHistory = lazy(() => import('./pages/candidate/InterviewHistory'));
 const CandidateMessages = lazy(() => import('./pages/candidate/Messages'));
@@ -57,7 +57,6 @@ const Troubleshooting = lazy(() => import('./pages/candidate/Troubleshooting'));
 const InterviewStart = lazy(() => import('./pages/candidate/InterviewStart'));
 
 const EmployerDashboard = lazy(() => import('./pages/employer/Dashboard'));
-const EmployerEnhancedDashboard = lazy(() => import('./pages/employer/EnhancedDashboard'));
 const EmployerProfile = lazy(() => import('./pages/employer/Profile'));
 const EmployerSettings = lazy(() => import('./pages/employer/Settings'));
 const EmployerSecurity = lazy(() => import('./pages/employer/Security'));
@@ -74,7 +73,6 @@ const InterviewCalendar = lazy(() => import('./pages/employer/InterviewCalendar'
 const Inbox = lazy(() => import('./pages/employer/Inbox'));
 
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
-const AdminEnhancedDashboard = lazy(() => import('./pages/admin/EnhancedDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminCompanies = lazy(() => import('./pages/admin/Companies'));
 const AdminJobs = lazy(() => import('./pages/admin/Jobs'));
@@ -90,7 +88,7 @@ const SupportTickets = lazy(() => import('./pages/admin/SupportTickets'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 const App: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, _hasHydrated } = useAuthStore();
 
   return (
     <SidebarProvider>
@@ -111,11 +109,11 @@ const App: React.FC = () => {
             {/* Auth Routes */}
             <Route 
               path="/login" 
-              element={user ? <Navigate to={`/${user.role}/dashboard`} /> : <Login />} 
+              element={_hasHydrated && user ? <Navigate to={`/${user.role}/dashboard`} replace /> : <Login />} 
             />
             <Route 
               path="/register" 
-              element={user ? <Navigate to={`/${user.role}/dashboard`} /> : <Register />} 
+              element={_hasHydrated && user ? <Navigate to={`/${user.role}/dashboard`} replace /> : <Register />} 
             />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -140,16 +138,6 @@ const App: React.FC = () => {
                 <PrivateRoute role="candidate">
                   <Suspense fallback={<Loading />}>
                     <CandidateDashboard />
-                  </Suspense>
-                </PrivateRoute>
-              } 
-            />
-            <Route 
-              path="/candidate/dashboard-enhanced" 
-              element={
-                <PrivateRoute role="candidate">
-                  <Suspense fallback={<Loading />}>
-                    <CandidateEnhancedDashboard />
                   </Suspense>
                 </PrivateRoute>
               } 
@@ -356,6 +344,16 @@ const App: React.FC = () => {
               } 
             />
             <Route 
+              path="/assessment" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <Assessment />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
               path="/candidate/system-check" 
               element={
                 <PrivateRoute role="candidate">
@@ -425,6 +423,16 @@ const App: React.FC = () => {
                 </PrivateRoute>
               } 
             />
+            <Route 
+              path="/help-center" 
+              element={
+                <PrivateRoute role="candidate">
+                  <Suspense fallback={<Loading />}>
+                    <HelpCenter />
+                  </Suspense>
+                </PrivateRoute>
+              } 
+            />
             
             {/* Employer Routes */}
             <Route 
@@ -433,16 +441,6 @@ const App: React.FC = () => {
                 <PrivateRoute role="employer">
                   <Suspense fallback={<Loading />}>
                     <EmployerDashboard />
-                  </Suspense>
-                </PrivateRoute>
-              } 
-            />
-            <Route 
-              path="/employer/dashboard-enhanced" 
-              element={
-                <PrivateRoute role="employer">
-                  <Suspense fallback={<Loading />}>
-                    <EmployerEnhancedDashboard />
                   </Suspense>
                 </PrivateRoute>
               } 
@@ -595,16 +593,6 @@ const App: React.FC = () => {
                 <PrivateRoute role="admin">
                   <Suspense fallback={<Loading />}>
                     <AdminDashboard />
-                  </Suspense>
-                </PrivateRoute>
-              } 
-            />
-            <Route 
-              path="/admin/dashboard-enhanced" 
-              element={
-                <PrivateRoute role="admin">
-                  <Suspense fallback={<Loading />}>
-                    <AdminEnhancedDashboard />
                   </Suspense>
                 </PrivateRoute>
               } 

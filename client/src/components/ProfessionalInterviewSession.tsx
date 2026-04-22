@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Mic, MicOff, Clock, AlertCircle, CheckCircle2, Zap, MessageCircle, Loader, RotateCcw, Shield, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { interviewAPI } from '../utils/api';
-import { proctorService } from '../services/proctorService';
 
 interface Message {
   id: string;
@@ -49,7 +48,6 @@ const ProfessionalInterviewSession: React.FC<ProfessionalInterviewSessionProps> 
   const [cheatingDetected, setCheatingDetected] = useState(false);
   const [violationCount, setViolationCount] = useState(0);
   const [lastTextLength, setLastTextLength] = useState(0);
-  const [riskScore, setRiskScore] = useState(0);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -117,7 +115,6 @@ const ProfessionalInterviewSession: React.FC<ProfessionalInterviewSessionProps> 
       window.removeEventListener('keydown', handleGlobalKeyDown, true);
       window.removeEventListener('blur', handleWindowBlur);
       if (riskCheckIntervalRef.current) clearInterval(riskCheckIntervalRef.current);
-      proctorService.destroy();
     };
   }, []);
 
@@ -136,7 +133,6 @@ const ProfessionalInterviewSession: React.FC<ProfessionalInterviewSessionProps> 
       if (response.data.success) {
         const data = response.data.data as any;
         setInterviewId(data.interviewId);
-        proctorService.initialize(data.interviewId);
 
         // Start with intro question
         const introQuestion = `ሰላም! (Selam - Hello!) Welcome to our professional interview.
@@ -225,7 +221,6 @@ Take your time and speak clearly.`;
         interviewId,
         response: '',
         terminationReason: reason,
-        proctorData: proctorService.getSessionReport()
       });
 
       toast.error(`Interview terminated: ${reason}`);
@@ -274,7 +269,6 @@ Take your time and speak clearly.`;
         response: userResponse,
         turn: currentTurn,
         phase: currentPhase,
-        proctorData: proctorService.getSessionReport()
       });
 
       if (response.data.success) {

@@ -1,4 +1,4 @@
-import axios, { AxiosProgressEvent } from 'axios';
+import { AxiosProgressEvent } from 'axios';
 import { apiService } from './apiService';
 
 interface UploadProgress {

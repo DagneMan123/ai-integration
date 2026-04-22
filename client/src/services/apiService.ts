@@ -76,12 +76,11 @@ class ApiService {
       async (error: AxiosError<ApiErrorResponse>) => {
         const originalRequest = error.config as any;
 
-        // HARD AUTH RESET: Handle 401 - Token expired or invalid
-        // MUST call localStorage.removeItem('token') FIRST, then redirect
+        // STEP 4: AXIOS INTERCEPTOR - 401 error only clears token, no page refresh
         if (error.response?.status === 401 && !originalRequest._retry) {
-          console.error('[API Service] 401 Unauthorized - HARD AUTH RESET TRIGGERED');
+          console.error('[API Service] 401 Unauthorized - Clearing token only (no page refresh)');
           
-          // CRITICAL: Remove token from localStorage FIRST
+          // CRITICAL: Only remove token from localStorage - NO page refresh
           console.log('[API Service] Removing token from localStorage');
           localStorage.removeItem('token');
           localStorage.removeItem('refreshToken');
@@ -94,9 +93,9 @@ class ApiService {
           this.isRefreshing = false;
           this.failedQueue = [];
           
-          // CRITICAL: Redirect to login immediately
-          console.log('[API Service] Redirecting to /login');
-          window.location.href = '/login';
+          // CRITICAL: Do NOT redirect - let PrivateRoute handle it
+          // This prevents page refresh and redirect loops
+          console.log('[API Service] Token cleared - PrivateRoute will render Login component');
           
           return Promise.reject(error);
         }

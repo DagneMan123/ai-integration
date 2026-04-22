@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { candidateMenu } from '../../config/menuConfig';
 import { helpCenterAPI } from '../../services/helpCenterService';
 import Loading from '../../components/Loading';
+import { useSidebar } from '../../context/SidebarContext';
 
 interface FAQItem {
   id: string | number;
@@ -22,6 +23,7 @@ const HelpCenter: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedId, setExpandedId] = useState<string | number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { setHelpCenterOpen } = useSidebar();
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -52,12 +54,20 @@ const HelpCenter: React.FC = () => {
         <div className="max-w-7xl mx-auto space-y-8 pb-10">
           {/* Hero Section */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 text-white">
-            <div className="flex items-start gap-4">
-              <HelpCircle className="w-12 h-12 flex-shrink-0" />
-              <div>
-                <h1 className="text-4xl font-black tracking-tight mb-2">Help Center</h1>
-                <p className="text-blue-100 text-lg">Find answers to common questions and get support</p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <HelpCircle className="w-12 h-12 flex-shrink-0" />
+                <div>
+                  <h1 className="text-4xl font-black tracking-tight mb-2">Help Center</h1>
+                  <p className="text-blue-100 text-lg">Find answers to common questions and get support</p>
+                </div>
               </div>
+              <button 
+                onClick={() => setHelpCenterOpen(true)}
+                className="flex-shrink-0 px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all font-bold shadow-lg hover:shadow-xl"
+              >
+                Open Sidebar
+              </button>
             </div>
           </div>
 
@@ -131,7 +141,14 @@ const HelpCenter: React.FC = () => {
                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
                     <h3 className="font-bold text-gray-900 mb-4">Still need help?</h3>
                     <div className="space-y-3">
-                      <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-bold shadow-md hover:shadow-lg">
+                      <button 
+                        onClick={() => setHelpCenterOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-bold shadow-md hover:shadow-lg"
+                      >
+                        <HelpCircle className="w-5 h-5" />
+                        Open Help Sidebar
+                      </button>
+                      <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-all font-bold">
                         <Mail className="w-5 h-5" />
                         Email Support
                       </button>

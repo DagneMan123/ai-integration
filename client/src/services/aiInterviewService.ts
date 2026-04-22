@@ -10,6 +10,22 @@ import api from '../utils/api';
  */
 
 export const aiInterviewService = {
+  // Start interview session (creates interview record)
+  startInterview: async (data: { jobId: number; applicationId: number; interviewMode?: string; strictnessLevel?: string }) => {
+    try {
+      const response = await api.post('/interviews/start', {
+        jobId: data.jobId,
+        applicationId: data.applicationId,
+        interviewMode: data.interviewMode || 'video',
+        strictnessLevel: data.strictnessLevel || 'moderate'
+      });
+      return response;
+    } catch (error) {
+      console.error('Error starting interview:', error);
+      throw error;
+    }
+  },
+
   // Generate AI questions based on job description
   generateQuestions: async (jobId: number, difficulty: 'easy' | 'medium' | 'hard' = 'medium') => {
     try {

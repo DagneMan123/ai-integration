@@ -26,12 +26,11 @@ const Login: React.FC = () => {
   const { setAuth, setIsLoading } = useAuthStore();
   const navigate = useNavigate();
 
-  // HARDCODED STOP: Kill the redirect loop - nuke ALL stale data immediately
+  // STEP 3: LOGIN COMPONENT - Clear localStorage as soon as page loads
   useEffect(() => {
-    console.log('[Login Page] HARDCODED STOP - Nuking all stale data');
+    console.log('[Login Page] STEP 3: Clearing localStorage on mount');
     localStorage.clear();
-    sessionStorage.clear();
-    console.log('[Login Page] All storage cleared');
+    console.log('[Login Page] localStorage cleared - clean slate ready');
   }, []); // Empty dependency array - runs once on mount
 
   const onSubmit = async (data: LoginFormData) => {

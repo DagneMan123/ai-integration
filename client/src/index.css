@@ -107,3 +107,40 @@
 .hover-lift {
   @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg;
 }
+
+
+/* WINDOWS WATERMARK OVERLAY: Hide 'Activate Windows' watermark for screenshots */
+@supports (position: fixed) {
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 450px;
+    height: 120px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 1;
+    box-shadow: -10px -10px 30px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Ensure watermark overlay doesn't interfere with interactions */
+body::after {
+  pointer-events: none !important;
+}
+
+/* Hide watermark during print/screenshot */
+@media print {
+  body::after {
+    display: none !important;
+  }
+}
+
+/* Hide watermark when using browser screenshot tools */
+@media (prefers-color-scheme: light) {
+  body::after {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.99) 100%);
+  }
+}

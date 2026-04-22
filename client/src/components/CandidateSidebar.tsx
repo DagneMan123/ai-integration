@@ -83,7 +83,7 @@ const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) 
         { label: 'Practice', icon: <Award size={18} />, path: '/candidate/practice' },
         { label: 'System Check', icon: <AlertCircle size={18} />, path: '/candidate/system-check' },
         { label: 'Troubleshooting', icon: <AlertCircle size={18} />, path: '/candidate/troubleshooting' },
-        { label: 'Help Center', icon: <MessageSquare size={18} />, path: '/candidate/help-center' },
+        { label: 'Help Center', icon: <MessageSquare size={18} />, path: '/help-center' },
       ]
     },
     {

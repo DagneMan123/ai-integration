@@ -62,6 +62,18 @@ exports.submitVideoResponse = async (req, res) => {
     const videoInfo = await videoProcessingService.saveVideoFile(videoBuffer, sessionId);
 
     // Create response record in database
+    // NOTE: If you get "Cannot read properties of undefined (reading 'create')" error,
+    // it means Prisma client needs to be regenerated. Run: npm run db:generate
+    if (!prisma.interviewResponse) {
+      logger.error('CRITICAL: prisma.interviewResponse is undefined');
+      logger.error('This means Prisma client was not regenerated with the InterviewResponse model');
+      logger.error('FIX: Run "npm run db:generate" in the server directory');
+      return res.status(500).json({
+        success: false,
+        message: 'Database client not properly initialized. Please contact support.'
+      });
+    }
+
     const response = await prisma.interviewResponse.create({
       data: {
         sessionId: parseInt(sessionId),
