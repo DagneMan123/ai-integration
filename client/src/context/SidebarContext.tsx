@@ -4,9 +4,6 @@ interface SidebarContextType {
   // Admin sidebars
   supportTicketsOpen: boolean;
   setSupportTicketsOpen: (open: boolean) => void;
-  // Help center
-  helpCenterOpen: boolean;
-  setHelpCenterOpen: (open: boolean) => void;
   // Employer sidebar
   employerSidebarOpen: boolean;
   setEmployerSidebarOpen: (open: boolean) => void;
@@ -22,7 +19,6 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [supportTicketsOpen, setSupportTicketsOpen] = useState(false);
-  const [helpCenterOpen, setHelpCenterOpen] = useState(false);
   const [employerSidebarOpen, setEmployerSidebarOpen] = useState(false);
   const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
   const [candidateSidebarOpen, setCandidateSidebarOpen] = useState(false);
@@ -32,8 +28,6 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
       value={{
         supportTicketsOpen,
         setSupportTicketsOpen,
-        helpCenterOpen,
-        setHelpCenterOpen,
         employerSidebarOpen,
         setEmployerSidebarOpen,
         adminSidebarOpen,

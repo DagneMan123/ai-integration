@@ -2,7 +2,6 @@ import React from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useSidebar } from '../context/SidebarContext';
 import SupportTickets from './SupportTickets';
-import HelpCenterSidebar from './HelpCenterSidebar';
 import AdminSidebar from './AdminSidebar';
 import CandidateSidebar from './CandidateSidebar';
 import EmployerSidebar from './EmployerSidebar';
@@ -12,8 +11,6 @@ const GlobalSidebars: React.FC = () => {
   const {
     supportTicketsOpen,
     setSupportTicketsOpen,
-    helpCenterOpen,
-    setHelpCenterOpen,
     adminSidebarOpen,
     setAdminSidebarOpen,
     candidateSidebarOpen,
@@ -24,9 +21,6 @@ const GlobalSidebars: React.FC = () => {
 
   return (
     <>
-      {/* Help Center Sidebar - For all users */}
-      <HelpCenterSidebar isOpen={helpCenterOpen} onClose={() => setHelpCenterOpen(false)} />
-
       {/* Admin Sidebars - Only for admin users */}
       {user?.role === 'admin' && (
         <>

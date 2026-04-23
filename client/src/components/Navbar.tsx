@@ -22,11 +22,12 @@ const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Hide navbar on dashboard pages and jobs page
-  const isDashboardPage = location.pathname.includes('/candidate/') || 
+  // Hide navbar on dashboard pages and jobs page (but show on enhanced-dashboard)
+  const isDashboardPage = (location.pathname.includes('/candidate/') || 
                           location.pathname.includes('/employer/') || 
                           location.pathname.includes('/admin/') ||
-                          location.pathname === '/jobs';
+                          location.pathname === '/jobs') &&
+                          !location.pathname.includes('/enhanced-dashboard');
 
   // Handle scroll effect for glassmorphism
   useEffect(() => {
@@ -64,7 +65,7 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to={user ? `/${user.role}/dashboard` : "/"} className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all">
               <Sparkles size={22} className="font-bold" />
             </div>

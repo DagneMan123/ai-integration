@@ -1,10 +1,7 @@
 import api from '../utils/api';
 import { logger } from '../utils/logger';
 
-/**
- * Frontend Dashboard Communication Service
- * Handles all communication between 3 dashboards
- */
+
 
 export type DashboardRole = 'candidate' | 'employer' | 'admin';
 

@@ -1,8 +1,3 @@
-/**
- * Professional API Service
- * Centralized API communication with error handling and logging
- * HARD AUTH RESET: Force logout on 401 with immediate localStorage.clear()
- */
 
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';

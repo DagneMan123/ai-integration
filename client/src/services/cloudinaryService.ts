@@ -22,12 +22,7 @@ interface CloudinaryUploadResponse {
   resource_type: string;
 }
 
-/**
- * Upload video directly to Cloudinary
- * @param videoBlob - The video blob to upload
- * @param onProgress - Callback for upload progress
- * @returns Promise with Cloudinary response
- */
+
 export const uploadVideoToCloudinary = async (
   videoBlob: Blob,
   onProgress?: (event: UploadProgressEvent) => void

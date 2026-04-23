@@ -83,7 +83,7 @@ const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) 
         { label: 'Practice', icon: <Award size={18} />, path: '/candidate/practice' },
         { label: 'System Check', icon: <AlertCircle size={18} />, path: '/candidate/system-check' },
         { label: 'Troubleshooting', icon: <AlertCircle size={18} />, path: '/candidate/troubleshooting' },
-        { label: 'Help Center', icon: <MessageSquare size={18} />, path: '/help-center' },
+        { label: 'Help Center', icon: <MessageSquare size={18} />, path: '/candidate/help-center' },
       ]
     },
     {
@@ -100,8 +100,8 @@ const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) 
 
   const quickActions = [
     { label: 'Browse Jobs', icon: <Briefcase size={18} />, path: '/jobs', color: 'bg-blue-50 text-blue-600' },
+    { label: 'Enhanced Dashboard', icon: <TrendingUp size={18} />, path: '/candidate/enhanced-dashboard', color: 'bg-indigo-50 text-indigo-600' },
     { label: 'My Applications', icon: <FileText size={18} />, path: '/candidate/applications', color: 'bg-purple-50 text-purple-600' },
-    { label: 'Upcoming Interviews', icon: <Clock size={18} />, path: '/candidate/interviews', color: 'bg-green-50 text-green-600' },
   ];
 
   const stats = [
@@ -316,7 +316,10 @@ const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) 
 
               {/* Help & Support */}
               <div className="border-t border-slate-200 pt-4">
-                <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left">
+                <button
+                  onClick={() => handleNavigation('/help-center')}
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
+                >
                   <div className="flex items-center gap-3">
                     <AlertCircle size={18} className="text-slate-400" />
                     <span className="text-sm font-medium text-slate-700">Help & Support</span>
