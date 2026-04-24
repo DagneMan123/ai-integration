@@ -50,7 +50,7 @@ export const candidateMenu: MenuItem[] = [
     description: 'Your career overview'
   },
   { 
-    path: '/candidate/dashboard-enhanced', 
+    path: '/candidate/enhanced-dashboard', 
     label: 'Enhanced Dashboard', 
     icon: <TrendingUp size={20} />,
     description: 'AI scores & applications'

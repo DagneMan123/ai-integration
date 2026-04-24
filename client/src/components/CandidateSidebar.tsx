@@ -30,7 +30,7 @@ interface CandidateSidebarProps {
 
 const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const [expandedSection, setExpandedSection] = useState<string | null>('applications');
+  const [expandedSection, setExpandedSection] = useState<string | null>('ai-prep');
   const [currentView, setCurrentView] = useState<string | null>(null);
 
   const sections = [
@@ -53,6 +53,17 @@ const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) 
         { label: 'Interview History', icon: <FileText size={18} />, path: '/candidate/interview-history' },
         { label: 'Interview Insights', icon: <TrendingUp size={18} />, path: '/candidate/interview-insights' },
         { label: 'Interview Tips', icon: <BookOpen size={18} />, path: '/candidate/interview-tips' },
+      ]
+    },
+    {
+      id: 'ai-prep',
+      title: 'AI Interview Prep',
+      icon: <Zap size={20} />,
+      items: [
+        { label: 'Official Invitations', icon: <CheckCircle size={18} />, path: '/candidate/invitations' },
+        { label: 'Practice Mode', icon: <Award size={18} />, path: '/candidate/practice' },
+        { label: 'System Check', icon: <AlertCircle size={18} />, path: '/candidate/system-check' },
+        { label: 'Interview History', icon: <FileText size={18} />, path: '/candidate/interview-history' },
       ]
     },
     {
@@ -83,7 +94,7 @@ const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) 
         { label: 'Practice', icon: <Award size={18} />, path: '/candidate/practice' },
         { label: 'System Check', icon: <AlertCircle size={18} />, path: '/candidate/system-check' },
         { label: 'Troubleshooting', icon: <AlertCircle size={18} />, path: '/candidate/troubleshooting' },
-        { label: 'Help Center', icon: <MessageSquare size={18} />, path: '/candidate/help-center' },
+        { label: 'Help Center', icon: <MessageSquare size={18} />, path: '/help-center' },
       ]
     },
     {
@@ -100,7 +111,7 @@ const CandidateSidebar: React.FC<CandidateSidebarProps> = ({ isOpen, onClose }) 
 
   const quickActions = [
     { label: 'Browse Jobs', icon: <Briefcase size={18} />, path: '/jobs', color: 'bg-blue-50 text-blue-600' },
-    { label: 'Enhanced Dashboard', icon: <TrendingUp size={18} />, path: '/candidate/enhanced-dashboard', color: 'bg-indigo-50 text-indigo-600' },
+    { label: 'Enhanced Dashboard', icon: <TrendingUp size={18} />, path: "/candidate/enhanced-dashboard", color: 'bg-indigo-50 text-indigo-600'},
     { label: 'My Applications', icon: <FileText size={18} />, path: '/candidate/applications', color: 'bg-purple-50 text-purple-600' },
   ];
 

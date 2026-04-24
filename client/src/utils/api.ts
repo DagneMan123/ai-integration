@@ -170,6 +170,7 @@ export const jobAPI = {
   updateStatus: (id: string, status: string) => request.patch(`/jobs/${id}/status`, { status }),
   delete: (id: string) => request.delete(`/jobs/${id}`),
   getEmployerJobs: () => request.get<Job[]>('/jobs/employer/my-jobs'),
+  saveJob: (jobId: string | number) => request.post('/saved-jobs', { jobId }),
 };
 
 export const interviewAPI = {
@@ -182,6 +183,7 @@ export const interviewAPI = {
   recordAntiCheatEvent: (id: string, data: object) => request.post(`/interviews/${id}/anti-cheat-event`, data),
   recordIdentitySnapshot: (id: string, data: object) => request.post(`/interviews/${id}/identity-snapshot`, data),
   submitProctorReport: (data: object) => request.post('/interviews/proctor-report', data),
+  logSecurityViolation: (data: object) => request.post('/interviews/security-violation', data),
 };
 
 export const paymentAPI = {

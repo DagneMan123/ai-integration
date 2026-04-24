@@ -1,0 +1,214 @@
+/**
+ * Interview Security Styles
+ * Prevents text selection, copying, and other cheating attempts
+ */
+
+/* Disable text selection globally during interview */
+.interview-secure {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
+/* Disable text selection on specific elements */
+.interview-secure * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow text selection only on answer input fields */
+.interview-secure .answer-input,
+.interview-secure textarea.answer-input {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* Disable text selection on question text */
+.interview-question {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Disable drag and drop */
+.interview-secure {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* Prevent image dragging */
+.interview-secure img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+/* Disable text selection on headers and titles */
+.interview-header,
+.interview-title,
+.question-text {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Style for paste attempt feedback */
+.paste-blocked {
+  background-color: #ffcccc !important;
+  border-color: #ff6666 !important;
+  transition: background-color 0.3s ease;
+}
+
+/* Disable selection on buttons */
+button,
+.btn,
+[role="button"] {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Disable selection on labels */
+label {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent text selection on timer/counter */
+.interview-timer,
+.question-counter {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Disable selection on status indicators */
+.status-indicator,
+.security-status {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent selection on warning messages */
+.security-warning,
+.violation-warning {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow selection only in answer textarea */
+.answer-textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* Disable selection on read-only content */
+[readonly] {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent selection on disabled elements */
+:disabled {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Disable context menu styling (visual feedback) */
+.no-context-menu {
+  cursor: not-allowed;
+}
+
+/* Prevent selection on code blocks (if any) */
+code,
+pre {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow selection in code blocks for answers */
+.answer-code {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* Disable selection on navigation */
+nav,
+.navbar,
+.sidebar {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Disable selection on footer */
+footer {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent double-click selection */
+.interview-secure {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Disable selection on tooltips */
+.tooltip,
+[role="tooltip"] {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent selection on modals */
+.modal,
+.dialog {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow selection in modal content if needed */
+.modal-content .answer-input,
+.dialog-content .answer-input {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}

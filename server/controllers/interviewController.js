@@ -255,9 +255,9 @@ exports.submitAnswer = async (req, res, next) => {
       return next(new AppError('Unauthorized: This is not your interview', 403));
     }
 
-    // Only allow submissions for IN_PROGRESS interviews
-    if (interview.status !== 'IN_PROGRESS') {
-      logger.warn(`[submitAnswer] Interview not in progress`, {
+    // Allow submissions for PENDING and IN_PROGRESS interviews
+    if (interview.status !== 'IN_PROGRESS' && interview.status !== 'PENDING') {
+      logger.warn(`[submitAnswer] Interview not in valid state`, {
         interviewId: id,
         currentStatus: interview.status,
         userId,
@@ -269,11 +269,25 @@ exports.submitAnswer = async (req, res, next) => {
       let errorMessage = `Interview is ${interview.status.toLowerCase()}. Cannot submit answers.`;
       if (interview.status === 'COMPLETED') {
         errorMessage = 'This interview has already been completed. View your results instead.';
-      } else if (interview.status === 'PENDING') {
-        errorMessage = 'Interview has not started yet. Please wait for the interview to begin.';
       }
       
       return next(new AppError(errorMessage, 400));
+    }
+
+    // If interview is PENDING, update it to IN_PROGRESS and set startedAt
+    if (interview.status === 'PENDING') {
+      await prisma.interview.update({
+        where: { id },
+        data: {
+          status: 'IN_PROGRESS',
+          startedAt: new Date()
+        }
+      });
+      
+      logger.info(`[submitAnswer] Interview status updated from PENDING to IN_PROGRESS`, {
+        interviewId: id,
+        userId
+      });
     }
 
     // Get job details
@@ -397,11 +411,15 @@ exports.submitAnswer = async (req, res, next) => {
     let overallScore = 0;
     if (isFinished) {
       const scores = updatedResponses.map(r => r.score || 0);
+      // Use simple arithmetic mean - do NOT artificially inflate
+      // Example: (0 + 80) / 2 = 40, not inflated
       overallScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
       logger.info(`[submitAnswer] Interview complete, calculating overall score`, {
         interviewId: id,
         responseCount: updatedResponses.length,
-        overallScore: overallScore
+        scores: scores,
+        overallScore: overallScore,
+        calculation: `(${scores.join(' + ')}) / ${scores.length} = ${overallScore}`
       });
     }
 
@@ -509,7 +527,7 @@ exports.completeInterview = async (req, res, next) => {
       requiredSkills: interview.job.requiredSkills || []
     };
 
-    // Call AI evaluation service
+    // Call AI evaluation service with strict accuracy grading
     let evaluation = null;
     try {
       evaluation = await aiService.evaluateFinalPerformance(jobDetails, transcript);
@@ -519,15 +537,21 @@ exports.completeInterview = async (req, res, next) => {
         error: aiError.message
       });
       // Fallback evaluation if AI fails
-      const totalScore = responses.reduce((sum, r) => sum + (r.score || 0), 0);
-      const averageScore = responses.length > 0 ? Math.round(totalScore / responses.length) : 0;
+      const scores = responses.map(r => r.score || 0);
+      // Use simple arithmetic mean - do NOT artificially inflate
+      const averageScore = responses.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / responses.length) : 0;
       
       evaluation = {
         overall_score: averageScore,
-        technical_score: Math.round(averageScore * 0.9),
-        communication_score: Math.round(averageScore * 0.85),
-        confidence_score: Math.round(averageScore * 0.8),
-        problem_solving_score: Math.round(averageScore * 0.88),
+        technical_score: Math.round(averageScore * 0.85),
+        communication_score: Math.round(averageScore * 0.80),
+        confidence_score: Math.round(averageScore * 0.75),
+        problem_solving_score: Math.round(averageScore * 0.82),
+        accuracy_penalties: 0,
+        hallucination_count: 0,
+        incorrect_answers: 0,
+        incomplete_sessions: scores.filter(s => s === 0).length,
+        average_calculation: `(${scores.join(' + ')}) / ${responses.length} = ${averageScore}`,
         strengths: [
           'Clear communication',
           'Problem-solving ability',
@@ -538,18 +562,23 @@ exports.completeInterview = async (req, res, next) => {
           'Could elaborate on technical details'
         ],
         recommendation: averageScore >= 70 ? 'Recommend' : averageScore >= 60 ? 'Consider' : 'Reject',
-        feedback_summary: `Interview completed with ${responses.length} questions. Overall performance: ${averageScore}%`,
+        feedback_summary: `Interview completed with ${responses.length} questions. Overall performance: ${averageScore}%. Calculation: (${scores.join(' + ')}) / ${responses.length} = ${averageScore}%`,
         hiringDecision: averageScore >= 70 ? 'recommended' : averageScore >= 60 ? 'under_review' : 'not_recommended'
       };
     }
 
     // Ensure all scores are numbers
     const finalEvaluation = {
-      overall_score: parseInt(evaluation.overall_score) || 0,
-      technical_score: parseInt(evaluation.technical_score) || 0,
-      communication_score: parseInt(evaluation.communication_score) || 0,
-      confidence_score: parseInt(evaluation.confidence_score) || 0,
-      problem_solving_score: parseInt(evaluation.problem_solving_score) || 0,
+      overall_score: Math.max(0, Math.min(100, parseInt(evaluation.overall_score) || 0)),
+      technical_score: Math.max(0, Math.min(100, parseInt(evaluation.technical_score) || 0)),
+      communication_score: Math.max(0, Math.min(100, parseInt(evaluation.communication_score) || 0)),
+      confidence_score: Math.max(0, Math.min(100, parseInt(evaluation.confidence_score) || 0)),
+      problem_solving_score: Math.max(0, Math.min(100, parseInt(evaluation.problem_solving_score) || 0)),
+      accuracy_penalties: parseInt(evaluation.accuracy_penalties) || 0,
+      hallucination_count: parseInt(evaluation.hallucination_count) || 0,
+      incorrect_answers: parseInt(evaluation.incorrect_answers) || 0,
+      incomplete_sessions: parseInt(evaluation.incomplete_sessions) || 0,
+      average_calculation: evaluation.average_calculation || '',
       strengths: Array.isArray(evaluation.strengths) ? evaluation.strengths : [],
       weaknesses: Array.isArray(evaluation.weaknesses) ? evaluation.weaknesses : [],
       recommendation: evaluation.recommendation || 'Consider',
@@ -850,6 +879,100 @@ exports.saveRecording = async (req, res, next) => {
       error: error.message,
       userId: req.user?.id,
       stack: error.stack
+    });
+    next(error);
+  }
+};
+
+
+// LOG SECURITY VIOLATION: Log paste attempts and other security violations
+exports.logSecurityViolation = async (req, res, next) => {
+  try {
+    const { interviewId, violationType, method, timestamp, userAgent } = req.body;
+    const userId = req.user?.id;
+
+    if (!interviewId || !violationType) {
+      return next(new AppError('interviewId and violationType are required', 400));
+    }
+
+    logger.warn(`[logSecurityViolation] Security violation detected`, {
+      interviewId,
+      violationType,
+      method,
+      userId,
+      userAgent,
+      timestamp
+    });
+
+    // Find the interview
+    const interview = await prisma.interview.findUnique({
+      where: { id: parseInt(interviewId) }
+    });
+
+    if (!interview) {
+      return next(new AppError('Interview not found', 404));
+    }
+
+    // Verify ownership
+    if (interview.candidateId !== userId) {
+      logger.warn(`[logSecurityViolation] Unauthorized violation report`, {
+        interviewId,
+        interviewCandidateId: interview.candidateId,
+        reportingUserId: userId
+      });
+      return next(new AppError('Unauthorized', 403));
+    }
+
+    // Update anti-cheat data with violation
+    const antiCheatData = interview.antiCheatData || {};
+    
+    if (violationType === 'PASTE_ATTEMPT') {
+      antiCheatData.copyPasteAttempts = (antiCheatData.copyPasteAttempts || 0) + 1;
+    }
+
+    // Add to suspicious activities
+    if (!antiCheatData.suspiciousActivities) {
+      antiCheatData.suspiciousActivities = [];
+    }
+
+    antiCheatData.suspiciousActivities.push({
+      type: violationType,
+      method: method,
+      timestamp: new Date(timestamp),
+      userAgent: userAgent
+    });
+
+    // Update interview with violation data
+    const updatedInterview = await prisma.interview.update({
+      where: { id: parseInt(interviewId) },
+      data: {
+        antiCheatData: antiCheatData,
+        integrityRisk: antiCheatData.copyPasteAttempts > 2 ? 'HIGH' : antiCheatData.copyPasteAttempts > 0 ? 'MEDIUM' : 'LOW'
+      }
+    });
+
+    logger.info(`[logSecurityViolation] Violation logged successfully`, {
+      interviewId,
+      violationType,
+      totalViolations: antiCheatData.copyPasteAttempts,
+      integrityRisk: updatedInterview.integrityRisk
+    });
+
+    res.json({
+      success: true,
+      data: {
+        interviewId,
+        violationType,
+        totalViolations: antiCheatData.copyPasteAttempts,
+        integrityRisk: updatedInterview.integrityRisk,
+        message: 'Security violation logged and flagged for review'
+      }
+    });
+  } catch (error) {
+    logger.error(`[logSecurityViolation] Unexpected error`, {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
     });
     next(error);
   }

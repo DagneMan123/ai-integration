@@ -80,6 +80,7 @@ app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/saved-jobs', require('./routes/savedJobs'));
 app.use('/api/job-alerts', require('./routes/jobAlerts'));
 app.use('/api/interviews', require('./routes/interviews'));
+app.use('/api/interview-security', require('./routes/interviewSecurity'));
 app.use('/api/applications', require('./routes/applications'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/analytics', require('./routes/analytics'));

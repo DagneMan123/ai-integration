@@ -133,6 +133,7 @@ const App: React.FC = () => {
               <Route path="/candidate/interviews" element={<PrivateRoute role="candidate"><CandidateInterviews /></PrivateRoute>} />
               <Route path="/candidate/interview/:interviewId/payment" element={<PrivateRoute role="candidate"><InterviewPayment /></PrivateRoute>} />
               <Route path="/candidate/interview/:id" element={<PrivateRoute role="candidate"><InterviewSession /></PrivateRoute>} />
+              <Route path="/candidate/interview-session/:id" element={<PrivateRoute role="candidate"><InterviewSession /></PrivateRoute>} />
               <Route path="/candidate/interview/start/:jobId/:applicationId" element={<PrivateRoute role="candidate"><InterviewStart /></PrivateRoute>} />
               <Route path="/candidate/interview/:id/report" element={<PrivateRoute role="candidate"><InterviewReport /></PrivateRoute>} />
               <Route path="/candidate/payments" element={<PrivateRoute role="candidate"><CandidatePayments /></PrivateRoute>} />
@@ -150,7 +151,7 @@ const App: React.FC = () => {
               <Route path="/candidate/getting-started" element={<PrivateRoute role="candidate"><GettingStarted /></PrivateRoute>} />
               <Route path="/candidate/interview-tips" element={<PrivateRoute role="candidate"><InterviewTips /></PrivateRoute>} />
               <Route path="/candidate/troubleshooting" element={<PrivateRoute role="candidate"><Troubleshooting /></PrivateRoute>} />
-              <Route path="/candidate/help-center" element={<PrivateRoute role="candidate"><HelpCenter /></PrivateRoute>} />
+              <Route path="/help-center" element={<PrivateRoute role="candidate"><HelpCenter /></PrivateRoute>} />
               
               {/* Employer Routes */}
               <Route path="/employer/dashboard" element={<PrivateRoute role="employer"><EmployerDashboard /></PrivateRoute>} />

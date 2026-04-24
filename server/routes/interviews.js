@@ -33,6 +33,7 @@ router.get('/test', (req, res) => {
 router.post('/start', authorizeRoles('candidate'), interviewController.startInterview);
 router.post('/submit-answer', authorizeRoles('candidate'), interviewController.submitAnswer);
 router.post('/save-recording', authorizeRoles('candidate'), interviewController.saveRecording);
+router.post('/security-violation', authorizeRoles('candidate'), interviewController.logSecurityViolation);
 router.get('/candidate/my-interviews', authorizeRoles('candidate'), interviewController.getCandidateInterviews);
 router.get('/candidate/pending-invitations', authorizeRoles('candidate'), interviewController.getPendingInvitations);
 router.get('/results', authorizeRoles('candidate'), interviewController.getCandidateResults);

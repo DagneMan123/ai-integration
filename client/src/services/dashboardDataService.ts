@@ -20,7 +20,7 @@ export const dashboardDataService = {
 
   getCandidateApplications: async () => {
     try {
-      const response = await api.get('/applications');
+      const response = await api.get('/applications/candidate/my-applications');
       return response.data;
     } catch (error) {
       logger.error('Error fetching applications:', error);

@@ -40,11 +40,32 @@ const getCandidateDashboard = async (userId) => {
       take: 10
     });
 
-    // Calculate average score
-    const completedInterviews = interviews.filter(i => i.status === 'COMPLETED');
+    // Filter valid interviews (completed or in-progress with valid timestamps)
+    const validInterviews = interviews.filter(i => {
+      // Check if startedAt is a valid date (not null, not epoch time)
+      const startDate = new Date(i.startedAt);
+      return i.startedAt && startDate.getTime() > 0 && startDate.getFullYear() >= 2020;
+    });
+
+    // Calculate average score from valid completed interviews only
+    const completedInterviews = validInterviews.filter(i => i.status === 'COMPLETED' && (i.overallScore || 0) > 0);
     const averageScore = completedInterviews.length > 0
       ? completedInterviews.reduce((sum, i) => sum + (i.overallScore || 0), 0) / completedInterviews.length
       : 0;
+
+    // Determine interview status with proper handling for incomplete sessions
+    const mapInterviewStatus = (interview) => {
+      if (interview.status === 'COMPLETED') {
+        return interview.overallScore > 0 ? 'passed' : 'incomplete';
+      }
+      if (interview.status === 'IN_PROGRESS') {
+        return 'pending';
+      }
+      if (interview.status === 'FAILED' || interview.status === 'CANCELLED') {
+        return 'failed';
+      }
+      return 'pending';
+    };
 
     return {
       user: {
@@ -58,27 +79,29 @@ const getCandidateDashboard = async (userId) => {
         jobTitle: app.job?.title,
         companyName: app.job?.company?.name,
         status: app.status,
-        appliedAt: app.appliedAt
+        appliedAt: app.appliedAt ? new Date(app.appliedAt).toISOString() : new Date().toISOString()
       })),
-      interviews: interviews.map(int => ({
+      interviews: validInterviews.map(int => ({
         id: int.id,
         jobTitle: int.job?.title,
         companyName: int.job?.company?.name,
-        status: int.status,
-        score: int.overallScore,
-        date: int.startedAt
+        status: mapInterviewStatus(int),
+        score: int.overallScore || 0,
+        date: int.startedAt ? new Date(int.startedAt).toISOString() : new Date().toISOString(),
+        isIncomplete: int.status === 'COMPLETED' && (int.overallScore || 0) === 0
       })),
-      recentInterviews: interviews.slice(0, 5).map(int => ({
+      recentInterviews: validInterviews.slice(0, 5).map(int => ({
         id: int.id,
         jobTitle: int.job?.title,
         companyName: int.job?.company?.name,
-        status: int.status,
-        score: int.overallScore,
-        date: int.startedAt
+        status: mapInterviewStatus(int),
+        score: int.overallScore || 0,
+        date: int.startedAt ? new Date(int.startedAt).toISOString() : new Date().toISOString(),
+        isIncomplete: int.status === 'COMPLETED' && (int.overallScore || 0) === 0
       })),
       stats: {
         totalApplications: applications.length,
-        totalInterviews: interviews.length,
+        totalInterviews: validInterviews.length,
         completedInterviews: completedInterviews.length,
         averageScore: Math.round(averageScore)
       }

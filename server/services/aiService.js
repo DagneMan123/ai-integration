@@ -487,6 +487,9 @@ class AIService {
 
   /**
    * Analyzes the entire interview transcript to provide a final report.
+   * Uses STRICT ACCURACY GRADING with weighted scoring:
+   * - Technical Accuracy: 70% of total score
+   * - Communication Skills: 30% of total score
    */
   async evaluateFinalPerformance(jobDetails, fullTranscript) {
     try {
@@ -505,30 +508,63 @@ class AIService {
         };
       }
 
+      const systemPrompt = `
+You are an expert technical recruiter and evaluator. Evaluate this interview with STRICT ACCURACY GRADING.
+
+CRITICAL EVALUATION RULES:
+1. PRIORITIZE TECHNICAL CORRECTNESS above all else
+2. If an answer is factually wrong, deduct 40-50% from technical score
+3. If an answer contains hallucination (made-up information), deduct 50% from technical score
+4. If an answer is vague or incomplete, deduct 20-30% from technical score
+5. If candidate says "I don't know", give 0% but NO penalty (better than wrong information)
+6. Distinguish between incomplete sessions (0% score) and genuine failures
+
+SCORING FORMULA:
+- Technical Accuracy Score (0-100): How correct and accurate are the answers?
+- Communication Score (0-100): How clear, fluent, and professional is the delivery?
+- Overall Score = (Technical × 0.70) + (Communication × 0.30)
+
+AVERAGE CALCULATION:
+- If candidate gets 0% on one question and 80% on another: Average = (0 + 80) / 2 = 40%
+- Do NOT artificially inflate low scores
+- Use simple arithmetic mean
+
+Return ONLY valid JSON with no markdown or extra text.
+`;
+
       const prompt = `
-        Perform a comprehensive evaluation for the role: ${jobDetails.title}.
-        Analyze the provided transcript for technical accuracy, communication clarity, and confidence.
-        
-        IMPORTANT: Return ONLY valid JSON with these exact fields and types:
-        {
-          "overall_score": <number 0-100>,
-          "technical_score": <number 0-100>,
-          "communication_score": <number 0-100>,
-          "confidence_score": <number 0-100>,
-          "problem_solving_score": <number 0-100>,
-          "strengths": [<string>, <string>, <string>],
-          "weaknesses": [<string>, <string>],
-          "recommendation": "<string: Strongly Recommend | Recommend | Consider | Reject>",
-          "feedback_summary": "<string: detailed feedback>",
-          "hiringDecision": "<string: recommended | under_review | not_recommended>"
-        }
-      `;
+POSITION: ${jobDetails.title}
+REQUIRED SKILLS: ${jobDetails.requiredSkills?.join(', ') || 'Software Engineering'}
+EXPERIENCE LEVEL: ${jobDetails.experienceLevel || 'Mid-level'}
+
+INTERVIEW TRANSCRIPT:
+${JSON.stringify(fullTranscript, null, 2)}
+
+Evaluate this interview with strict accuracy grading. Return JSON:
+{
+  "overall_score": <0-100>,
+  "technical_score": <0-100>,
+  "communication_score": <0-100>,
+  "confidence_score": <0-100>,
+  "problem_solving_score": <0-100>,
+  "accuracy_penalties": <total penalties applied>,
+  "hallucination_count": <number of hallucinations detected>,
+  "incorrect_answers": <number of factually wrong answers>,
+  "incomplete_sessions": <number of incomplete/0% sessions>,
+  "average_calculation": "<show the math>",
+  "strengths": [<string>, <string>, <string>],
+  "weaknesses": [<string>, <string>],
+  "recommendation": "<Strongly Recommend | Recommend | Consider | Reject>",
+  "feedback_summary": "<detailed feedback>",
+  "hiringDecision": "<recommended | under_review | not_recommended>"
+}
+`;
 
       const response = await openai.chat.completions.create({
         model: AI_MODEL,
         messages: [
-          { role: "system", content: "You are an expert recruitment analyst. Return ONLY valid JSON, no markdown, no extra text." },
-          { role: "user", content: `${prompt}\n\nTranscript: ${JSON.stringify(fullTranscript)}` }
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
         temperature: 0.3
@@ -538,11 +574,16 @@ class AIService {
       
       // Validate and normalize the response
       return {
-        overall_score: parseInt(result.overall_score) || 0,
-        technical_score: parseInt(result.technical_score) || 0,
-        communication_score: parseInt(result.communication_score) || 0,
-        confidence_score: parseInt(result.confidence_score) || 0,
-        problem_solving_score: parseInt(result.problem_solving_score) || 0,
+        overall_score: Math.max(0, Math.min(100, parseInt(result.overall_score) || 0)),
+        technical_score: Math.max(0, Math.min(100, parseInt(result.technical_score) || 0)),
+        communication_score: Math.max(0, Math.min(100, parseInt(result.communication_score) || 0)),
+        confidence_score: Math.max(0, Math.min(100, parseInt(result.confidence_score) || 0)),
+        problem_solving_score: Math.max(0, Math.min(100, parseInt(result.problem_solving_score) || 0)),
+        accuracy_penalties: parseInt(result.accuracy_penalties) || 0,
+        hallucination_count: parseInt(result.hallucination_count) || 0,
+        incorrect_answers: parseInt(result.incorrect_answers) || 0,
+        incomplete_sessions: parseInt(result.incomplete_sessions) || 0,
+        average_calculation: result.average_calculation || '',
         strengths: Array.isArray(result.strengths) ? result.strengths : [],
         weaknesses: Array.isArray(result.weaknesses) ? result.weaknesses : [],
         recommendation: result.recommendation || 'Consider',

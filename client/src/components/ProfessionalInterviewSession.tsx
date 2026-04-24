@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Mic, MicOff, Clock, AlertCircle, CheckCircle2, Zap, MessageCircle, Loader, RotateCcw, Shield, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { interviewAPI } from '../utils/api';
+import { useAntiPaste } from '../hooks/useAntiPaste';
 
 interface Message {
   id: string;
@@ -53,6 +54,15 @@ const ProfessionalInterviewSession: React.FC<ProfessionalInterviewSessionProps> 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const riskCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { handlePaste, handleDrop, handleContextMenu } = useAntiPaste({
+    interviewId: interviewId || undefined,
+    onCheatingDetected: () => {
+      setCheatingDetected(true);
+      setViolationCount(prev => prev + 1);
+    },
+    enabled: true
+  });
 
   const progress = (currentTurn / 7) * 100;
 
@@ -166,31 +176,6 @@ Take your time and speak clearly.`;
     } finally {
       setIsInitializing(false);
     }
-  };
-
-  // SECURITY: Multi-level paste block
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCheatingDetected(true);
-    toast.error('🚨 PASTE BLOCKED - Unauthorized Input');
-    setTimeout(() => handleTerminateInterview('PASTE_ATTEMPT'), 2000);
-    return false;
-  };
-
-  const handleContextMenu = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLTextAreaElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCheatingDetected(true);
-    toast.error('🚨 DRAG & DROP BLOCKED');
-    setTimeout(() => handleTerminateInterview('DRAG_DROP_ATTEMPT'), 2000);
-    return false;
   };
 
   // SECURITY: Sudden text change detection
@@ -576,6 +561,7 @@ Take your time and speak clearly.`;
                     onContextMenu={handleContextMenu}
                     onDrop={handleDrop}
                     placeholder="Type your response here... (Paste disabled)"
+                    autoComplete="off"
                     className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     rows={3}
                     disabled={cheatingDetected}
